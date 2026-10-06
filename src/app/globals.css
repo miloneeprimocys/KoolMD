@@ -1,26 +1,236 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
+@import "./color.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ==========================================================================
+   Fonts — Poppins (Google Fonts)
+   ========================================================================== */
 
+/* Expose EVERY colour from color.css as a Tailwind utility
+   (bg-primary, text-heading, border-border, from-surface-start …) */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-link: var(--link);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-green: var(--brand-green);
+  --color-brand-sky: var(--brand-sky);
+
+  --color-heading: var(--heading);
+  --color-body: var(--body);
+  --color-label: var(--label);
+  --color-placeholder: var(--placeholder);
+  --color-on-primary: var(--on-primary);
+
+  --color-card: var(--card);
+  --color-page: var(--page);
+  --color-surface-start: var(--surface-start);
+  --color-surface-end: var(--surface-end);
+
+  --color-border: var(--border);
+  --color-divider: var(--divider);
+  --color-accent-line: var(--accent-line);
+
+  --color-shape-mint: var(--shape-mint);
+  --color-shape-sky: var(--shape-sky);
+  --color-shape-blue: var(--shape-blue);
+  --color-shape-deep: var(--shape-deep);
+
+  --color-google-red: var(--google-red);
+  --color-google-blue: var(--google-blue);
+  --color-google-yellow: var(--google-yellow);
+  --color-google-green: var(--google-green);
+
+  --color-background: var(--page);
+  --color-foreground: var(--heading);
+
+  /* ---- Fonts: Poppins only ---- */
+  --font-sans: "Poppins", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+  --font-mono: "Poppins", ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ==========================================================================
+   Base
+   ========================================================================== */
+html,
+body {
+  font-family: "Poppins", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--page);
+  color: var(--heading);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
+
+/* Poppins everywhere — form controls inherit instead of using system fonts */
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   KOOLMD – Shared auth animations
+   ========================================================================== */
+
+/* ---- Entrance ---- */
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Submit button: continuous breathing + shimmer ---- */
+@keyframes btnBreath {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(47, 123, 245, 0.35); }
+  50%      { box-shadow: 0 0 0 8px rgba(47, 123, 245, 0); }
+}
+@keyframes shineLoop {
+  0%   { transform: translateX(0) skewX(-12deg); opacity: 0; }
+  20%  { opacity: 1; }
+  60%  { transform: translateX(420%) skewX(-12deg); opacity: 0; }
+  100% { transform: translateX(420%) skewX(-12deg); opacity: 0; }
+}
+@keyframes ringPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(47, 123, 245, 0.30) inset; }
+  50%      { box-shadow: 0 0 0 3px rgba(47, 123, 245, 0.05) inset; }
+}
+
+/* ---- Social buttons: gentle float + subtle life ---- */
+@keyframes softFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-1.5px); }
+}
+@keyframes washBreath {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 1; }
+}
+@keyframes lineGrow {
+  0%, 100% { width: 0; opacity: 0.4; }
+  50%      { width: 40%; opacity: 1; }
+}
+@keyframes iconWiggle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25%      { transform: rotate(-3deg) scale(1.03); }
+  75%      { transform: rotate(3deg) scale(1.03); }
+}
+
+/* ---- Dropdown panel entrance ---- */
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---- Button wave animation ---- */
+.btn-wave {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  will-change: transform;
+}
+.btn-wave-1 { bottom: -20%; height: 90%; animation: btnWaveMove 5s linear infinite; }
+.btn-wave-2 { bottom: -35%; height: 90%; animation: btnWaveMove 7s linear infinite reverse; }
+.btn-wave-3 { bottom: -50%; height: 90%; animation: btnWaveMove 9s linear infinite; }
+
+@keyframes btnWaveMove {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ---- HIPAA shield heartbeat ---- */
+@keyframes hipaaPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.10); opacity: 0.85; }
+}
+
+/* ---- Respect user motion preferences ---- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   Verify OTP – animations
+   ========================================================================== */
+
+@keyframes verifyPulse {
+  0%   { transform: scale(0.85); opacity: 0.55; }
+  70%  { transform: scale(1.15); opacity: 0; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+ 
+
+@keyframes badgePop {
+  0%   { transform: scale(0);    opacity: 0; }
+  70%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+/* ==========================================================================
+   Left Section – leaf sway animations
+   ========================================================================== */
+
+/* all leaves rotate around the SAME base point, so they stay glued to the corner */
+.leaf { transform-origin: 295px 435px; will-change: transform; }
+
+@keyframes leafSwayA {
+  0%, 100% { transform: rotate(-1.6deg) skewX(0deg); }
+  50%      { transform: rotate(2.2deg)  skewX(-1.2deg); }
+}
+@keyframes leafSwayB {
+  0%, 100% { transform: rotate(1.4deg)  skewX(0deg); }
+  50%      { transform: rotate(-2.4deg) skewX(1deg); }
+}
+@keyframes leafSwayC {
+  0%, 100% { transform: rotate(-2.4deg); }
+  50%      { transform: rotate(3.2deg); }
+}
+.leaf-a { animation: leafSwayA 3.4s ease-in-out infinite; }
+.leaf-b { animation: leafSwayB 2.8s ease-in-out -0.8s infinite; }
+.leaf-c { animation: leafSwayC 2.2s ease-in-out -0.4s infinite; }
+
+/* ==========================================================================
+   Verify Left Section – arc floats + fade
+   ========================================================================== */
+
+@keyframes vlFloatA {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(5px, -7px); }
+}
+@keyframes vlFloatB {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(-6px, -5px); }
+}
+@keyframes vlFloatC {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(7px, -4px); }
+}
+
+@keyframes vlFadeSlide {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.vl-arc-1 { animation: vlFloatA 4s ease-in-out infinite; }
+.vl-arc-2 { animation: vlFloatB 5s ease-in-out -1s infinite; }
+.vl-arc-3 { animation: vlFloatC 3.6s ease-in-out -2s infinite; }
+.vl-fade   { animation: vlFadeSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.vl-fade-1 { animation-delay: 0.18s; }
+.vl-fade-2 { animation-delay: 0.28s; }
+.vl-fade-3 { animation-delay: 0.38s; }
+.vl-fade-4 { animation-delay: 0.48s; }
+.vl-fade-5 { animation-delay: 0.58s; }
