@@ -2,14 +2,13 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { FaEnvelopeOpenText } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-
-import SignupButton from "@/components/SignupButton";
 import { setAuthVariant } from "@/redux/slices/authSlice";
 import { clearVerifyOtpEmail } from "@/redux/slices/verifyOtpSlice";
 import { RootState } from "@/redux/store";
+import SignupSocialButton from "@/components/SignupSocialButton";
 
 /* ---------------------------------------------------------------- */
 /*  Config                                                          */
@@ -307,23 +306,35 @@ const VerifyOTP = () => {
       )}
     </div>
 
-    {/* ---------- Submit ---------- */}
-    <div
-      className="
-        mt-6
-        [animation-delay:0.25s]
-        animate-[fadeSlide_0.5s_cubic-bezier(0.16,1,0.3,1)_both]
-      "
-    >
-      <SignupButton
-        type="button"
-        onClick={handleSubmit}
-        text="Verify & Continue"
-        loadingText="Verifying…"
-        loading={isSubmitting}
-        disabled={!isComplete}
-      />
-    </div>
+ {/* ---------- Submit ---------- */}
+<div
+  className="
+    mt-6
+    [animation-delay:0.25s]
+    animate-[fadeSlide_0.5s_cubic-bezier(0.16,1,0.3,1)_both]
+  "
+>
+<SignupSocialButton
+  type="button"
+  showIcon={false}
+  provider="google"
+  onClick={handleSubmit}
+  disabled={!isComplete || isSubmitting}
+  className="!h-12 !text-sm"
+>
+  {isSubmitting ? (
+    <span className="flex items-center gap-2">
+      <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+      Verifying…
+    </span>
+  ) : (
+    <span className="flex items-center gap-2">
+      Verify & Continue
+      <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+    </span>
+  )}
+</SignupSocialButton>
+</div>
   </div>
 );
 };

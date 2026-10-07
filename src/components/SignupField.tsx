@@ -15,7 +15,7 @@ export const FieldError = ({ message }: { message?: string }) => (
     aria-live="polite"
   >
     <div className="overflow-hidden">
-      <p className="flex items-center gap-1 text-[11px] font-medium leading-tight text-red-500">
+      <p className="flex items-center gap-1 text-[11px] font-medium leading-tight text-danger">
         <AlertCircle className="h-3 w-3 shrink-0" />
         {message}
       </p>
@@ -29,7 +29,7 @@ export const FieldError = ({ message }: { message?: string }) => (
 export interface SignupFieldProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "className"> {
   /** Field label shown above the input */
-  label?: string;
+ label?: ReactNode;
   /** Leading icon (rendered inside, on the left) */
   icon?: ReactNode;
   /** Trailing icon / element (e.g. password toggle) */
@@ -66,14 +66,14 @@ const SignupField = forwardRef<HTMLInputElement, SignupFieldProps>(
 
     /* Border state: error > focused > default */
     const borderClass = hasError
-      ? "border-red-500"
+      ? "border-danger"
       : focused
         ? "border-primary"
         : "border-border hover:border-primary/50";
 
     /* Icon color: error > focused > body */
     const iconColor = hasError
-      ? "text-red-500"
+      ? "text-danger"
       : focused
         ? "text-primary"
         : "text-body";

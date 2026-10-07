@@ -1,21 +1,14 @@
 import React from "react";
+import Image from "next/image";
 
 const Logo = () => (
-    <svg width="60" height="60" viewBox="0 0 56 56" fill="none" aria-hidden="true" className="shrink-0">
-        <defs>
-            <linearGradient id="leafL" x1="0" y1="1" x2="1" y2="0">
-                <stop offset="0%" stopColor="var(--brand-teal)" />
-                <stop offset="100%" stopColor="var(--brand-sky)" />
-            </linearGradient>
-            <linearGradient id="leafR" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="var(--brand-green)" />
-                <stop offset="100%" stopColor="var(--brand-teal)" />
-            </linearGradient>
-        </defs>
-        <circle cx="28" cy="7" r="5.5" fill="var(--brand-sky)" />
-        <path d="M26 16C10 14 2 24 3 40c1 8 6 13 14 14C13 44 16 28 26 16Z" fill="url(#leafL)" />
-        <path d="M30 16c16-2 24 8 23 24-1 8-6 13-14 14 4-10 1-26-9-38Z" fill="url(#leafR)" />
-    </svg>
+    <Image
+        src="/images/only_logo.svg"
+        alt="KOOLMD Logo"
+        width={60}
+        height={60}
+        className="shrink-0"
+    />
 );
 
 const LeftSection = () => {

@@ -30,36 +30,53 @@ const SignupButton: React.FC<SignupButtonProps> = ({
       className={`
         group relative isolate flex h-12 w-full cursor-pointer items-center justify-center gap-2
         overflow-hidden rounded-xl
-        border border-shape-blue
-        bg-linear-to-r from-surface-start to-shape-sky
-        text-sm font-semibold text-heading
+        border border-[var(--btn-border)]
+        bg-linear-to-r from-[var(--btn-from)] to-[var(--btn-to)]
+        text-sm font-semibold text-[var(--btn-text,var(--on-primary))]
+        shadow-lg shadow-[var(--btn-shadow)]
         transition-all duration-300 ease-out
         hover:-translate-y-0.5
-        hover:border-brand-sky
-        hover:shadow-lg hover:shadow-shape-blue/30
+        hover:border-[var(--btn-border)]
+        hover:shadow-xl hover:shadow-[var(--btn-shadow-hover)]
         active:translate-y-0 active:scale-[0.985]
-        focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25
+        focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--btn-glow)]
         disabled:cursor-not-allowed disabled:opacity-70
         disabled:hover:translate-y-0 disabled:hover:shadow-none
         ${className}
       `}
     >
-      {/* ── Wavy flowing layers (light shades only) ── */}
+      {/* ── Wavy flowing layers (light tints over the fill) ── */}
       <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
         <svg className="btn-wave btn-wave-1" viewBox="0 0 1200 120" preserveAspectRatio="none">
-          <path d={WAVE_PATH} fill="var(--shape-blue)" opacity="0.35" />
+          <path d={WAVE_PATH} fill="var(--card)" opacity="0.16" />
         </svg>
         <svg className="btn-wave btn-wave-2" viewBox="0 0 1200 120" preserveAspectRatio="none">
-          <path d={WAVE_PATH} fill="var(--shape-sky)" opacity="0.6" />
+          <path d={WAVE_PATH} fill="var(--btn-to)" opacity="0.55" />
         </svg>
         <svg className="btn-wave btn-wave-3" viewBox="0 0 1200 120" preserveAspectRatio="none">
-          <path d={WAVE_PATH} fill="var(--card)" opacity="0.55" />
+          <path d={WAVE_PATH} fill="var(--card)" opacity="0.1" />
         </svg>
       </span>
 
+      {/* ── Shine sweep on hover — same treatment as GlobalButton ── */}
+      <span
+        aria-hidden="true"
+        className="
+          pointer-events-none absolute inset-y-0 left-0 w-1/2
+          -translate-x-full -skew-x-12
+          bg-gradient-to-r
+          from-transparent
+          via-[rgba(47,123,245,0.10)]
+          dark:via-[rgba(150,200,255,0.45)]
+          to-transparent
+          transition-transform duration-[1400ms] ease-out
+          group-hover:translate-x-[260%]
+        "
+      />
+
       {loading ? (
         <>
-          <span className="relative h-4 w-4 animate-spin rounded-full border-2 border-shape-blue border-t-primary" />
+          <span className="relative h-4 w-4 animate-spin rounded-full border-2 border-[var(--btn-text,var(--on-primary))]/40 border-t-[var(--btn-text,var(--on-primary))]" />
           <span className="relative tracking-tight">{loadingText}</span>
         </>
       ) : (

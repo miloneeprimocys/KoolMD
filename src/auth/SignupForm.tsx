@@ -14,8 +14,8 @@ import {
 import { useDispatch } from "react-redux";
 
 import SignupField from "@/components/SignupField";
+import { ArrowRight } from "lucide-react";
 import SignupDropdown from "@/components/SignupDropdown";
-import SignupButton from "@/components/SignupButton";
 import SignupSocialButton from "@/components/SignupSocialButton";
 import { setVerifyOtpEmail } from "@/redux/slices/verifyOtpSlice";
 
@@ -242,15 +242,28 @@ const SignupForm = () => {
           />
         </div>
 
-        {/* ---------- Submit ---------- */}
-        <div className="pt-2 animate-[fadeSlide_0.5s_cubic-bezier(0.16,1,0.3,1)_both] [animation-delay:0.22s]">
-          <SignupButton
-            type="submit"
-            text="Create Account"
-            loadingText="Creating account…"
-            loading={isSubmitting}
-          />
-        </div>
+     {/* ---------- Submit ---------- */}
+<div className="pt-2 animate-[fadeSlide_0.5s_cubic-bezier(0.16,1,0.3,1)_both] [animation-delay:0.22s]">
+  <SignupSocialButton
+    type="submit"
+    showIcon={false}
+    provider="google"
+    disabled={isSubmitting}
+    className="!h-12 !text-sm"
+  >
+    {isSubmitting ? (
+      <span className="flex items-center gap-2">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+        Creating account…
+      </span>
+    ) : (
+      <span className="flex items-center gap-2">
+        Create Account
+        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+      </span>
+    )}
+  </SignupSocialButton>
+</div>
       </form>
 
       {/* ---------- Divider ---------- */}
@@ -263,7 +276,7 @@ const SignupForm = () => {
       {/* ---------- Social ---------- */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <SignupSocialButton provider="google" />
-        <SignupSocialButton provider="apple" delay="-2s" />
+        <SignupSocialButton provider="apple" />
       </div>
 
       {/* ---------- HIPAA notice ---------- */}

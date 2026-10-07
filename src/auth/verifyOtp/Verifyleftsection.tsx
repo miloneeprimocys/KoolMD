@@ -1,27 +1,15 @@
 import React from "react";
+import Image from "next/image";
 import { Lock, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
 
 const Logo = () => (
-  <svg
-    viewBox="0 0 56 56"
-    fill="none"
-    aria-hidden="true"
+  <Image
+    src="/images/only_logo.svg"
+    alt="KOOLMD Logo"
+    width={56}
+    height={56}
     className="h-14 w-14 shrink-0 xl:h-16 xl:w-16 2xl:h-[72px] 2xl:w-[72px]"
-  >
-    <defs>
-      <linearGradient id="vLeafL" x1="0" y1="1" x2="1" y2="0">
-        <stop offset="0%" stopColor="var(--brand-teal, #14B8A6)" />
-        <stop offset="100%" stopColor="var(--brand-sky, #38BDF8)" />
-      </linearGradient>
-      <linearGradient id="vLeafR" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="var(--brand-green, #22C55E)" />
-        <stop offset="100%" stopColor="var(--brand-teal, #14B8A6)" />
-      </linearGradient>
-    </defs>
-    <circle cx="28" cy="7" r="5.5" fill="var(--brand-sky, #38BDF8)" />
-    <path d="M26 16C10 14 2 24 3 40c1 8 6 13 14 14C13 44 16 28 26 16Z" fill="url(#vLeafL)" />
-    <path d="M30 16c16-2 24 8 23 24-1 8-6 13-14 14 4-10 1-26-9-38Z" fill="url(#vLeafR)" />
-  </svg>
+  />
 );
 
 interface Feature {

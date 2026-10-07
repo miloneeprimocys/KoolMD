@@ -1,10 +1,6 @@
-/* ==========================================================================
-   KOOLMD – Colour palette (single source of truth)
-   Plain CSS variables: usable in Tailwind classes (mapped in globals.css)
-   AND directly in SVG / custom CSS via var(--name).
-   ========================================================================== */
-
 :root {
+  color-scheme: light;
+
   /* Brand */
   --primary: #2f7bf5;
   --primary-hover: #1f6ae6;
@@ -23,7 +19,7 @@
 
   /* Surfaces */
   --card: #ffffff;
-  --page: #f6f9fe;
+  --page: #ffffff;
   --surface-start: #f4f9ff;
   --surface-end: #e6f1fd;
 
@@ -38,9 +34,85 @@
   --shape-blue: #8cc4ff;
   --shape-deep: #5aa2f5;
 
+  /* Status (dashboard) */
+  --success: #0f9d6c;
+  --warning: #f0642b;
+  --danger: #e5484d;
+  --violet: #8b5cf6;
+
   /* Google logo (brand-mandated colours) */
   --google-red: #ea4335;
   --google-blue: #4285f4;
   --google-yellow: #fbbc05;
   --google-green: #34a853;
+
+  /* Button tokens — light mode */
+  --btn-from: rgba(255, 255, 255, 0.70);
+  --btn-to:   rgba(244, 249, 255, 0.85);
+  --btn-border: rgba(15, 29, 74, 0.10);
+  --btn-text: #0f1d4a;
+  --btn-shadow: rgba(15, 29, 74, 0.06);
+  --btn-shadow-hover: rgba(15, 29, 74, 0.12);
+  --btn-glow: rgba(15, 157, 108, 0.20);
+}
+
+/* ==========================================================================
+   Dark theme – applied when <html class="dark">
+   ========================================================================== */
+:root.dark {
+  color-scheme: dark;
+
+  /* Brand */
+  --primary: #4d8ff8;
+  --primary-hover: #6aa3fa;
+  --link: #6aa8ff;
+  --brand-navy: #d6e4ff;
+  --brand-teal: #2cc7db;
+  --brand-green: #3ddc97;
+  --brand-sky: #5aaeff;
+
+  /* Text */
+  --heading: #eaf0ff;
+  --body: #9aa7c4;
+  --label: #d3dcf5;
+  --placeholder: #6f7b99;
+  --on-primary: #ffffff;
+
+  /* Surfaces */
+  --card: #121a33;
+  --page: #0b1226;
+  --surface-start: #0f1834;
+  --surface-end: #0a1124;
+
+  /* Borders & dividers */
+  --border: #243053;
+  --divider: #1d2747;
+  --accent-line: #4d8ff8;
+
+  /* Decorative shapes */
+  --shape-mint: #1b6b57;
+  --shape-sky: #1d3f73;
+  --shape-blue: #2a5aa3;
+  --shape-deep: #3b7ad8;
+
+  /* Status (dashboard) */
+  --success: #07875F;
+  --warning: #ff7a45;
+  --danger: #f0555a;
+  --violet: #9b7bf7;
+
+  /* Google logo (brand-mandated colours) – unchanged */
+  --google-red: #ea4335;
+  --google-blue: #4285f4;
+  --google-yellow: #fbbc05;
+  --google-green: #34a853;
+
+  /* Button tokens — dark mode */
+  --btn-from: #0d1430;
+  --btn-to:   #0a1026;
+  --btn-border: #1f2b4f;
+  --btn-text: #eaf0ff;
+  --btn-shadow: rgba(0, 0, 0, 0.45);
+  --btn-shadow-hover: rgba(0, 0, 0, 0.60);
+  --btn-glow: rgba(77, 143, 248, 0.22);
 }
