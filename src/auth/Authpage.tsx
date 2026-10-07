@@ -5,7 +5,6 @@ import { useSelector } from "react-redux";
 import LeftSection from "./LeftSection";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
-import AccountCreated from "./AccountCreated";
 
 interface AuthPageProps {
   variant: "login" | "signup";
@@ -22,8 +21,7 @@ interface AuthPageProps {
  */
 const AuthPage = ({ variant }: AuthPageProps) => {
   return (
-    <>
-    <AccountCreated />
+    
     <main className="flex h-screen w-full overflow-hidden bg-page">
       {/* Left panel — hidden below lg by its own classes */}
       <LeftSection />
@@ -44,7 +42,6 @@ const AuthPage = ({ variant }: AuthPageProps) => {
         </div>
       </div>
     </main>
-    </>
   );
 };
 
