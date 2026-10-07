@@ -1,5 +1,5 @@
 import AuthPage from "@/auth/Authpage";
 
 export default function Home() {
-  return <AuthPage />;
+  return <AuthPage variant="login" />;
 }
