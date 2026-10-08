@@ -6,11 +6,10 @@ import { Moon, Sun } from "lucide-react";
 const ThemeToggle = () => {
   const [dark, setDark] = useState(false);
 
-  // restore saved theme on first load
+  // sync state with the class already set by the script
   useEffect(() => {
-    const saved = localStorage.getItem("theme") === "dark";
-    document.documentElement.classList.toggle("dark", saved);
-    setDark(saved);
+    const isDark = document.documentElement.classList.contains("dark");
+    setDark(isDark);
   }, []);
 
   const toggle = () => {

@@ -290,3 +290,16 @@ optgroup {
 .shine-always:hover > .shine-layer {
   animation-duration: 1.2s;
 }
+/* Date input: calendar icon hover + pointer */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  opacity: 0.6;
+  transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(0, 137, 201, 0.12);
+  opacity: 1;
+}

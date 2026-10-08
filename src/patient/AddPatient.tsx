@@ -1,20 +1,56 @@
 "use client";
 
-import React, { ReactNode, SelectHTMLAttributes } from "react";
-import { CalendarDays, ChevronDown, ImagePlus, User } from "lucide-react";
+import React, { ReactNode, useMemo } from "react";
+import { ImagePlus, User } from "lucide-react";
+import { Country, State, City } from "country-state-city";
+import {
+  isValidPhoneNumber,
+  parsePhoneNumberFromString,
+  CountryCode,
+} from "libphonenumber-js";
+import {
+  postcodeValidator,
+  postcodeValidatorExistsForCountry,
+} from "postcode-validator";
 
 import SignupField, { FieldError } from "@/components/SignupField";
+import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 import Breadcrumb from "@/components/Breadcrumb";
-
+import DatePicker from "@/components/Datepicker";
 /* ---------- Static data ---------- */
-const GENDERS = ["Male", "Female", "Other"];
-const MARITAL = ["Single", "Married", "Divorced", "Widowed"];
-const BLOOD = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-const LANGUAGES = ["English", "Spanish", "French", "German", "Hindi"];
-const STATES = ["California", "Florida", "New York", "Texas", "Washington"];
-const COUNTRIES = ["United States", "Canada", "United Kingdom", "India"];
+const GENDERS: DropdownOption[] = [
+  { value: "Male", label: "Male" },
+  { value: "Female", label: "Female" },
+  { value: "Other", label: "Other" },
+];
+
+const MARITAL: DropdownOption[] = [
+  { value: "Single", label: "Single" },
+  { value: "Married", label: "Married" },
+  { value: "Divorced", label: "Divorced" },
+  { value: "Widowed", label: "Widowed" },
+];
+
+const BLOOD: DropdownOption[] = [
+  { value: "A+", label: "A+" },
+  { value: "A-", label: "A-" },
+  { value: "B+", label: "B+" },
+  { value: "B-", label: "B-" },
+  { value: "AB+", label: "AB+" },
+  { value: "AB-", label: "AB-" },
+  { value: "O+", label: "O+" },
+  { value: "O-", label: "O-" },
+];
+
+const LANGUAGES: DropdownOption[] = [
+  { value: "English", label: "English" },
+  { value: "Spanish", label: "Spanish" },
+  { value: "French", label: "French" },
+  { value: "German", label: "German" },
+  { value: "Hindi", label: "Hindi" },
+];
 
 const ROLES = [
   { id: "patient", label: "Patient", desc: "Can book appointments, access records and communicate with providers.", checked: true },
@@ -23,10 +59,24 @@ const ROLES = [
   { id: "admin", label: "Administrator", desc: "Full access to manage platform records and settings.", checked: false },
 ];
 
+/* ---------- Dynamic location data (from library) ---------- */
+const ALL_COUNTRIES = Country.getAllCountries();
+
+// Address country dropdown: value = ISO code (e.g. "IN"), label = name
+const COUNTRY_OPTIONS: DropdownOption[] = ALL_COUNTRIES.map((c) => ({
+  value: c.isoCode,
+  label: c.name,
+}));
+
+// Phone code dropdown: value = ISO code, label = "IN +91"
+const PHONE_CODE_OPTIONS: DropdownOption[] = ALL_COUNTRIES.map((c) => ({
+  value: c.isoCode,
+  label: `${c.isoCode} +${(c.phonecode || "").replace(/^\+/, "")}`,
+}));
+const DEFAULT_COUNTRY = "US";
+
 /* ---------- Shared styles ---------- */
 const labelCls = "mb-2 block text-sm font-medium text-label";
-const controlCls =
-  "h-12 w-full rounded-xl border border-border bg-card text-sm text-heading outline-none transition-colors duration-200 hover:border-primary/50 focus:border-primary placeholder:text-placeholder disabled:cursor-not-allowed disabled:opacity-60";
 const checkboxCls =
   "mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-border accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
 const cardCls = "rounded-2xl border border-border bg-card p-4 sm:p-5";
@@ -35,89 +85,57 @@ const cardCls = "rounded-2xl border border-border bg-card p-4 sm:p-5";
 const Req = () => <span className="text-danger"> *</span>;
 const Opt = () => <span className="font-normal text-body"> (Optional)</span>;
 
-/* Select that matches SignupField styling */
-interface SelectFieldProps
-  extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "className"> {
-  label?: ReactNode;
-  placeholder: string;
-  options: string[];
-  error?: string;
-}
-
-const SelectField = ({
-  label,
-  placeholder,
-  options,
-  error,
-  id,
-  name,
-  ...rest
-}: SelectFieldProps) => {
-  const inputId = id || name;
-  return (
-    <div className="w-full">
-      {label && (
-        <label htmlFor={inputId} className={labelCls}>
-          {label}
-        </label>
-      )}
-      <div className="relative">
-        <select
-          id={inputId}
-          name={name}
-          defaultValue=""
-          className={`${controlCls} cursor-pointer appearance-none pl-4 pr-10 invalid:text-placeholder ${
-            error ? "border-danger" : ""
-          }`}
-          required
-          {...rest}
-        >
-          <option value="" disabled>
-            {placeholder}
-          </option>
-          {options.map((o) => (
-            <option key={o} value={o} className="text-heading">
-              {o}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-body" />
-      </div>
-      <FieldError message={error} />
-    </div>
-  );
-};
-
-/* Phone input with flag + country code prefix */
+/* Phone input: country-code SignupDropdown + number input */
 const PhoneField = ({
   label,
   placeholder,
   name,
+  value,
+  onChange,
+  countryCode,
+  onCountryChange,
+  error,
 }: {
   label: ReactNode;
   placeholder: string;
   name: string;
+  value: string;
+  onChange: (value: string) => void;
+  countryCode: string;
+  onCountryChange: (iso: string) => void;
+  error?: string;
 }) => (
   <div className="w-full">
     <label htmlFor={name} className={labelCls}>
       {label}
     </label>
-    <div className="flex h-12 w-full items-center rounded-xl border border-border bg-card transition-colors duration-200 focus-within:border-primary hover:border-primary/50">
-      <span className="flex shrink-0 items-center gap-1.5 pl-3.5 pr-2 text-sm text-heading">
-        <span aria-hidden="true" className="text-base leading-none">
-          🇺🇸
-        </span>
-        <span>+1</span>
-      </span>
-      <input
-        id={name}
-        name={name}
-        type="tel"
-        placeholder={placeholder}
-        className="h-full min-w-0 flex-1 rounded-r-xl bg-transparent pr-4 text-sm text-heading outline-none placeholder:text-placeholder"
+    <div className="flex items-start gap-2">
+      <SignupDropdown
+        name={`${name}Country`}
+               className="!w-[104px] shrink-0"
+        options={PHONE_CODE_OPTIONS}
+        value={countryCode}
+        onChange={onCountryChange}
+        placeholder="Code"
       />
+      <div
+        className={`flex h-12 min-w-0 flex-1 items-center rounded-xl border bg-card transition-colors duration-200 focus-within:border-primary hover:border-primary/50 ${
+          error ? "border-danger" : "border-border"
+        }`}
+      >
+        <input
+          id={name}
+          name={name}
+          type="tel"
+          inputMode="tel"
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-full min-w-0 flex-1 rounded-xl bg-transparent px-4 text-sm text-heading outline-none placeholder:text-placeholder"
+        />
+      </div>
     </div>
-    <FieldError message={undefined} />
+    <FieldError message={error} />
   </div>
 );
 
@@ -142,8 +160,211 @@ const SectionHeader = ({
   </div>
 );
 
+/* ---------- Validation types ---------- */
+interface FormValues {
+  firstName: string;
+  lastName: string;
+  dob: string;
+  gender: string;
+  phoneCountry: string;
+  phone: string;
+  email: string;
+  patientId: string;
+  marital: string;
+  blood: string;
+  language: string;
+  emergencyName: string;
+  emergencyPhoneCountry: string;
+  emergencyPhone: string;
+  address1: string;
+  address2: string;
+  country: string; // ISO code
+  state: string; // ISO code
+  city: string; // city name
+  zip: string;
+}
+
+type FormErrors = Partial<Record<keyof FormValues, string>>;
+
 /* ---------- Page ---------- */
 const AddPatient = () => {
+  const [values, setValues] = React.useState<FormValues>({
+    firstName: "",
+    lastName: "",
+    dob: "",
+    gender: "",
+    phoneCountry: DEFAULT_COUNTRY,
+    phone: "",
+    email: "",
+    patientId: "",
+    marital: "",
+    blood: "",
+    language: "",
+    emergencyName: "",
+    emergencyPhoneCountry: DEFAULT_COUNTRY,
+    emergencyPhone: "",
+    address1: "",
+    address2: "",
+    country: DEFAULT_COUNTRY,
+    state: "",
+    city: "",
+    zip: "",
+  });
+
+  const [errors, setErrors] = React.useState<FormErrors>({});
+  const [submitted, setSubmitted] = React.useState(false);
+
+  /* ---------- Dependent dropdown options ---------- */
+  const stateOptions: DropdownOption[] = useMemo(
+    () =>
+      State.getStatesOfCountry(values.country).map((s) => ({
+        value: s.isoCode,
+        label: s.name,
+      })),
+    [values.country],
+  );
+
+  const cityOptions: DropdownOption[] = useMemo(() => {
+    const list = values.state
+      ? City.getCitiesOfState(values.country, values.state)
+      : stateOptions.length === 0
+        ? City.getCitiesOfCountry(values.country) ?? []
+        : [];
+    // de-duplicate by name so option keys are unique
+    const seen = new Set<string>();
+    const out: DropdownOption[] = [];
+    for (const c of list) {
+      if (!seen.has(c.name)) {
+        seen.add(c.name);
+        out.push({ value: c.name, label: c.name });
+      }
+    }
+    return out;
+  }, [values.country, values.state, stateOptions.length]);
+
+  const postalLabel = values.country === "IN" ? "PIN Code" : values.country === "US" ? "ZIP Code" : "Postal Code";
+
+  /* ---------- Field setters ---------- */
+  const clearError = (field: keyof FormValues) => {
+    if (submitted) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const setField = (field: keyof FormValues, value: string) => {
+    setValues((prev) => ({ ...prev, [field]: value }));
+    clearError(field);
+  };
+
+  const handleCountryChange = (iso: string) => {
+    // Changing country resets state/city/zip and syncs phone codes
+    setValues((prev) => ({
+      ...prev,
+      country: iso,
+      state: "",
+      city: "",
+      zip: "",
+      phoneCountry: iso,
+      emergencyPhoneCountry: iso,
+    }));
+    clearError("country");
+    clearError("state");
+    clearError("city");
+    clearError("zip");
+  };
+
+  const handleStateChange = (iso: string) => {
+    setValues((prev) => ({ ...prev, state: iso, city: "" }));
+    clearError("state");
+    clearError("city");
+  };
+
+  /* ---------- Validation ---------- */
+  const validate = (vals: FormValues): FormErrors => {
+    const errs: FormErrors = {};
+
+    if (!vals.firstName.trim()) errs.firstName = "First name is required.";
+    else if (vals.firstName.trim().length < 2)
+      errs.firstName = "First name must be at least 2 characters.";
+
+    if (!vals.lastName.trim()) errs.lastName = "Last name is required.";
+    else if (vals.lastName.trim().length < 2)
+      errs.lastName = "Last name must be at least 2 characters.";
+
+    if (!vals.dob.trim()) errs.dob = "Date of birth is required.";
+
+    if (!vals.gender) errs.gender = "Gender is required.";
+
+    // Phone (validated against the selected country code)
+    if (!vals.phone.trim()) {
+      errs.phone = "Phone number is required.";
+    } else if (
+      !isValidPhoneNumber(vals.phone.trim(), vals.phoneCountry as CountryCode)
+    ) {
+      errs.phone = "Enter a valid phone number for the selected country.";
+    }
+
+    if (!vals.email.trim()) errs.email = "Email address is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.email.trim()))
+      errs.email = "Enter a valid email address.";
+
+    // Emergency phone (optional, validate only if filled)
+    if (
+      vals.emergencyPhone.trim() &&
+      !isValidPhoneNumber(
+        vals.emergencyPhone.trim(),
+        vals.emergencyPhoneCountry as CountryCode,
+      )
+    ) {
+      errs.emergencyPhone = "Enter a valid phone number for the selected country.";
+    }
+
+    if (!vals.country) errs.country = "Country is required.";
+
+    // ZIP / PIN (optional, validated per country)
+    if (vals.zip.trim() && vals.country) {
+      const zip = vals.zip.trim();
+      const ok = postcodeValidatorExistsForCountry(vals.country)
+        ? postcodeValidator(zip, vals.country)
+        : /^[A-Za-z0-9\s-]{3,10}$/.test(zip);
+      if (!ok) errs.zip = `Enter a valid ${postalLabel.toLowerCase()}.`;
+    }
+
+    return errs;
+  };
+
+  const toE164 = (national: string, iso: string) =>
+    parsePhoneNumberFromString(national, iso as CountryCode)?.number ?? "";
+
+  const submitForm = () => {
+    setSubmitted(true);
+    const errs = validate(values);
+    setErrors(errs);
+
+    if (Object.keys(errs).length === 0) {
+      const payload = {
+        ...values,
+        phone: toE164(values.phone, values.phoneCountry),
+        emergencyPhone: values.emergencyPhone
+          ? toE164(values.emergencyPhone, values.emergencyPhoneCountry)
+          : "",
+        countryName: Country.getCountryByCode(values.country)?.name ?? "",
+        stateName:
+          State.getStateByCodeAndCountry(values.state, values.country)?.name ?? "",
+      };
+      console.log("Form submitted successfully:", payload);
+      // TODO: call your API here
+    } else {
+      const firstErrorField = Object.keys(errs)[0];
+      const el = document.getElementById(firstErrorField);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      el?.focus?.();
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitForm();
+  };
+
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-4 sm:space-y-5">
       <Breadcrumb
@@ -153,35 +374,39 @@ const AddPatient = () => {
         ]}
       />
 
-     {/* Title + actions */}
-<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-  <div>
-    <h2 className="text-lg font-semibold text-heading sm:text-xl 2xl:text-2xl">
-      Add Patient
-    </h2>
-    <p className="mt-0.5 text-sm text-body">
-      Create a new patient record in the system.
-    </p>
-  </div>
+      {/* Title + actions */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-heading sm:text-xl 2xl:text-2xl">
+            Add Patient
+          </h2>
+          <p className="mt-0.5 text-sm text-body">
+            Create a new patient record in the system.
+          </p>
+        </div>
 
-{/* Buttons — always side by side, share width on phones */}
-<div className="flex flex-row gap-2">
-  <ImportButton
-    text="Cancel"
-    icon={null}
-    className="flex-1 sm:flex-none"
-  />
-  <AddButton
-    text="Save Patient"
-    icon={null}
-    className="flex-1 sm:flex-none"
-  />
-</div>
-</div>
+        <div className="flex flex-row gap-2">
+          <ImportButton
+            text="Cancel"
+            icon={null}
+            className="flex-1 sm:flex-none"
+          />
+          <AddButton
+            text="Save Patient"
+            icon={null}
+            className="flex-1 sm:flex-none"
+            onClick={submitForm}
+          />
+        </div>
+      </div>
 
       <div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
         {/* ================= LEFT: FORM ================= */}
-        <form className={`${cardCls} sm:p-6`} onSubmit={(e) => e.preventDefault()}>
+        <form
+          className={`${cardCls} sm:p-6`}
+          onSubmit={handleSubmit}
+          noValidate
+        >
           {/* 1. Basic information */}
           <section>
             <SectionHeader
@@ -194,34 +419,54 @@ const AddPatient = () => {
                 name="firstName"
                 label={<>First Name<Req /></>}
                 placeholder="Enter first name"
+                value={values.firstName}
+                onChange={(e) => setField("firstName", e.target.value)}
+                error={errors.firstName}
               />
               <SignupField
                 name="lastName"
                 label={<>Last Name<Req /></>}
                 placeholder="Enter last name"
+                value={values.lastName}
+                onChange={(e) => setField("lastName", e.target.value)}
+                error={errors.lastName}
               />
-              <SignupField
+              <DatePicker
                 name="dob"
                 label={<>Date of Birth<Req /></>}
-                placeholder="Select date"
-                trailing={<CalendarDays className="h-4 w-4 text-body" />}
+                placeholder="dd-mm-yyyy"
+                value={values.dob}
+                onChange={(v) => setField("dob", v)}
+                maxDate={new Date().toISOString().split("T")[0]}
+                error={errors.dob}
               />
-              <SelectField
+              <SignupDropdown
                 name="gender"
-                label={<>Gender<Req /></>}
+                label="Gender *"
                 placeholder="Select gender"
                 options={GENDERS}
+                value={values.gender}
+                onChange={(v) => setField("gender", v)}
+                error={errors.gender}
               />
               <PhoneField
                 name="phone"
                 label={<>Phone Number<Req /></>}
                 placeholder="Enter phone number"
+                value={values.phone}
+                onChange={(v) => setField("phone", v)}
+                countryCode={values.phoneCountry}
+                onCountryChange={(iso) => setField("phoneCountry", iso)}
+                error={errors.phone}
               />
               <SignupField
                 name="email"
                 type="email"
                 label={<>Email Address<Req /></>}
                 placeholder="Enter email address"
+                value={values.email}
+                onChange={(e) => setField("email", e.target.value)}
+                error={errors.email}
               />
             </div>
           </section>
@@ -240,34 +485,54 @@ const AddPatient = () => {
                 name="patientId"
                 label={<>Patient ID<Opt /></>}
                 placeholder="Auto-generated if left blank"
+                value={values.patientId}
+                onChange={(e) => setField("patientId", e.target.value)}
+                error={errors.patientId}
               />
-              <SelectField
+              <SignupDropdown
                 name="marital"
                 label="Marital Status"
                 placeholder="Select marital status"
                 options={MARITAL}
+                value={values.marital}
+                onChange={(v) => setField("marital", v)}
+                error={errors.marital}
               />
-              <SelectField
+              <SignupDropdown
                 name="blood"
                 label="Blood Type"
                 placeholder="Select blood type"
                 options={BLOOD}
+                value={values.blood}
+                onChange={(v) => setField("blood", v)}
+                error={errors.blood}
               />
-              <SelectField
+              <SignupDropdown
                 name="language"
                 label="Preferred Language"
                 placeholder="Select language"
                 options={LANGUAGES}
+                value={values.language}
+                onChange={(v) => setField("language", v)}
+                error={errors.language}
               />
               <SignupField
                 name="emergencyName"
                 label="Emergency Contact Name"
                 placeholder="Enter contact name"
+                value={values.emergencyName}
+                onChange={(e) => setField("emergencyName", e.target.value)}
+                error={errors.emergencyName}
               />
               <PhoneField
                 name="emergencyPhone"
                 label="Emergency Contact Number"
                 placeholder="Enter phone number"
+                value={values.emergencyPhone}
+                onChange={(v) => setField("emergencyPhone", v)}
+                countryCode={values.emergencyPhoneCountry}
+                onCountryChange={(iso) => setField("emergencyPhoneCountry", iso)}
+                error={errors.emergencyPhone}
               />
             </div>
           </section>
@@ -286,33 +551,69 @@ const AddPatient = () => {
                 name="address1"
                 label="Address Line 1"
                 placeholder="Enter address line 1"
+                value={values.address1}
+                onChange={(e) => setField("address1", e.target.value)}
+                error={errors.address1}
               />
               <SignupField
                 name="address2"
                 label={<>Address Line 2<Opt /></>}
                 placeholder="Enter address line 2"
+                value={values.address2}
+                onChange={(e) => setField("address2", e.target.value)}
+                error={errors.address2}
               />
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <SignupField name="city" label="City" placeholder="Enter city" />
-              <SelectField
+              <SignupDropdown
+                name="country"
+                label="Country *"
+                placeholder="Select country"
+                options={COUNTRY_OPTIONS}
+                value={values.country}
+                onChange={handleCountryChange}
+                error={errors.country}
+              />
+              <SignupDropdown
+                key={`state-${values.country}`}
                 name="state"
                 label="State"
-                placeholder="Select state"
-                options={STATES}
+                placeholder={
+                  stateOptions.length ? "Select state" : "No states available"
+                }
+                options={stateOptions}
+                value={values.state}
+                onChange={handleStateChange}
+                disabled={stateOptions.length === 0}
+                error={errors.state}
+              />
+              <SignupDropdown
+                key={`city-${values.country}-${values.state}`}
+                name="city"
+                label="City"
+                placeholder={
+                  stateOptions.length && !values.state
+                    ? "Select state first"
+                    : cityOptions.length
+                      ? "Select city"
+                      : "No cities available"
+                }
+                options={cityOptions}
+                value={values.city}
+                onChange={(v) => setField("city", v)}
+                disabled={
+                  cityOptions.length === 0 ||
+                  (stateOptions.length > 0 && !values.state)
+                }
+                error={errors.city}
               />
               <SignupField
                 name="zip"
-                label="ZIP Code"
-                placeholder="Enter zip code"
-                inputMode="numeric"
-              />
-              <SelectField
-                name="country"
-                label="Country"
-                placeholder="Select country"
-                options={COUNTRIES}
-                defaultValue="United States"
+                label={postalLabel}
+                placeholder={`Enter ${postalLabel.toLowerCase()}`}
+                value={values.zip}
+                onChange={(e) => setField("zip", e.target.value)}
+                error={errors.zip}
               />
             </div>
           </section>

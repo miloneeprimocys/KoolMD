@@ -8,18 +8,15 @@ import { AlertCircle } from "lucide-react";
 /* ---------------------------------------------------------------- */
 export const FieldError = ({ message }: { message?: string }) => (
   <div
-    className={`
-      grid transition-all duration-200 ease-out
-      ${message ? "grid-rows-[1fr] opacity-100 mt-1" : "grid-rows-[0fr] opacity-0 mt-0"}
-    `}
+    className={`overflow-hidden transition-all duration-200 ease-out ${
+      message ? "mt-1 max-h-10 opacity-100" : "mt-0 max-h-0 opacity-0"
+    }`}
     aria-live="polite"
   >
-    <div className="overflow-hidden">
-      <p className="flex items-center gap-1 text-[11px] font-medium leading-tight text-danger">
-        <AlertCircle className="h-3 w-3 shrink-0" />
-        {message}
-      </p>
-    </div>
+    <p className="flex items-center gap-1 text-[11px] font-medium leading-tight text-danger">
+      <AlertCircle className="h-3 w-3 shrink-0" />
+      {message}
+    </p>
   </div>
 );
 
@@ -29,7 +26,7 @@ export const FieldError = ({ message }: { message?: string }) => (
 export interface SignupFieldProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "className"> {
   /** Field label shown above the input */
- label?: ReactNode;
+  label?: ReactNode;
   /** Leading icon (rendered inside, on the left) */
   icon?: ReactNode;
   /** Trailing icon / element (e.g. password toggle) */
