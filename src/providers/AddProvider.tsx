@@ -22,11 +22,13 @@ import Availability, {
   initialAvailability,
   validateAvailability,
   type AvailabilityValues,
-} from "./Availability";
+} from "./Availability/Availability";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 import Breadcrumb from "@/components/Breadcrumb";
 import AddSteps from "@/components/Addsteps";
+import SuccessToast from "@/components/SuccessToast";
+import ErrorToast from "@/components/ErrorToast";
 import type { Errors } from "./Shared";
 
 /* ---------- Step configuration ---------- */
@@ -42,6 +44,15 @@ const AddProvider = () => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [attemptTick, setAttemptTick] = useState(0);
+  const [toast, setToast] = useState<{
+    type: "success" | "error" | null;
+    title: string;
+    message: string;
+  }>({
+    type: null,
+    title: "",
+    message: "",
+  });
 
   // Form state for each step
   const [basic, setBasic] = useState<BasicValues>(initialBasic());
@@ -93,7 +104,15 @@ const AddProvider = () => {
 
   /* ---------- Navigation ---------- */
   const handleNext = () => {
-    if (!validateCurrentStep()) return;
+    if (!validateCurrentStep()) {
+      const stepName = STEPS[currentStep - 1]?.title || `Step ${currentStep}`;
+      setToast({
+        type: "error",
+        title: "Validation Incomplete",
+        message: `Please complete all required fields in ${stepName}.`,
+      });
+      return;
+    }
 
     if (isLastStep) {
       // Submit all steps
@@ -104,6 +123,12 @@ const AddProvider = () => {
         availability,
       };
       console.log("Form submitted successfully:", payload);
+      const providerName = `${basic.title ? basic.title + " " : ""}${basic.firstName} ${basic.lastName}`.trim() || "Provider";
+      setToast({
+        type: "success",
+        title: "Provider Saved Successfully",
+        message: `${providerName} has been successfully registered in the system.`,
+      });
       // TODO: call your API here
       // router.push("/providers");
     } else {
@@ -179,7 +204,21 @@ const AddProvider = () => {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <div className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-4 sm:px-6 sm:py-5 lg:px-6 pb-32">
+      {/* Success and Error Toasts */}
+      <SuccessToast
+        isOpen={toast.type === "success"}
+        onClose={() => setToast((prev) => ({ ...prev, type: null }))}
+        title={toast.title}
+        message={toast.message}
+      />
+      <ErrorToast
+        isOpen={toast.type === "error"}
+        onClose={() => setToast((prev) => ({ ...prev, type: null }))}
+        title={toast.title}
+        message={toast.message}
+      />
+
+      <div className="mx-auto w-full max-w-[1600px] flex-1  ">
         <div className="space-y-4 sm:space-y-5">
           {/* Breadcrumb */}
           <Breadcrumb
@@ -212,7 +251,7 @@ const AddProvider = () => {
       </div>
 
       {/* Sticky bottom buttons - contained within content width */}
-      <div className="sticky bottom-0 z-[200] -mx-4 mt-4 border-t border-border bg-card px-4 py-4 sm:-mx-6 sm:px-6 sm:py-5 lg:-mx-6 lg:px-6 lg:py-5">
+      <div className="sticky -bottom-4 sm:-bottom-6 z-[200] -mx-4 -mb-4 sm:-mb-6 mt-4 border-t border-border bg-card px-4 py-4 sm:-mx-6 sm:px-6 sm:py-5">
         <div className="mx-auto flex max-w-[1600px] items-center justify-end gap-3">
           <ImportButton
             text="Cancel"

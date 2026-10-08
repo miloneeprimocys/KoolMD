@@ -1,24 +1,34 @@
 "use client";
 
-import React, { ReactNode, useMemo } from "react";
-import { ImagePlus, User } from "lucide-react";
-import { Country, State, City } from "country-state-city";
+import React, { ReactNode, useMemo, useRef, useState, useEffect } from "react";
+import { ImagePlus, User, Camera, Trash2, RefreshCw } from "lucide-react";
+import { Country, State } from "country-state-city";
 import {
-  isValidPhoneNumber,
   parsePhoneNumberFromString,
   CountryCode,
 } from "libphonenumber-js";
-import {
-  postcodeValidator,
-  postcodeValidatorExistsForCountry,
-} from "postcode-validator";
 
 import SignupField, { FieldError } from "@/components/SignupField";
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
 import AddButton from "@/components/Addbutton";
+import AddInternalButton from "@/components/AddInternalButton";
 import ImportButton from "@/components/ImportButton";
 import Breadcrumb from "@/components/Breadcrumb";
 import DatePicker from "@/components/Datepicker";
+import SuccessToast from "@/components/SuccessToast";
+import ErrorToast from "@/components/ErrorToast";
+
+import {
+  COUNTRY_OPTIONS,
+  DEFAULT_COUNTRY,
+  FlagIcon,
+  PhoneField,
+  getCityOptions,
+  getStateOptions,
+  postalLabelFor,
+  validatePhone,
+} from "../providers/Shared";
+
 /* ---------- Static data ---------- */
 const GENDERS: DropdownOption[] = [
   { value: "Male", label: "Male" },
@@ -59,24 +69,7 @@ const ROLES = [
   { id: "admin", label: "Administrator", desc: "Full access to manage platform records and settings.", checked: false },
 ];
 
-/* ---------- Dynamic location data (from library) ---------- */
-const ALL_COUNTRIES = Country.getAllCountries();
-
-// Address country dropdown: value = ISO code (e.g. "IN"), label = name
-const COUNTRY_OPTIONS: DropdownOption[] = ALL_COUNTRIES.map((c) => ({
-  value: c.isoCode,
-  label: c.name,
-}));
-
-// Phone code dropdown: value = ISO code, label = "IN +91"
-const PHONE_CODE_OPTIONS: DropdownOption[] = ALL_COUNTRIES.map((c) => ({
-  value: c.isoCode,
-  label: `${c.isoCode} +${(c.phonecode || "").replace(/^\+/, "")}`,
-}));
-const DEFAULT_COUNTRY = "US";
-
 /* ---------- Shared styles ---------- */
-const labelCls = "mb-2 block text-sm font-medium text-label";
 const checkboxCls =
   "mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-border accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
 const cardCls = "rounded-2xl border border-border bg-card p-4 sm:p-5";
@@ -84,60 +77,6 @@ const cardCls = "rounded-2xl border border-border bg-card p-4 sm:p-5";
 /* ---------- Small helpers ---------- */
 const Req = () => <span className="text-danger"> *</span>;
 const Opt = () => <span className="font-normal text-body"> (Optional)</span>;
-
-/* Phone input: country-code SignupDropdown + number input */
-const PhoneField = ({
-  label,
-  placeholder,
-  name,
-  value,
-  onChange,
-  countryCode,
-  onCountryChange,
-  error,
-}: {
-  label: ReactNode;
-  placeholder: string;
-  name: string;
-  value: string;
-  onChange: (value: string) => void;
-  countryCode: string;
-  onCountryChange: (iso: string) => void;
-  error?: string;
-}) => (
-  <div className="w-full">
-    <label htmlFor={name} className={labelCls}>
-      {label}
-    </label>
-    <div className="flex items-start gap-2">
-      <SignupDropdown
-        name={`${name}Country`}
-               className="!w-[104px] shrink-0"
-        options={PHONE_CODE_OPTIONS}
-        value={countryCode}
-        onChange={onCountryChange}
-        placeholder="Code"
-      />
-      <div
-        className={`flex h-12 min-w-0 flex-1 items-center rounded-xl border bg-card transition-colors duration-200 focus-within:border-primary hover:border-primary/50 ${
-          error ? "border-danger" : "border-border"
-        }`}
-      >
-        <input
-          id={name}
-          name={name}
-          type="tel"
-          inputMode="tel"
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-full min-w-0 flex-1 rounded-xl bg-transparent px-4 text-sm text-heading outline-none placeholder:text-placeholder"
-        />
-      </div>
-    </div>
-    <FieldError message={error} />
-  </div>
-);
 
 /* Numbered section header */
 const SectionHeader = ({
@@ -178,9 +117,9 @@ interface FormValues {
   emergencyPhone: string;
   address1: string;
   address2: string;
-  country: string; // ISO code
-  state: string; // ISO code
-  city: string; // city name
+  country: string;
+  state: string;
+  city: string;
   zip: string;
 }
 
@@ -213,36 +152,73 @@ const AddPatient = () => {
 
   const [errors, setErrors] = React.useState<FormErrors>({});
   const [submitted, setSubmitted] = React.useState(false);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [toast, setToast] = React.useState<{
+    type: "success" | "error" | null;
+    title: string;
+    message: string;
+  }>({
+    type: null,
+    title: "",
+    message: "",
+  });
+
+  /* ---------- Profile photo handling ---------- */
+  useEffect(() => {
+    if (photo) {
+      const objectUrl = URL.createObjectURL(photo);
+      setPhotoPreview(objectUrl);
+      return () => URL.revokeObjectURL(objectUrl);
+    } else {
+      setPhotoPreview(null);
+    }
+  }, [photo]);
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(file.type)) {
+      setToast({
+        type: "error",
+        title: "Invalid File Type",
+        message: "Please select a JPG, PNG, or WebP image file.",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setToast({
+        type: "error",
+        title: "File Size Exceeded",
+        message: "Profile image must be less than 5MB.",
+      });
+      return;
+    }
+
+    setPhoto(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleRemovePhoto = () => {
+    setPhoto(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   /* ---------- Dependent dropdown options ---------- */
   const stateOptions: DropdownOption[] = useMemo(
-    () =>
-      State.getStatesOfCountry(values.country).map((s) => ({
-        value: s.isoCode,
-        label: s.name,
-      })),
+    () => getStateOptions(values.country),
     [values.country],
   );
 
-  const cityOptions: DropdownOption[] = useMemo(() => {
-    const list = values.state
-      ? City.getCitiesOfState(values.country, values.state)
-      : stateOptions.length === 0
-        ? City.getCitiesOfCountry(values.country) ?? []
-        : [];
-    // de-duplicate by name so option keys are unique
-    const seen = new Set<string>();
-    const out: DropdownOption[] = [];
-    for (const c of list) {
-      if (!seen.has(c.name)) {
-        seen.add(c.name);
-        out.push({ value: c.name, label: c.name });
-      }
-    }
-    return out;
-  }, [values.country, values.state, stateOptions.length]);
+  const cityOptions: DropdownOption[] = useMemo(
+    () => getCityOptions(values.country, values.state),
+    [values.country, values.state],
+  );
 
-  const postalLabel = values.country === "IN" ? "PIN Code" : values.country === "US" ? "ZIP Code" : "Postal Code";
+  const postalLabel = postalLabelFor(values.country);
 
   /* ---------- Field setters ---------- */
   const clearError = (field: keyof FormValues) => {
@@ -255,7 +231,6 @@ const AddPatient = () => {
   };
 
   const handleCountryChange = (iso: string) => {
-    // Changing country resets state/city/zip and syncs phone codes
     setValues((prev) => ({
       ...prev,
       country: iso,
@@ -290,42 +265,31 @@ const AddPatient = () => {
       errs.lastName = "Last name must be at least 2 characters.";
 
     if (!vals.dob.trim()) errs.dob = "Date of birth is required.";
-
     if (!vals.gender) errs.gender = "Gender is required.";
 
-    // Phone (validated against the selected country code)
-    if (!vals.phone.trim()) {
-      errs.phone = "Phone number is required.";
-    } else if (
-      !isValidPhoneNumber(vals.phone.trim(), vals.phoneCountry as CountryCode)
-    ) {
-      errs.phone = "Enter a valid phone number for the selected country.";
-    }
+    // Use shared phone validator
+    const phoneErr = validatePhone(vals.phone, vals.phoneCountry, true);
+    if (phoneErr) errs.phone = phoneErr;
 
     if (!vals.email.trim()) errs.email = "Email address is required.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.email.trim()))
       errs.email = "Enter a valid email address.";
 
-    // Emergency phone (optional, validate only if filled)
-    if (
-      vals.emergencyPhone.trim() &&
-      !isValidPhoneNumber(
-        vals.emergencyPhone.trim(),
-        vals.emergencyPhoneCountry as CountryCode,
-      )
-    ) {
-      errs.emergencyPhone = "Enter a valid phone number for the selected country.";
-    }
+    const altPhoneErr = validatePhone(
+      vals.emergencyPhone,
+      vals.emergencyPhoneCountry,
+      false,
+    );
+    if (altPhoneErr) errs.emergencyPhone = altPhoneErr;
 
     if (!vals.country) errs.country = "Country is required.";
 
-    // ZIP / PIN (optional, validated per country)
     if (vals.zip.trim() && vals.country) {
       const zip = vals.zip.trim();
-      const ok = postcodeValidatorExistsForCountry(vals.country)
-        ? postcodeValidator(zip, vals.country)
-        : /^[A-Za-z0-9\s-]{3,10}$/.test(zip);
-      if (!ok) errs.zip = `Enter a valid ${postalLabel.toLowerCase()}.`;
+      const label = postalLabelFor(vals.country);
+      // basic format check — full postcode validation is done in Shared.validateAddress
+      if (!/^[A-Za-z0-9\s-]{3,10}$/.test(zip))
+        errs.zip = `Enter a valid ${label.toLowerCase()}.`;
     }
 
     return errs;
@@ -342,21 +306,35 @@ const AddPatient = () => {
     if (Object.keys(errs).length === 0) {
       const payload = {
         ...values,
+        photo,
         phone: toE164(values.phone, values.phoneCountry),
         emergencyPhone: values.emergencyPhone
           ? toE164(values.emergencyPhone, values.emergencyPhoneCountry)
           : "",
         countryName: Country.getCountryByCode(values.country)?.name ?? "",
         stateName:
-          State.getStateByCodeAndCountry(values.state, values.country)?.name ?? "",
+          State.getStateByCodeAndCountry(values.state, values.country)?.name ??
+          "",
       };
       console.log("Form submitted successfully:", payload);
+      setToast({
+        type: "success",
+        title: "Patient Saved Successfully",
+        message: `${values.firstName} ${values.lastName} has been added to the system directory.`,
+      });
       // TODO: call your API here
     } else {
       const firstErrorField = Object.keys(errs)[0];
       const el = document.getElementById(firstErrorField);
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
       el?.focus?.();
+
+      const errorCount = Object.keys(errs).length;
+      setToast({
+        type: "error",
+        title: "Validation Error",
+        message: `Please fill out all required fields (${errorCount} missing or invalid).`,
+      });
     }
   };
 
@@ -367,6 +345,19 @@ const AddPatient = () => {
 
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-4 sm:space-y-5">
+      {/* Success and Error Toasts */}
+      <SuccessToast
+        isOpen={toast.type === "success"}
+        onClose={() => setToast((prev) => ({ ...prev, type: null }))}
+        title={toast.title}
+        message={toast.message}
+      />
+      <ErrorToast
+        isOpen={toast.type === "error"}
+        onClose={() => setToast((prev) => ({ ...prev, type: null }))}
+        title={toast.title}
+        message={toast.message}
+      />
       <Breadcrumb
         items={[
           { label: "Patients", href: "/patients" },
@@ -400,10 +391,10 @@ const AddPatient = () => {
         </div>
       </div>
 
-      <div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
         {/* ================= LEFT: FORM ================= */}
         <form
-          className={`${cardCls} sm:p-6`}
+          className={`${cardCls} min-w-0 sm:p-6`}
           onSubmit={handleSubmit}
           noValidate
         >
@@ -531,7 +522,9 @@ const AddPatient = () => {
                 value={values.emergencyPhone}
                 onChange={(v) => setField("emergencyPhone", v)}
                 countryCode={values.emergencyPhoneCountry}
-                onCountryChange={(iso) => setField("emergencyPhoneCountry", iso)}
+                onCountryChange={(iso) =>
+                  setField("emergencyPhoneCountry", iso)
+                }
                 error={errors.emergencyPhone}
               />
             </div>
@@ -624,19 +617,85 @@ const AddPatient = () => {
           {/* Profile photo */}
           <section className={cardCls}>
             <h3 className="text-sm font-semibold text-heading">Profile Photo</h3>
+            
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png, image/jpeg, image/jpg, image/webp"
+              onChange={handlePhotoSelect}
+              className="hidden"
+              id="patient-photo-upload"
+            />
+
             <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-shape-sky/40 text-body sm:h-28 sm:w-28">
-                <User className="h-10 w-10" strokeWidth={1.5} />
-              </span>
-              <div>
-                <button
-                  type="button"
-                  className="group inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-4 text-sm font-medium text-primary transition-all duration-200 hover:border-primary/40 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-[0.98]"
-                >
-                  <ImagePlus className="h-4 w-4 transition-transform duration-200 group-hover:-translate-y-0.5" />
-                  Upload Photo
-                </button>
-                <p className="mt-2 text-xs text-body">JPG, PNG up to 5MB</p>
+              {/* Avatar circle / Image preview */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="group relative flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-border bg-shape-sky/40 text-body transition-all duration-200 hover:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 sm:h-28 sm:w-28"
+                title={photoPreview ? "Click to change photo" : "Click to upload photo"}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
+              >
+                {photoPreview ? (
+                  <>
+                    <img
+                      src={photoPreview}
+                      alt="Patient avatar preview"
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    {/* Hover overlay with camera icon */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      <Camera className="h-5 w-5 text-white" />
+                      <span className="mt-0.5 text-[10px] font-medium text-white">Change</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <User className="h-10 w-10 text-body transition-transform duration-200 group-hover:scale-105" strokeWidth={1.5} />
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/25 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      <Camera className="h-5 w-5 text-white" />
+                      <span className="mt-0.5 text-[10px] font-medium text-white">Upload</span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Action buttons and format info */}
+              <div className="flex flex-col gap-1.5">
+                {photoPreview ? (
+                  <div className="flex items-center gap-3 text-xs font-medium">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="cursor-pointer text-primary transition-colors hover:text-primary-hover hover:underline focus-visible:outline-none"
+                    >
+                      Change Photo
+                    </button>
+                    <span className="text-body/30" aria-hidden="true">•</span>
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="cursor-pointer text-danger transition-colors hover:text-danger/80 hover:underline focus-visible:outline-none"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <AddInternalButton
+                    text="Upload Photo"
+                    icon={<ImagePlus className="h-4 w-4" />}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="!h-10"
+                  />
+                )}
+                <p className="text-xs text-body">JPG, PNG up to 5MB</p>
               </div>
             </div>
           </section>

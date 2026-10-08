@@ -1,13 +1,14 @@
 "use client";
 
-import React, { ReactNode, useMemo } from "react";
+import React, { ReactNode, useMemo, useState, useRef, useEffect } from "react";
 import { Country, State, City } from "country-state-city";
 import { CountryCode, isValidPhoneNumber } from "libphonenumber-js";
 import {
   postcodeValidator,
   postcodeValidatorExistsForCountry,
 } from "postcode-validator";
-import { X } from "lucide-react";
+import { X, Search, Check, ChevronDown } from "lucide-react";
+import ReactCountryFlag from "react-country-flag";
 
 import SignupField, { FieldError } from "@/components/SignupField";
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
@@ -34,7 +35,6 @@ export const Opt = () => (
   <span className="font-normal text-body"> (Optional)</span>
 );
 
-/** Unique id for rows created after first render (never used for initial state) */
 export const uid = () =>
   `id_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 
@@ -49,6 +49,30 @@ export const toOptions = (list: string[]): DropdownOption[] =>
   list.map((v) => ({ value: v, label: v }));
 
 /* ---------------------------------------------------------------- */
+/*  SVG flag icon (works on Windows too)                            */
+/* ---------------------------------------------------------------- */
+export const FlagIcon = ({
+  iso,
+  size = 18,
+}: {
+  iso: string;
+  size?: number;
+}) => (
+  <ReactCountryFlag
+    countryCode={iso}
+    svg
+    style={{
+      width: size,
+      height: size * 0.75,
+      objectFit: "cover",
+      borderRadius: 2,
+      display: "inline-block",
+    }}
+    aria-label={iso}
+  />
+);
+
+/* ---------------------------------------------------------------- */
 /*  Static option lists                                             */
 /* ---------------------------------------------------------------- */
 export const DEFAULT_COUNTRY = "US";
@@ -58,11 +82,27 @@ const ALL_COUNTRIES = Country.getAllCountries();
 export const COUNTRY_OPTIONS: DropdownOption[] = ALL_COUNTRIES.map((c) => ({
   value: c.isoCode,
   label: c.name,
+  icon: <FlagIcon iso={c.isoCode} />,
+  keywords: [c.isoCode, c.name],
 }));
 
-export const PHONE_CODE_OPTIONS: DropdownOption[] = ALL_COUNTRIES.map((c) => ({
-  value: c.isoCode,
-  label: `${c.isoCode} +${(c.phonecode || "").replace(/^\+/, "")}`,
+export const COUNTRY_PHONE_OPTIONS = ALL_COUNTRIES.filter((c) => c.phonecode).map((c) => {
+  const rawCode = (c.phonecode || "").replace(/^\+/, "");
+  const dialCode = `+${rawCode}`;
+  return {
+    iso: c.isoCode,
+    name: c.name,
+    dialCode,
+    rawCode,
+    icon: <FlagIcon iso={c.isoCode} />,
+  };
+}).sort((a, b) => a.name.localeCompare(b.name));
+
+export const PHONE_CODE_OPTIONS: DropdownOption[] = COUNTRY_PHONE_OPTIONS.map((c) => ({
+  value: c.iso,
+  label: `${c.name} (${c.dialCode})`,
+  icon: c.icon,
+  keywords: [c.dialCode, c.rawCode, c.iso, c.name],
 }));
 
 export const US_STATE_OPTIONS: DropdownOption[] = State.getStatesOfCountry(
@@ -118,7 +158,7 @@ export const getSubspecialtyOptions = (specialty: string) =>
   toOptions(SUBSPECIALTY_MAP[specialty] ?? []);
 
 /* ---------------------------------------------------------------- */
-/*  Location helpers (country-state-city)                           */
+/*  Location helpers                                                */
 /* ---------------------------------------------------------------- */
 export const getStateOptions = (country: string): DropdownOption[] =>
   country
@@ -242,7 +282,7 @@ export const SectionCard = ({
 );
 
 /* ---------------------------------------------------------------- */
-/*  PhoneField (country code SignupDropdown + number input)         */
+/*  PhoneField                                                      */
 /* ---------------------------------------------------------------- */
 export const PhoneField = ({
   label,
@@ -262,43 +302,264 @@ export const PhoneField = ({
   countryCode: string;
   onCountryChange: (iso: string) => void;
   error?: string;
-}) => (
-  <div className="w-full">
-    <label htmlFor={name} className={labelCls}>
-      {label}
-    </label>
-    <div className="flex items-start gap-2">
-      <SignupDropdown
-        name={`${name}Country`}
-        className="!w-[104px] shrink-0"
-        options={PHONE_CODE_OPTIONS}
-        value={countryCode}
-        onChange={onCountryChange}
-        placeholder="Code"
-      />
-      <div
-        className={`flex h-12 min-w-0 flex-1 items-center rounded-xl border bg-card transition-colors duration-200 focus-within:border-primary hover:border-primary/50 ${
-          error ? "border-danger" : "border-border"
-        }`}
-      >
-        <input
-          id={name}
-          name={name}
-          type="tel"
-          inputMode="tel"
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-full min-w-0 flex-1 rounded-xl bg-transparent px-4 text-sm text-heading outline-none placeholder:text-placeholder"
-        />
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [placement, setPlacement] = useState<"down" | "up">("down");
+
+  const country = ALL_COUNTRIES.find((c) => c.isoCode === countryCode);
+  const phoneCode = country ? `+${(country.phonecode || "").replace(/^\+/, "")}` : "+1";
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  // Filter countries by dial code (+1, 91), ISO (US, IN), or country name (United States)
+  const filteredCountries = useMemo(() => {
+    if (!searchQuery.trim()) return COUNTRY_PHONE_OPTIONS;
+    const raw = searchQuery.trim().toLowerCase();
+    const noPlus = raw.replace(/^\+/, "");
+
+    return COUNTRY_PHONE_OPTIONS.filter((c) => {
+      const nameMatch = c.name.toLowerCase().includes(raw);
+      const isoMatch = c.iso.toLowerCase().includes(raw);
+      const dialMatch =
+        c.dialCode.toLowerCase().includes(raw) ||
+        (noPlus ? c.rawCode.includes(noPlus) : false);
+      return nameMatch || isoMatch || dialMatch;
+    });
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [searchQuery, isOpen]);
+
+  // Compute placement and auto-focus search input when opened
+  useEffect(() => {
+    if (isOpen) {
+      if (dropdownRef.current) {
+        const rect = dropdownRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        if (spaceBelow < 280 && rect.top > spaceBelow) {
+          setPlacement("up");
+        } else {
+          setPlacement("down");
+        }
+      }
+      requestAnimationFrame(() => {
+        searchInputRef.current?.focus();
+      });
+    } else {
+      setSearchQuery("");
+    }
+  }, [isOpen]);
+
+  // Outside click to close
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // Auto scroll to highlighted item
+  useEffect(() => {
+    if (!isOpen || !listRef.current) return;
+    const item = listRef.current.children[highlightedIndex] as HTMLElement;
+    item?.scrollIntoView({ block: "nearest" });
+  }, [highlightedIndex, isOpen]);
+
+  const selectCountry = (iso: string) => {
+    onCountryChange(iso);
+    setIsOpen(false);
+    setSearchQuery("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          filteredCountries.length === 0
+            ? 0
+            : (prev + 1) % filteredCountries.length,
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          filteredCountries.length === 0
+            ? 0
+            : (prev - 1 + filteredCountries.length) % filteredCountries.length,
+        );
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (filteredCountries[highlightedIndex]) {
+          selectCountry(filteredCountries[highlightedIndex].iso);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsOpen(false);
+        break;
+    }
+  };
+
+  return (
+    <div className="w-full min-w-0">
+      <label htmlFor={name} className={labelCls}>
+        {label}
+      </label>
+
+      <div className="relative" ref={dropdownRef}>
+        <div
+          className={`flex h-12 min-w-0 items-center rounded-xl border bg-card transition-colors duration-200 focus-within:border-primary hover:border-primary/50 ${
+            error ? "border-danger" : "border-border"
+          }`}
+        >
+          {/* Country code selector button */}
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            className="flex h-full shrink-0 items-center gap-1.5 border-r border-border bg-card/60 px-3 transition-colors hover:bg-surface-start/60 outline-none focus-visible:ring-2 focus-visible:ring-primary/30 cursor-pointer"
+          >
+            <FlagIcon iso={countryCode} size={18} />
+            <span className="text-sm font-medium text-heading">{phoneCode}</span>
+            <ChevronDown
+              className={`h-3.5 w-3.5 text-body transition-transform duration-200 ${
+                isOpen ? "rotate-180 text-primary" : ""
+              }`}
+            />
+          </button>
+
+          {/* Phone number input */}
+          <input
+            id={name}
+            name={name}
+            type="tel"
+            inputMode="tel"
+            placeholder={placeholder}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-full w-full min-w-0 bg-transparent px-3 text-sm text-heading outline-none placeholder:text-placeholder sm:px-4"
+          />
+        </div>
+
+        {/* Searchable Country code dropdown menu */}
+        {isOpen && (
+          <div
+            className={`absolute left-0 z-50 w-72 sm:w-80 rounded-xl border border-border bg-card shadow-2xl ring-1 ring-border/60 overflow-hidden animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both] ${
+              placement === "up" ? "bottom-full mb-1.5" : "top-full mt-1.5"
+            }`}
+          >
+            {/* Search Input */}
+            <div className="border-b border-divider bg-surface-start/30 p-2">
+              <div className="relative flex items-center">
+                <Search className="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-placeholder" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search prefix or country (e.g. +91, US)..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="h-8 w-full rounded-lg border border-border bg-card pl-8 pr-7 text-xs text-heading placeholder:text-placeholder outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      searchInputRef.current?.focus();
+                    }}
+                    className="absolute right-2 text-xs text-body hover:text-heading cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Country list */}
+            <ul
+              ref={listRef}
+              role="listbox"
+              className="max-h-56 overflow-y-auto p-1 text-sm hide-scrollbar"
+            >
+              {filteredCountries.length === 0 ? (
+                <li className="px-3 py-4 text-center text-xs text-body">
+                  No country or prefix found for &quot;{searchQuery}&quot;
+                </li>
+              ) : (
+                filteredCountries.map((option, idx) => {
+                  const isSelected = option.iso === countryCode;
+                  const isHighlighted = idx === highlightedIndex;
+
+                  return (
+                    <li
+                      key={option.iso}
+                      role="option"
+                      aria-selected={isSelected}
+                      onMouseEnter={() => setHighlightedIndex(idx)}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => selectCountry(option.iso)}
+                      className={`mx-0.5 flex cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-xs transition-colors duration-150 ${
+                        isHighlighted ? "bg-primary/10" : "bg-transparent"
+                      } ${
+                        isSelected
+                          ? "font-medium text-primary"
+                          : "text-heading"
+                      }`}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="shrink-0">{option.icon}</span>
+                        <span className="truncate text-heading font-normal">
+                          {option.name}
+                        </span>
+                      </span>
+
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <span className="rounded bg-surface-start/80 px-1.5 py-0.5 text-[11px] font-medium text-body border border-border/50">
+                          {option.dialCode}
+                        </span>
+                        {isSelected && (
+                          <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+                        )}
+                      </div>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </div>
+        )}
       </div>
+
+      <FieldError message={error} />
     </div>
-    <FieldError message={error} />
-  </div>
-);
+  );
+};
 
 /* ---------------------------------------------------------------- */
-/*  AddressFields (dynamic Country -> State -> City + PIN/ZIP)      */
+/*  AddressFields                                                   */
 /* ---------------------------------------------------------------- */
 export const AddressFields = ({
   values,
@@ -433,7 +694,7 @@ export const Switch = ({
 );
 
 /* ---------------------------------------------------------------- */
-/*  ChipSelect: multi-select built on SignupDropdown                */
+/*  ChipSelect                                                      */
 /* ---------------------------------------------------------------- */
 export const ChipSelect = ({
   name,
@@ -466,7 +727,7 @@ export const ChipSelect = ({
         error={error}
       />
       {value.length > 0 && (
-        <ul className="-mt-1 flex flex-wrap gap-2">
+        <ul className="mt-2 flex flex-wrap gap-2">
           {value.map((v) => (
             <li
               key={v}
@@ -490,7 +751,7 @@ export const ChipSelect = ({
 };
 
 /* ---------------------------------------------------------------- */
-/*  TextArea (matches field styling, optional counter)              */
+/*  TextArea                                                        */
 /* ---------------------------------------------------------------- */
 export const TextArea = ({
   name,

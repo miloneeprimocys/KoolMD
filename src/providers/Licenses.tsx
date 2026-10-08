@@ -1,12 +1,13 @@
 "use client";
 
 import React, { ReactNode } from "react";
-import { Plus, X } from "lucide-react";
+import {  X } from "lucide-react";
 
 import SignupField from "@/components/SignupField";
 import SignupDropdown from "@/components/SignupDropdown";
 import DatePicker from "@/components/Datepicker";
 import FileDropzone from "@/components/Filedropzone";
+import AddInternalButton from "@/components/AddInternalButton";
 import {
   Errors,
   Req,
@@ -114,7 +115,7 @@ const LicenseCard = ({
         {badge}
       </span>
     </div>
-    <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+    <div className="mt-4 grid gap-4 lg:gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
       {dropzone}
       <div>{children}</div>
     </div>
@@ -156,7 +157,7 @@ const Licenses = ({ values: v, errors, onChange }: StepProps<LicenseValues>) => 
           />
         }
       >
-        <div className="grid gap-x-4 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-2">
           <SignupField
             name="medicalNumber"
             label={<>License Number<Req /></>}
@@ -201,7 +202,7 @@ const Licenses = ({ values: v, errors, onChange }: StepProps<LicenseValues>) => 
           />
         }
       >
-        <div className="grid gap-x-4 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-2">
           <SignupField
             name="deaNumber"
             label={<>DEA Number<Req /></>}
@@ -244,7 +245,7 @@ const Licenses = ({ values: v, errors, onChange }: StepProps<LicenseValues>) => 
                 i > 0 ? "border-t border-divider pt-3" : undefined
               }
             >
-              <div className="grid gap-x-4 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 <SignupDropdown
                   name={`cert_${c.id}_type`}
                   label="Certification Type"
@@ -289,21 +290,17 @@ const Licenses = ({ values: v, errors, onChange }: StepProps<LicenseValues>) => 
             </div>
           ))}
 
-          <button
-            type="button"
-            onClick={() =>
-              onChange({
-                certs: [
-                  ...v.certs,
-                  { id: uid(), type: "", number: "", expiry: "" },
-                ],
-              })
-            }
-            className="group inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-4 text-sm font-medium text-primary transition-all duration-200 hover:border-primary/40 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-[0.98]"
-          >
-            <Plus className="h-4 w-4" />
-            Add Another Certification
-          </button>
+         <AddInternalButton
+  text="Add Another Certification"
+  onClick={() =>
+    onChange({
+      certs: [
+        ...v.certs,
+        { id: uid(), type: "", number: "", expiry: "" },
+      ],
+    })
+  }
+/>
         </div>
       </LicenseCard>
     </div>

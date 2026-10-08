@@ -35,7 +35,7 @@ const AddSteps = ({
       aria-label="Progress"
       className={`rounded-2xl border border-border bg-card p-4 sm:p-5 ${className}`}
     >
-      <ol className="flex items-center">
+     <ol className="flex min-w-0 items-center overflow-x-auto px-1 py-1 hide-scrollbar">
         {steps.map((step, idx) => {
           const complete = step.id < current;
           const isCurrent = step.id === current;
@@ -64,7 +64,7 @@ const AddSteps = ({
                   >
                     {complete ? <Check className="h-4 w-4" /> : step.id}
                   </span>
-                  <span className="hidden min-w-0 lg:block">
+                  <span className={`min-w-0 whitespace-nowrap ${isCurrent ? "hidden sm:block" : "hidden xl:block"}`}>
                     <span
                       className={`block text-sm font-semibold ${
                         isCurrent || complete ? "text-heading" : "text-body"
@@ -95,7 +95,7 @@ const AddSteps = ({
       </ol>
 
       {active && (
-        <p className="mt-3 text-sm lg:hidden">
+        <p className="mt-3 text-sm sm:hidden">
           <span className="text-body">
             Step {current} of {steps.length}:{" "}
           </span>
