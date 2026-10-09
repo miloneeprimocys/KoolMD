@@ -1,10 +1,11 @@
 "use client";
 
 import React from "react";
-import { Bell, ChevronDown, Menu, ShieldCheck } from "lucide-react";
+import { Bell, Menu, ShieldCheck } from "lucide-react";
 
 import ThemeToggle from "./Themetoggle";
 import GlobalSearch from "./GlobalSearch";
+import UserMenu from "./UserMenu";
 
 interface MainHeaderProps {
   title?: string;
@@ -76,24 +77,7 @@ const MainHeader = ({ onSearch }: MainHeaderProps) => {
           aria-hidden="true"
         />
         {/* User menu */}
-        <button
-          type="button"
-          aria-label="Account menu"
-          className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 transition-colors hover:bg-primary/5"
-        >
-          {/* Avatar */}
-          <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-end text-xs font-semibold text-heading ring-1 ring-border">
-            DS
-          </span>
-
-          {/* Name + role — large screens only */}
-          <div className="hidden text-left leading-tight lg:block">
-            <p className="text-xs font-semibold text-heading">Dr. Sarah Carter</p>
-            <p className="text-[10px] text-body">Administrator</p>
-          </div>
-
-          <ChevronDown className="hidden h-4 w-4 text-body lg:block" />
-        </button>
+        <UserMenu />
       </div>
     </header>
   );

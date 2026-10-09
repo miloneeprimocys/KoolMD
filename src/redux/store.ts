@@ -1,15 +1,15 @@
 import { configureStore } from "@reduxjs/toolkit";
-import signupReducer from "./slices/signupSlice";
-import authReducer from "./slices/authSlice";
-import verifyOtpReducer from "./slices/verifyOtpSlice";
+import authReducer, { sessionExpired } from "./slices/authSlice";
+import { registerSessionExpiredHandler } from "./services/apiClient";
 
 export const store = configureStore({
   reducer: {
-    signup: signupReducer,
     auth: authReducer,
-    verifyOtp: verifyOtpReducer,
   },
 });
+
+// API client lives outside React — let it sign the user out when refresh fails.
+registerSessionExpiredHandler(() => store.dispatch(sessionExpired()));
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

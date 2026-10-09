@@ -2,10 +2,10 @@
 
 import React from "react";
 import VerifyLeftSection from "./Verifyleftsection";
-import VerifyOTP from "./VerifyOTP";
+import VerifyEmail from "./VerifyEmail";
 
 /**
- * Common wrapper – renders VerifyLeftSection + VerifyOTP side by side.
+ * Common wrapper – renders VerifyLeftSection + VerifyEmail side by side.
  *
  * Layout (same as AuthPage):
  *  - < lg : left panel hidden, right column scrolls on its own.
@@ -29,7 +29,7 @@ const VerifyPage = () => {
         "
       >
         <div className="mx-auto my-auto w-full max-w-lg py-8">
-          <VerifyOTP />
+          <VerifyEmail />
         </div>
       </div>
     </main>

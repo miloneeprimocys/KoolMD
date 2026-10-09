@@ -3,68 +3,83 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
-import { FiArrowRight } from "react-icons/fi";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
 import SignupField from "@/components/SignupField";
 import SignupSocialButton from "@/components/SignupSocialButton";
+import ErrorToast from "@/components/ErrorToast";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { useAuthRequest } from "@/hooks/useAuthRequest";
+import { loginUser, resendVerificationEmail } from "@/redux/thunks/authThunks";
+import { setPendingVerificationEmail } from "@/redux/slices/authSlice";
+import AuthCard from "./AuthCard";
+import SubmitButtonContent from "./SubmitButtonContent";
+import { compactErrors, validateEmail } from "./authValidation";
 
-type Errors = {
-  email?: string;
-  password?: string;
-};
+type LoginField = "email" | "password";
+type LoginErrors = Partial<Record<LoginField, string>>;
 
+const validateLoginForm = (email: string, password: string): LoginErrors =>
+  compactErrors<LoginField>({
+    email: validateEmail(email),
+    password: password ? undefined : "Please enter your password.",
+  });
+
+/**
+ * Field values stay in local state (typing must not touch the global store);
+ * the API lifecycle lives in Redux. On success the RouteGuard redirects to the dashboard.
+ */
 const LoginForm = () => {
+  const dispatch = useAppDispatch();
   const router = useRouter();
+  const loginRequest = useAuthRequest("login");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<Errors>({});
-  const [touched, setTouched] = useState<{ [k: string]: boolean }>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [touchedFields, setTouchedFields] = useState<Partial<Record<LoginField, boolean>>>({});
 
-  const validate = (): Errors => {
-    const e: Errors = {};
-    if (!email.trim()) e.email = "Please enter your email address.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      e.email = "Please enter a valid email address.";
-    if (!password) e.password = "Please enter your password.";
-    else if (password.length < 6)
-      e.password = "Password must be at least 6 characters.";
-    return e;
+  // Derived on render — no extra state, no sync effects.
+  const validationErrors = validateLoginForm(email, password);
+
+  const handleBlur = (field: LoginField) =>
+    setTouchedFields((previous) => ({ ...previous, [field]: true }));
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setTouchedFields({ email: true, password: true });
+    if (Object.keys(validationErrors).length) return;
+
+    dispatch(loginUser({ email: email.trim(), password }));
   };
 
-  const handleBlur = (field: string) => {
-    setTouched((t) => ({ ...t, [field]: true }));
-    setErrors(validate());
+  /** Unverified account: email a fresh code (the old one has likely expired) and open the OTP screen. */
+  const handleGoToEmailVerification = () => {
+    const unverifiedEmail = email.trim();
+    dispatch(setPendingVerificationEmail(unverifiedEmail));
+    dispatch(resendVerificationEmail(unverifiedEmail));
+    router.push("/auth/verify-email");
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const v = validate();
-    setErrors(v);
-    setTouched({ email: true, password: true });
-    if (Object.keys(v).length) return;
+  const getFieldError = (field: LoginField) =>
+    (touchedFields[field] ? validationErrors[field] : undefined) ??
+    loginRequest.fieldErrors[field];
 
-    setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 900));
-    console.log({ email, password });
-    setIsSubmitting(false);
-  };
-
-  const showError = (field: keyof Errors) =>
-    touched[field] && errors[field] ? errors[field] : undefined;
+  const isEmailNotVerified = loginRequest.error?.errorCode === "EMAIL_NOT_VERIFIED";
 
   return (
-    <div
-      className="
-        w-full max-w-md rounded-2xl border border-border
-        bg-card p-7 shadow-xl shadow-shape-sky/25
-        transition-shadow duration-500
-        hover:shadow-2xl hover:shadow-shape-sky/40
-        sm:max-w-lg sm:p-9 lg:p-10
-        animate-[cardIn_0.5s_cubic-bezier(0.16,1,0.3,1)_both]
-      "
-    >
+    <AuthCard>
+      <ErrorToast
+        isOpen={loginRequest.isFailed}
+        onClose={loginRequest.clearRequest}
+        title="Sign in failed"
+        message={loginRequest.error?.message}
+        action={
+          isEmailNotVerified
+            ? { label: "Verify email", onClick: handleGoToEmailVerification }
+            : undefined
+        }
+      />
+
       {/* Heading */}
       <div className="animate-[fadeSlide_0.5s_cubic-bezier(0.16,1,0.3,1)_both] [animation-delay:0.05s]">
         <h2 className="text-3xl font-semibold tracking-tight text-heading sm:text-[2rem]">
@@ -88,12 +103,9 @@ const LoginForm = () => {
             autoComplete="email"
             icon={<Mail className="h-[18px] w-[18px]" />}
             value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (touched.email) setErrors(validate());
-            }}
+            onChange={(event) => setEmail(event.target.value)}
             onBlur={() => handleBlur("email")}
-            error={showError("email")}
+            error={getFieldError("email")}
           />
         </div>
 
@@ -108,16 +120,13 @@ const LoginForm = () => {
             autoComplete="current-password"
             icon={<Lock className="h-[18px] w-[18px]" />}
             value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (touched.password) setErrors(validate());
-            }}
+            onChange={(event) => setPassword(event.target.value)}
             onBlur={() => handleBlur("password")}
-            error={showError("password")}
+            error={getFieldError("password")}
             trailing={
               <button
                 type="button"
-                onClick={() => setShowPassword((s) => !s)}
+                onClick={() => setShowPassword((isVisible) => !isVisible)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 className="cursor-pointer rounded-md p-1 text-label transition-all duration-200 hover:scale-110 hover:text-primary active:scale-95"
               >
@@ -131,7 +140,7 @@ const LoginForm = () => {
           />
 
           {/* Forgot password — right-aligned under the input */}
-          {!(touched.password && errors.password) && (
+          {!getFieldError("password") && (
             <div className="mt-2 text-right">
               <Link
                 href="/auth/forgot-password"
@@ -149,20 +158,14 @@ const LoginForm = () => {
   type="submit"
   showIcon={false}
   provider="google"
-  disabled={isSubmitting}
+  disabled={loginRequest.isPending}
   className="!h-12 !text-sm"
 >
-  {isSubmitting ? (
-    <span className="flex items-center gap-2">
-      <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-      Signing In…
-    </span>
-  ) : (
-    <span className="flex items-center gap-2">
-      Sign In
-      <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-    </span>
-  )}
+  <SubmitButtonContent
+    isLoading={loginRequest.isPending}
+    label="Sign In"
+    loadingLabel="Signing In…"
+  />
 </SignupSocialButton>
 </div>
       </form>
@@ -200,7 +203,7 @@ const LoginForm = () => {
           <span className="font-semibold text-heading">HIPAA compliant</span>.
         </p>
       </div>
-    </div>
+    </AuthCard>
   );
 };
 

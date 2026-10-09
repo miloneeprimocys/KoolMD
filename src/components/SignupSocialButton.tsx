@@ -29,6 +29,7 @@ const SignupSocialButton: React.FC<SignupSocialButtonProps> = ({
   showIcon = true,
   children,
   className = "",
+  type = "button",
   ...rest
 }) => {
   const isApple = provider === "apple";
@@ -36,7 +37,7 @@ const SignupSocialButton: React.FC<SignupSocialButtonProps> = ({
   return (
     <button
       {...rest}
-      type="button"
+      type={type}
       className={`
         group relative flex h-11 w-full items-center justify-center gap-2
         overflow-hidden rounded-xl

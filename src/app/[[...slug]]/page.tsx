@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import MainLayout from "@/app/Mainlayout";
 import { ROUTES } from "@/app/routes";
+import RouteGuard from "@/auth/RouteGuard";
 
 const NotFound = () => (
   <div className="flex min-h-screen items-center justify-center">
@@ -23,11 +24,15 @@ export default function CatchAllPage() {
 
   const Page = route.component;
 
-  return route.title ? (
-    <MainLayout title={route.title}>
-      <Page />
-    </MainLayout>
-  ) : (
-    <Page />
+  return (
+    <RouteGuard access={route.access}>
+      {route.title ? (
+        <MainLayout title={route.title}>
+          <Page />
+        </MainLayout>
+      ) : (
+        <Page />
+      )}
+    </RouteGuard>
   );
 }

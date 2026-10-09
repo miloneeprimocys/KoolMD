@@ -2,106 +2,139 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  Users,
-  User,
-  ShieldCheck,
-} from "lucide-react";
-import { useDispatch } from "react-redux";
+import { Eye, EyeOff, Lock, Mail, Users, User, ShieldCheck } from "lucide-react";
 
 import SignupField from "@/components/SignupField";
-import { ArrowRight } from "lucide-react";
 import SignupDropdown from "@/components/SignupDropdown";
 import SignupSocialButton from "@/components/SignupSocialButton";
-import { setVerifyOtpEmail } from "@/redux/slices/verifyOtpSlice";
+import ErrorToast from "@/components/ErrorToast";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { useAuthRequest } from "@/hooks/useAuthRequest";
+import { registerAccount } from "@/redux/thunks/authThunks";
+import type { SignupAccountType } from "@/types/auth";
+import AuthCard from "./AuthCard";
+import SubmitButtonContent from "./SubmitButtonContent";
+import {
+  PASSWORD_MIN_LENGTH,
+  compactErrors,
+  validateEmail,
+  validateNewPassword,
+  validateRequiredText,
+} from "./authValidation";
 
-const ROLES = [
+/** Admins/staff are invited by an administrator — only these can self-register. */
+const ACCOUNT_TYPE_OPTIONS: { value: SignupAccountType; label: string }[] = [
   { value: "patient", label: "Patient" },
-  { value: "doctor", label: "Doctor" },
-  { value: "admin", label: "Admin" },
+  { value: "provider", label: "Provider / Doctor" },
 ];
 
-type Errors = {
-  role?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  password?: string;
+type SignupField = "accountType" | "firstName" | "lastName" | "email" | "password";
+type SignupErrors = Partial<Record<SignupField, string>>;
+
+interface SignupFormValues {
+  accountType: SignupAccountType | "";
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+
+const EMPTY_SIGNUP_FORM: SignupFormValues = {
+  accountType: "",
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
 };
 
+const ALL_FIELDS_TOUCHED: Record<SignupField, boolean> = {
+  accountType: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+  password: true,
+};
+
+/** DOM id of each field's input, in on-screen order — used to focus the first invalid one. */
+const FIELD_ELEMENT_IDS: Record<SignupField, string> = {
+  accountType: "role",
+  firstName: "firstName",
+  lastName: "lastName",
+  email: "email",
+  password: "password",
+};
+
+const focusFirstInvalidField = (errors: SignupErrors) => {
+  const firstInvalidField = (Object.keys(FIELD_ELEMENT_IDS) as SignupField[]).find(
+    (field) => errors[field],
+  );
+  if (!firstInvalidField) return;
+  const fieldElement = document.getElementById(FIELD_ELEMENT_IDS[firstInvalidField]);
+  fieldElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+  fieldElement?.focus({ preventScroll: true });
+};
+
+const validateSignupForm = (formValues: SignupFormValues): SignupErrors =>
+  compactErrors<SignupField>({
+    accountType: formValues.accountType ? undefined : "Please select your role.",
+    firstName: validateRequiredText(formValues.firstName, "first name"),
+    lastName: validateRequiredText(formValues.lastName, "last name"),
+    email: validateEmail(formValues.email),
+    password: validateNewPassword(formValues.password, formValues),
+  });
+
 const SignupForm = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const router = useRouter();
-  const [role, setRole] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const registerRequest = useAuthRequest("register");
+
+  const [formValues, setFormValues] = useState<SignupFormValues>(EMPTY_SIGNUP_FORM);
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<Errors>({});
-  const [touched, setTouched] = useState<{ [k: string]: boolean }>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [touchedFields, setTouchedFields] = useState<Partial<Record<SignupField, boolean>>>({});
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const validate = (): Errors => {
-    const e: Errors = {};
-    if (!role) e.role = "Please select your role.";
-    if (!firstName.trim()) e.firstName = "Please enter your first name.";
-    if (!lastName.trim()) e.lastName = "Please enter your last name.";
-    if (!email.trim()) e.email = "Please enter your email address.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      e.email = "Please enter a valid email address.";
-    if (!password) e.password = "Please create a password.";
-    else if (password.length < 8)
-      e.password = "Password must be at least 8 characters.";
-    else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(password))
-      e.password = "Use a mix of letters and numbers.";
-    return e;
+  // Derived on render — no extra state, no sync effects.
+  const validationErrors = validateSignupForm(formValues);
+
+  const updateField = <TField extends SignupField>(field: TField, value: SignupFormValues[TField]) =>
+    setFormValues((previous) => ({ ...previous, [field]: value }));
+
+  const handleBlur = (field: SignupField) =>
+    setTouchedFields((previous) => ({ ...previous, [field]: true }));
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setTouchedFields(ALL_FIELDS_TOUCHED);
+    if (Object.keys(validationErrors).length || !formValues.accountType) {
+      focusFirstInvalidField(validationErrors);
+      return;
+    }
+
+    const registerResult = await dispatch(
+      registerAccount({
+        accountType: formValues.accountType,
+        firstName: formValues.firstName.trim(),
+        lastName: formValues.lastName.trim(),
+        email: formValues.email.trim(),
+        password: formValues.password,
+      }),
+    );
+    if (registerAccount.fulfilled.match(registerResult)) router.push("/auth/verify-email");
   };
 
-  const handleBlur = (field: string) => {
-    setTouched((t) => ({ ...t, [field]: true }));
-    setErrors(validate());
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const v = validate();
-    setErrors(v);
-    setTouched({
-      role: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      password: true,
-    });
-    if (Object.keys(v).length) return;
-
-    setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 900));
-    dispatch(setVerifyOtpEmail(email));
-    setIsSubmitting(false);
-    router.push("/auth/verify-otp");
-  };
-
-  const showError = (field: keyof Errors) =>
-    touched[field] && errors[field] ? errors[field] : undefined;
+  const getFieldError = (field: SignupField) =>
+    (touchedFields[field] ? validationErrors[field] : undefined) ??
+    registerRequest.fieldErrors[field];
 
   return (
-    <div
-      className="
-        w-full max-w-md rounded-2xl border border-border
-        bg-card p-7 shadow-xl shadow-shape-sky/25
-        transition-shadow duration-500
-        hover:shadow-2xl hover:shadow-shape-sky/40
-        sm:max-w-lg sm:p-9 lg:p-10
-        animate-[cardIn_0.5s_cubic-bezier(0.16,1,0.3,1)_both]
-      "
-    >
+    <AuthCard>
+      <ErrorToast
+        isOpen={registerRequest.isFailed}
+        onClose={registerRequest.clearRequest}
+        title="Could not create account"
+        message={registerRequest.error?.message}
+      />
+
       {/* Top-right sign-in link */}
       <div className="mb-5 text-right text-xs text-body">
         Already have an account?{" "}
@@ -138,15 +171,14 @@ const SignupForm = () => {
             label="Select Your Role"
             placeholder="Choose your role"
             icon={<Users className="h-[18px] w-[18px]" />}
-            value={role}
-            onChange={(v) => {
-              setRole(v);
-              if (touched.role) setErrors(validate());
-            }}
-            onBlur={() => handleBlur("role")}
+            value={formValues.accountType}
+            onChange={(selectedValue) =>
+              updateField("accountType", selectedValue as SignupAccountType)
+            }
+            onBlur={() => handleBlur("accountType")}
             onOpenChange={setIsDropdownOpen}
-            options={ROLES}
-            error={showError("role")}
+            options={ACCOUNT_TYPE_OPTIONS}
+            error={getFieldError("accountType")}
           />
         </div>
 
@@ -160,13 +192,10 @@ const SignupForm = () => {
               placeholder="Enter your first name"
               autoComplete="given-name"
               icon={<User className="h-[18px] w-[18px]" />}
-              value={firstName}
-              onChange={(e) => {
-                setFirstName(e.target.value);
-                if (touched.firstName) setErrors(validate());
-              }}
+              value={formValues.firstName}
+              onChange={(event) => updateField("firstName", event.target.value)}
               onBlur={() => handleBlur("firstName")}
-              error={showError("firstName")}
+              error={getFieldError("firstName")}
             />
 
             <SignupField
@@ -176,13 +205,10 @@ const SignupForm = () => {
               placeholder="Enter your last name"
               autoComplete="family-name"
               icon={<User className="h-[18px] w-[18px]" />}
-              value={lastName}
-              onChange={(e) => {
-                setLastName(e.target.value);
-                if (touched.lastName) setErrors(validate());
-              }}
+              value={formValues.lastName}
+              onChange={(event) => updateField("lastName", event.target.value)}
               onBlur={() => handleBlur("lastName")}
-              error={showError("lastName")}
+              error={getFieldError("lastName")}
             />
           </div>
         </div>
@@ -197,13 +223,10 @@ const SignupForm = () => {
             placeholder="you@example.com"
             autoComplete="email"
             icon={<Mail className="h-[18px] w-[18px]" />}
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (touched.email) setErrors(validate());
-            }}
+            value={formValues.email}
+            onChange={(event) => updateField("email", event.target.value)}
             onBlur={() => handleBlur("email")}
-            error={showError("email")}
+            error={getFieldError("email")}
           />
         </div>
 
@@ -217,18 +240,15 @@ const SignupForm = () => {
             placeholder="Create a strong password"
             autoComplete="new-password"
             icon={<Lock className="h-[18px] w-[18px]" />}
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (touched.password) setErrors(validate());
-            }}
+            value={formValues.password}
+            onChange={(event) => updateField("password", event.target.value)}
             onBlur={() => handleBlur("password")}
-            error={showError("password")}
-            hint="Use at least 8 characters with a mix of letters, numbers and a symbol."
+            error={getFieldError("password")}
+            hint={`Use at least ${PASSWORD_MIN_LENGTH} characters. Avoid your name, email or common passwords.`}
             trailing={
               <button
                 type="button"
-                onClick={() => setShowPassword((s) => !s)}
+                onClick={() => setShowPassword((isVisible) => !isVisible)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 className="cursor-pointer rounded-md p-1 text-label transition-all duration-200 hover:scale-110 hover:text-primary active:scale-95"
               >
@@ -248,20 +268,14 @@ const SignupForm = () => {
     type="submit"
     showIcon={false}
     provider="google"
-    disabled={isSubmitting}
+    disabled={registerRequest.isPending}
     className="!h-12 !text-sm"
   >
-    {isSubmitting ? (
-      <span className="flex items-center gap-2">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-        Creating account…
-      </span>
-    ) : (
-      <span className="flex items-center gap-2">
-        Create Account
-        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-      </span>
-    )}
+    <SubmitButtonContent
+      isLoading={registerRequest.isPending}
+      label="Create Account"
+      loadingLabel="Creating account…"
+    />
   </SignupSocialButton>
 </div>
       </form>
@@ -287,7 +301,7 @@ const SignupForm = () => {
           <span className="font-semibold text-heading">HIPAA compliant</span>.
         </p>
       </div>
-    </div>
+    </AuthCard>
   );
 };
 
