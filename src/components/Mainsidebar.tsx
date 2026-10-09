@@ -153,6 +153,25 @@ type MainSidebarProps = {
   onToggleMini: () => void;
 };
 
+const checkIsActive = (href: string, pathname: string | null) => {
+  if (!pathname) return false;
+  if (pathname === href) return true;
+
+  if (href === "/providers") {
+    return pathname === "/providers" || pathname.includes("provider");
+  }
+
+  if (href === "/patients") {
+    return pathname === "/patients" || pathname.includes("patient");
+  }
+
+  if (href !== "/" && pathname.startsWith(`${href}/`)) {
+    return true;
+  }
+
+  return false;
+};
+
 const MainSidebar = ({ isMini, onToggleMini }: MainSidebarProps) => {
   const pathname = usePathname();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
@@ -162,7 +181,7 @@ const MainSidebar = ({ isMini, onToggleMini }: MainSidebarProps) => {
         .map((n) => [n.label, true])
     )
   );
-   
+
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null);
   const tooltipTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -185,6 +204,13 @@ const handleToggleMini = () => {
   }
   setTooltip(null);
 };
+
+  const closeMobileSidebar = () => {
+    const toggleInput = document.getElementById("sidebar-toggle") as HTMLInputElement | null;
+    if (toggleInput) {
+      toggleInput.checked = false;
+    }
+  };
 
   const showTooltip = useCallback((e: React.MouseEvent, label: string) => {
     if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
@@ -251,7 +277,7 @@ const handleToggleMini = () => {
 
             <div className="space-y-1 lg:space-y-1.5">
               {section.items.map(({ label, href, Icon, children, badge }) => {
-                const isActive = pathname === href;
+                const isActive = checkIsActive(href, pathname);
 
                 /* ---- Simple item ---- */
                 if (!children) {
@@ -259,6 +285,7 @@ const handleToggleMini = () => {
                     <div key={label} className="relative">
                       <Link
                         href={href}
+                        onClick={closeMobileSidebar}
                         onMouseEnter={(e) => isMini && showTooltip(e, label)}
                         onMouseLeave={hideTooltip}
                         className={`${linkBase} ${isActive ? linkActive : linkIdle} ${
@@ -324,11 +351,12 @@ const handleToggleMini = () => {
                         <div className="min-h-0 overflow-hidden">
                           <div className="ml-5 mt-1 space-y-1 border-l border-divider pl-2 lg:ml-6 lg:mt-1.5 lg:space-y-1.5 lg:pl-3">
                             {children.map((c) => {
-                              const isSubActive = pathname === c.href;
+                              const isSubActive = checkIsActive(c.href, pathname);
                               return (
                                 <Link
                                   key={c.label}
                                   href={c.href}
+                                  onClick={closeMobileSidebar}
                                   className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-colors duration-200 lg:gap-3.5 lg:px-3.5 lg:py-2.5 lg:text-sm ${
                                     isSubActive
                                       ? "bg-primary/10 font-medium text-primary"
@@ -348,11 +376,12 @@ const handleToggleMini = () => {
                     {isMini && (
                       <div className="mt-1 flex flex-col items-center gap-1 lg:mt-1.5 lg:gap-1.5">
                         {children.map((c) => {
-                          const isSubActive = pathname === c.href;
+                          const isSubActive = checkIsActive(c.href, pathname);
                           return (
                             <Link
                               key={c.label}
                               href={c.href}
+                              onClick={closeMobileSidebar}
                               onMouseEnter={(e) => showTooltip(e, c.label)}
                               onMouseLeave={hideTooltip}
                               className={`${linkBase} ${

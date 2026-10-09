@@ -98,7 +98,7 @@ const leftPad = hasTriggerIcon
   : compact
     ? "pl-2.5"
     : "pl-4";
-const rightPad = compact ? "pr-6" : "pr-11";
+const rightPad = compact ? "pr-8" : "pr-10";
 const iconLeft = compact ? "left-2" : "left-3.5";
 const chevronRight = compact ? "right-2" : "right-3.5";
     const chevronSize = compact ? "h-4 w-4" : "h-4.5 w-4.5";
@@ -339,8 +339,8 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                 }}
              className={`
   h-full min-w-0 bg-transparent
-  ${compact ? "w-auto flex-none pr-0" : "flex-1 pr-2"}
-  text-sm text-heading outline-none
+  ${compact ? "w-auto flex-none pr-6" : "flex-1 pr-0"}
+  truncate text-sm text-heading outline-none
   placeholder:text-placeholder
   disabled:cursor-not-allowed disabled:opacity-60
 `}
@@ -356,7 +356,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                     setQuery("");
                     inputRef.current?.focus();
                   }}
-                  className={`absolute top-1/2 -translate-y-1/2 text-label hover:text-heading ${chevronRight}`}
+                  className={`absolute top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-card text-label hover:bg-heading/5 hover:text-heading ${chevronRight}`}
                 >
                   <span className="text-xs">✕</span>
                 </button>
@@ -365,7 +365,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                   className={`
                     pointer-events-none absolute top-1/2 -translate-y-1/2
                     ${chevronSize} ${chevronRight}
-                    transition-transform duration-300
+                    bg-card transition-transform duration-300
                     ${open ? "rotate-180 text-primary" : "text-label"}
                   `}
                 />

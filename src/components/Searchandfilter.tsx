@@ -27,7 +27,7 @@ export interface SearchAndFilterProps {
 }
 
 const searchCls =
-  "h-11 w-full rounded-lg border border-border bg-card pl-10 pr-4 text-sm text-heading outline-none transition-colors duration-200 placeholder:text-placeholder hover:border-primary/40 focus:border-primary";
+  "h-12 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm text-heading outline-none transition-colors duration-200 placeholder:text-placeholder hover:border-primary/40 focus:border-primary";
 
 const formatDateLabel = (isoDate: string) => {
   if (!isoDate) return "";
@@ -115,14 +115,13 @@ const SearchAndFilter = ({
 
   const hasActiveDateRange = Boolean(localDates.start || localDates.end);
   const dateRangeDisplay = hasActiveDateRange
-    ? `${formatDateLabel(localDates.start) || "Start"} - ${
-        formatDateLabel(localDates.end) || "End"
-      }`
+    ? `${formatDateLabel(localDates.start) || "Start"} - ${formatDateLabel(localDates.end) || "End"
+    }`
     : "Date Range";
 
   return (
     <div
-      className={`flex w-full flex-col gap-3 rounded-xl border border-border bg-card p-3 xl:flex-row xl:items-center ${className}`}
+      className={`flex w-full flex-col gap-3  xl:flex-col 2xl:flex-row 2xl:items-center ${className}`}
     >
       {/* Search */}
       <div className="relative min-w-0 flex-1">
@@ -134,25 +133,14 @@ const SearchAndFilter = ({
           onChange={handleSearchChange}
           className={searchCls}
         />
-        {searchTerm && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchTerm("");
-              onSearch?.("");
-            }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-body hover:text-heading cursor-pointer"
-          >
-            ✕
-          </button>
-        )}
+      
       </div>
 
       {/* Dropdown Filters + Date Range + More Filters */}
       {(filters.length > 0 || showDateRange) && (
-        <div className="flex flex-wrap gap-2 xl:shrink-0 xl:flex-nowrap xl:items-center">
+        <div className="flex flex-wrap gap-2 items-center xl:flex-wrap 2xl:shrink-0 2xl:flex-nowrap 2xl:items-center">
           {filters.map((f) => (
-            <div key={f.label} className="min-w-[8rem] flex-1 xl:w-40 xl:flex-none">
+            <div key={f.label} className="min-w-[8rem] flex-1 xl:w-40 xl:flex-none 2xl:w-40 2xl:flex-none">
               <SignupDropdown
                 id={f.label}
                 placeholder={f.label}
@@ -162,22 +150,22 @@ const SearchAndFilter = ({
                   { value: "all", label: "All" },
                   ...f.options.map((o) => ({ value: o, label: o })),
                 ]}
-                className="[&>*:last-child]:hidden [&_button]:!h-11 [&_button]:!rounded-lg"
+                compact
+                className="[&>*:last-child]:hidden [&_button]:!h-12 [&_button]:!rounded-xl"
               />
             </div>
           ))}
 
           {/* Interactive Date Range Button with DatePicker popover */}
           {showDateRange && (
-            <div className="relative min-w-[8rem] flex-1 xl:w-auto xl:flex-none" ref={datePopoverRef}>
+            <div className="relative min-w-[8rem] flex-1 xl:w-auto xl:flex-none 2xl:w-auto 2xl:flex-none" ref={datePopoverRef}>
               <button
                 type="button"
                 onClick={() => setDatePopoverOpen((o) => !o)}
-                className={`flex h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-lg border px-3.5 text-xs sm:text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
-                  hasActiveDateRange || datePopoverOpen
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-border bg-card text-heading hover:border-primary/40 hover:text-primary"
-                }`}
+                className={`flex h-12 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border px-3.5 text-xs sm:text-sm font-normal transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${hasActiveDateRange || datePopoverOpen
+                    ? "border-primary bg-primary/5 text-heading"
+                    : "border-border bg-card text-placeholder hover:border-primary/40 hover:text-primary"
+                  }`}
               >
                 <div className="flex items-center gap-2 truncate">
                   <Calendar className="h-4 w-4 shrink-0 text-body" />
@@ -250,14 +238,15 @@ const SearchAndFilter = ({
           )}
 
           {/* More Filters button */}
-          <div className="min-w-[8rem] flex-1 xl:w-36 xl:flex-none">
+          <div className="min-w-[8rem] flex-1 xl:w-36 xl:flex-none 2xl:w-36 2xl:flex-none">
             <button
               type="button"
               onClick={onMoreFilters}
-              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-card px-3.5 text-xs sm:text-sm font-medium text-heading transition-colors duration-200 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-card px-3.5 text-xs sm:text-sm font-medium text-placeholder transition-colors duration-200 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
-              <SlidersHorizontal className="h-4 w-4 text-body" />
-              <span>More Filters</span>
+              <SlidersHorizontal className="h-4 w-4 text-body shrink-0" />
+              {/* Added whitespace-nowrap here */}
+              <span className="whitespace-nowrap">More Filters</span>
             </button>
           </div>
         </div>

@@ -21,6 +21,7 @@ import Table from "@/components/Table";
 import { type TableColumn } from "@/components/Tableheader";
 import Content from "@/components/Content";
 import Tags, { type TagTone } from "@/components/Tags";
+import Actions from "@/components/Actions";
 import Pagination from "@/components/Pagination";
 
 /* ---------- Types + data (also used by RightSection) ---------- */
@@ -104,24 +105,7 @@ const Documents = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
 
-  // Dynamic category calculations
-  const categories = useMemo(() => {
-    const total = items.length;
-    const identification = items.filter((d) => d.category === "Identification").length;
-    const medical = items.filter((d) => d.category === "Medical").length;
-    const education = items.filter((d) => d.category === "Education").length;
-    const certifications = items.filter((d) => d.category === "Certifications").length;
-    const others = items.filter((d) => d.category === "Others").length;
 
-    return [
-      { key: "All" as const, label: "All Documents", count: total, Icon: Files, tone: "bg-primary/10 text-primary" },
-      { key: "Identification" as const, label: "Identification", count: identification, Icon: IdCard, tone: "bg-primary/10 text-primary" },
-      { key: "Medical" as const, label: "Medical", count: medical, Icon: Stethoscope, tone: "bg-orange-100 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400" },
-      { key: "Education" as const, label: "Education", count: education, Icon: GraduationCap, tone: "bg-violet-100 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400" },
-      { key: "Certifications" as const, label: "Certifications", count: certifications, Icon: ShieldCheck, tone: "bg-orange-100 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400" },
-      { key: "Others" as const, label: "Others", count: others, Icon: FileText, tone: "bg-primary/10 text-primary" },
-    ];
-  }, [items]);
 
   // Filtered by category, search and dropdowns
   const filteredItems = useMemo(() => {
@@ -229,31 +213,17 @@ const Documents = ({
         status: <Tags text={d.status} tone={d.statusTone} />,
         uploaded: <Content title={d.uploadedOn} />,
         actions: (
-          <div className="flex w-full items-center justify-center gap-1">
-            <button
-              type="button"
-              aria-label={`View ${d.name}`}
-              className={iconBtnCls}
-              onClick={() => onViewDocument?.(d)}
-            >
-              <Eye className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              aria-label={`Download ${d.name}`}
-              className={iconBtnCls}
-              onClick={() => console.log("download", d.file)}
-            >
-              <Download className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              aria-label={`More actions for ${d.name}`}
-              className={iconBtnCls}
-              onClick={() => onViewDocument?.(d)}
-            >
-              <MoreVertical className="h-4 w-4" />
-            </button>
+          <div className="flex w-full items-center justify-center">
+            <Actions
+              actions={["view", "download"]}
+              onAction={(action) => {
+                if (action === "view") {
+                  onViewDocument?.(d);
+                } else if (action === "download") {
+                  console.log("download", d.file);
+                }
+              }}
+            />
           </div>
         ),
       })),
@@ -263,38 +233,10 @@ const Documents = ({
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Category cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        {categories.map(({ key, label, count, Icon, tone }) => {
-          const active = category === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => {
-                setCategory(key);
-                setSelected(new Set());
-                setPage(1);
-              }}
-              aria-pressed={active}
-              className={`flex items-center gap-3 rounded-[14px] border bg-card p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 cursor-pointer ${
-                active ? "border-primary" : "border-border hover:border-primary/40"
-              }`}
-            >
-              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tone}`}>
-                <Icon className="h-5 w-5" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-lg font-semibold leading-tight text-heading">{count}</span>
-                <span className="block truncate text-xs text-body">{label}</span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
+    
 
       {/* Search + filters + upload */}
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-start 2xl:items-center">
         <div className="min-w-0 flex-1">
           <SearchAndFilter
             placeholder="Search documents..."
