@@ -12,7 +12,7 @@ import SuccessToast from "@/components/SuccessToast";
 import {
   PROVIDERS,
   type ProviderRow,
-} from "@/providers/Providers";
+} from "@/providers/viewproviders/providerMockData";
 import Licenses, {
   INITIAL_LICENSES,
   type LicenseRow,

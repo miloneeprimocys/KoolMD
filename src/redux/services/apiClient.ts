@@ -1,4 +1,5 @@
 import type { AuthTokens } from "@/types/auth";
+import type { PaginatedResult, PaginationMeta } from "@/types/api";
 import { tokenStorage } from "./tokenStorage";
 
 /** Same-origin path; the rewrite in `next.config.ts` proxies it to the backend (no CORS). */
@@ -25,6 +26,7 @@ export interface ApiErrorDetail {
 interface ApiSuccessEnvelope<TData> {
   success: true;
   data: TData;
+  meta?: { pagination: PaginationMeta };
 }
 
 interface ApiErrorEnvelope {
@@ -113,13 +115,17 @@ function toApiError(status: number, errorEnvelope: ApiErrorEnvelope | null): Api
   );
 }
 
-async function parseResponse<TData>(response: Response): Promise<TData> {
-  if (response.status === 204) return undefined as TData;
+async function parseEnvelope<TData>(response: Response): Promise<ApiSuccessEnvelope<TData>> {
+  if (response.status === 204) return { success: true, data: undefined as TData };
 
   const payload = await readJsonSafely<ApiSuccessEnvelope<TData> | ApiErrorEnvelope>(response);
-  if (response.ok && payload?.success) return payload.data;
+  if (response.ok && payload?.success) return payload;
 
   throw toApiError(response.status, payload?.success === false ? payload : null);
+}
+
+async function parseResponse<TData>(response: Response): Promise<TData> {
+  return (await parseEnvelope<TData>(response)).data;
 }
 
 /* ---------------------------------------------------------------- */
@@ -183,6 +189,40 @@ export async function apiRequest<TData>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<TData> {
+  return parseResponse<TData>(await sendWithSessionRecovery(path, options));
+}
+
+/** For list endpoints: keeps `meta.pagination` alongside the items. */
+export async function apiPaginatedRequest<TItem>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<PaginatedResult<TItem>> {
+  const envelope = await parseEnvelope<TItem[]>(await sendWithSessionRecovery(path, options));
+  if (!envelope.meta?.pagination) {
+    throw new ApiError("Unexpected response from the server.", 0, "INVALID_RESPONSE");
+  }
+  return { items: envelope.data, pagination: envelope.meta.pagination };
+}
+
+/** Builds `?a=1&b=x`, skipping empty values so the backend applies its defaults. */
+export function toQueryString(
+  queryParams: Record<string, string | number | undefined | null>,
+): string {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(queryParams)) {
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  }
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : "";
+}
+
+/** Sends the request; on a stale access token refreshes once and retries. */
+async function sendWithSessionRecovery(
+  path: string,
+  options: ApiRequestOptions,
+): Promise<Response> {
   let response = await sendRequest(path, options);
 
   if (response.status === 401 && options.isAuthenticated) {
@@ -203,5 +243,5 @@ export async function apiRequest<TData>(
     }
   }
 
-  return parseResponse<TData>(response);
+  return response;
 }

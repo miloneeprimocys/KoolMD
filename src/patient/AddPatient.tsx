@@ -1,12 +1,9 @@
 "use client";
 
-import React, { ReactNode, useMemo, useRef, useState, useEffect } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ImagePlus, User, Camera, Trash2, RefreshCw } from "lucide-react";
-import { Country, State } from "country-state-city";
-import {
-  parsePhoneNumberFromString,
-  CountryCode,
-} from "libphonenumber-js";
+import { parsePhoneNumberFromString, CountryCode } from "libphonenumber-js";
 
 import SignupField, { FieldError } from "@/components/SignupField";
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
@@ -17,6 +14,10 @@ import Breadcrumb from "@/components/Breadcrumb";
 import DatePicker from "@/components/Datepicker";
 import SuccessToast from "@/components/SuccessToast";
 import ErrorToast from "@/components/ErrorToast";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
+import { selectCreatePatientRequest } from "@/redux/selectors/patientSelectors";
+import { createPatient } from "@/redux/thunks/patientThunks";
+import type { AdministrativeGender, CreatePatientPayload } from "@/types/patient";
 
 import {
   COUNTRY_OPTIONS,
@@ -30,10 +31,12 @@ import {
 } from "../providers/Shared";
 
 /* ---------- Static data ---------- */
+/** Values are the backend `AdministrativeGender` enum. */
 const GENDERS: DropdownOption[] = [
-  { value: "Male", label: "Male" },
-  { value: "Female", label: "Female" },
-  { value: "Other", label: "Other" },
+  { value: "MALE", label: "Male" },
+  { value: "FEMALE", label: "Female" },
+  { value: "OTHER", label: "Other" },
+  { value: "UNKNOWN", label: "Prefer not to say" },
 ];
 
 const MARITAL: DropdownOption[] = [
@@ -54,13 +57,34 @@ const BLOOD: DropdownOption[] = [
   { value: "O-", label: "O-" },
 ];
 
+/** Values are BCP 47 tags, as the backend expects. */
 const LANGUAGES: DropdownOption[] = [
-  { value: "English", label: "English" },
-  { value: "Spanish", label: "Spanish" },
-  { value: "French", label: "French" },
-  { value: "German", label: "German" },
-  { value: "Hindi", label: "Hindi" },
+  { value: "en", label: "English" },
+  { value: "es", label: "Spanish" },
+  { value: "fr", label: "French" },
+  { value: "de", label: "German" },
+  { value: "hi", label: "Hindi" },
 ];
+
+/** Backend address rules (USPS state code, ZIP) apply to US addresses only. */
+const US_COUNTRY_CODE = "US";
+
+/** Backend validation field → form field, so server errors show under the right input. */
+const FORM_FIELD_BY_API_FIELD: Record<string, keyof FormValues> = {
+  firstName: "firstName",
+  lastName: "lastName",
+  dateOfBirth: "dob",
+  administrativeGender: "gender",
+  phoneNumber: "phone",
+  email: "email",
+  preferredLanguage: "language",
+  addressLine1: "address1",
+  addressLine2: "address2",
+  city: "city",
+  stateCode: "state",
+  postalCode: "zip",
+  countryCode: "country",
+};
 
 const ROLES = [
   { id: "patient", label: "Patient", desc: "Can book appointments, access records and communicate with providers.", checked: true },
@@ -127,6 +151,10 @@ type FormErrors = Partial<Record<keyof FormValues, string>>;
 
 /* ---------- Page ---------- */
 const AddPatient = () => {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const createPatientRequest = useAppSelector(selectCreatePatientRequest);
+  const isSaving = createPatientRequest.status === "pending";
   const [values, setValues] = React.useState<FormValues>({
     firstName: "",
     lastName: "",
@@ -159,6 +187,7 @@ const AddPatient = () => {
     type: "success" | "error" | null;
     title: string;
     message: string;
+    action?: { label: string; onClick: () => void };
   }>({
     type: null,
     title: "",
@@ -298,37 +327,98 @@ const AddPatient = () => {
   const toE164 = (national: string, iso: string) =>
     parsePhoneNumberFromString(national, iso as CountryCode)?.number ?? "";
 
+  /** Form values → `POST /patients` body (empty optional fields are left out). */
+  const buildCreatePatientPayload = (confirmNotDuplicate: boolean): CreatePatientPayload => {
+    const isUsAddress = values.country === US_COUNTRY_CODE;
+    const optional = (value: string) => value.trim() || undefined;
+    return {
+      firstName: values.firstName.trim(),
+      lastName: values.lastName.trim(),
+      dateOfBirth: values.dob,
+      administrativeGender: values.gender as AdministrativeGender,
+      phoneNumber: toE164(values.phone, values.phoneCountry) || undefined,
+      email: optional(values.email),
+      preferredLanguage: values.language || undefined,
+      addressLine1: optional(values.address1),
+      addressLine2: optional(values.address2),
+      city: optional(values.city),
+      stateCode: isUsAddress ? values.state || undefined : undefined,
+      postalCode: isUsAddress ? optional(values.zip) : undefined,
+      countryCode: values.country || undefined,
+      confirmNotDuplicate: confirmNotDuplicate || undefined,
+    };
+  };
+
+  const scrollToField = (field: string) => {
+    const fieldElement = document.getElementById(field);
+    fieldElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+    fieldElement?.focus?.();
+  };
+
+  const savePatient = async (confirmNotDuplicate = false) => {
+    const emergencyPhone = values.emergencyPhone
+      ? toE164(values.emergencyPhone, values.emergencyPhoneCountry)
+      : "";
+    const saveResult = await dispatch(
+      createPatient({
+        patient: buildCreatePatientPayload(confirmNotDuplicate),
+        emergencyContact:
+          values.emergencyName.trim() && emergencyPhone
+            ? { fullName: values.emergencyName.trim(), relationship: "OTHER", phoneNumber: emergencyPhone }
+            : undefined,
+      }),
+    );
+
+    if (createPatient.fulfilled.match(saveResult)) {
+      const { emergencyContactError } = saveResult.payload;
+      if (emergencyContactError) {
+        // Patient exists now — stay here so the user sees what was not saved.
+        setToast({
+          type: "error",
+          title: "Patient saved, emergency contact not saved",
+          message: emergencyContactError.message,
+        });
+        return;
+      }
+      router.push("/patients");
+      return;
+    }
+
+    const requestError = saveResult.payload;
+    if (!requestError) return; // skipped: a save is already in progress
+
+    if (requestError.errorCode === "POSSIBLE_DUPLICATE_PATIENT") {
+      setToast({
+        type: "error",
+        title: "Possible duplicate patient",
+        message: "A patient with the same name and date of birth already exists.",
+        action: { label: "Save anyway", onClick: () => savePatient(true) },
+      });
+      return;
+    }
+
+    const serverFieldErrors: FormErrors = {};
+    for (const [apiField, message] of Object.entries(requestError.fieldErrors ?? {})) {
+      const formField = FORM_FIELD_BY_API_FIELD[apiField];
+      if (formField) serverFieldErrors[formField] = message;
+    }
+    if (Object.keys(serverFieldErrors).length) {
+      setErrors(serverFieldErrors);
+      scrollToField(Object.keys(serverFieldErrors)[0]);
+    }
+    setToast({ type: "error", title: "Could not save patient", message: requestError.message });
+  };
+
   const submitForm = () => {
+    if (createPatientRequest.status === "pending") return;
     setSubmitted(true);
     const errs = validate(values);
     setErrors(errs);
 
     if (Object.keys(errs).length === 0) {
-      const payload = {
-        ...values,
-        photo,
-        phone: toE164(values.phone, values.phoneCountry),
-        emergencyPhone: values.emergencyPhone
-          ? toE164(values.emergencyPhone, values.emergencyPhoneCountry)
-          : "",
-        countryName: Country.getCountryByCode(values.country)?.name ?? "",
-        stateName:
-          State.getStateByCodeAndCountry(values.state, values.country)?.name ??
-          "",
-      };
-      console.log("Form submitted successfully:", payload);
-      setToast({
-        type: "success",
-        title: "Patient Saved Successfully",
-        message: `${values.firstName} ${values.lastName} has been added to the system directory.`,
-      });
-      // TODO: call your API here
+      savePatient();
     } else {
-      const firstErrorField = Object.keys(errs)[0];
-      const el = document.getElementById(firstErrorField);
-      el?.scrollIntoView({ behavior: "smooth", block: "center" });
-      el?.focus?.();
-
+      scrollToField(Object.keys(errs)[0]);
       const errorCount = Object.keys(errs).length;
       setToast({
         type: "error",
@@ -354,9 +444,10 @@ const AddPatient = () => {
       />
       <ErrorToast
         isOpen={toast.type === "error"}
-        onClose={() => setToast((prev) => ({ ...prev, type: null }))}
+        onClose={() => setToast((prev) => ({ ...prev, type: null, action: undefined }))}
         title={toast.title}
         message={toast.message}
+        action={toast.action}
       />
       <Breadcrumb
         items={[
@@ -381,12 +472,14 @@ const AddPatient = () => {
             text="Cancel"
             icon={null}
             className="flex-1 sm:flex-none"
+            onClick={() => router.push("/patients")}
           />
           <AddButton
-            text="Save Patient"
+            text={isSaving ? "Saving…" : "Save Patient"}
             icon={null}
             className="flex-1 sm:flex-none"
             onClick={submitForm}
+            disabled={isSaving}
           />
         </div>
       </div>

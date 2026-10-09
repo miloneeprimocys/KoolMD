@@ -1,19 +1,14 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Clock,
-  Stethoscope,
-  UserCheck,
-  UserX,
-  Users,
-} from "lucide-react";
+import { Clock, UserCheck, UserX, Users } from "lucide-react";
 
 import StatCards, { type StatItem } from "@/components/Statcards";
 import AddButton from "@/components/Addbutton";
 import SearchAndFilter from "@/components/Searchandfilter";
 import Table from "@/components/Table";
+import TableStatus from "@/components/TableStatus";
 import { type TableColumn } from "@/components/Tableheader";
 import Name from "@/components/Name";
 import Content from "@/components/Content";
@@ -21,200 +16,285 @@ import Tags, { type TagTone } from "@/components/Tags";
 import Actions from "@/components/Actions";
 import Pagination from "@/components/Pagination";
 import Breadcrumb from "@/components/Breadcrumb";
-
-/* ---------- Stats ---------- */
-const STATS: StatItem[] = [
-  { label: "Total Providers", value: "156", Icon: Users, accent: "primary", tag: { text: "↑ 12%", tone: "success" } },
-  { label: "Active Providers", value: "142", Icon: UserCheck, accent: "success", tag: { text: "↑ 8%", tone: "success" } },
-  { label: "Pending Approval", value: "8", Icon: Clock, accent: "violet", tag: { text: "↓ 14%", tone: "danger" } },
-  { label: "Inactive Providers", value: "6", Icon: UserX, accent: "danger", tag: { text: "↓ 25%", tone: "danger" } },
-];
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import {
+  selectPractitionerList,
+  selectPractitionerListQuery,
+  selectPractitionerStats,
+  selectSpecialties,
+} from "@/redux/selectors/practitionerSelectors";
+import {
+  setPractitionerPage,
+  setPractitionerSearch,
+  setPractitionerSpecialtyFilter,
+  setPractitionerStatusFilter,
+} from "@/redux/slices/practitionersSlice";
+import {
+  fetchPractitioners,
+  fetchPractitionerStats,
+  fetchSpecialties,
+} from "@/redux/thunks/practitionerThunks";
+import type { Practitioner, PractitionerOnboardingStatus } from "@/types/practitioner";
+import { formatCount, humanizeEnum } from "@/utils/formatters";
 
 /* ---------- Filters ---------- */
-const FILTERS = [
-  {
-    label: "All Specialties",
-    options: [
-      "Internal Medicine",
-      "Pediatrics",
-      "Cardiology",
-      "Family Medicine",
-      "Dermatology",
-      "Orthopedics",
-      "Neurology",
-      "Emergency Medicine",
-    ],
-  },
-  {
-    label: "All Locations",
-    options: [
-      "Main Clinic",
-      "West Clinic",
-      "East Clinic",
-      "North Clinic",
-      "South Clinic",
-      "Central Clinic",
-    ],
-  },
-  {
-    label: "All Statuses",
-    options: ["Active", "Inactive", "Pending"],
-  },
+const SPECIALTY_FILTER_LABEL = "All Specialties";
+const STATUS_FILTER_LABEL = "All Statuses";
+
+const ONBOARDING_STATUSES: PractitionerOnboardingStatus[] = [
+  "APPROVED",
+  "PENDING_REVIEW",
+  "DRAFT",
+  "REJECTED",
+  "SUSPENDED",
 ];
 
-/* ---------- Data ---------- */
-export type ProviderRow = {
-  name: string;
-  credential: string;
-  npi: string;
-  specialty: string;
-  clinic: string;
-  city: string;
-  license: string;
-  licenseTone: TagTone;
-  dea: string;
-  deaTone: TagTone;
-  status: string;
-  statusTone: TagTone;
-  email?: string;
-  phone?: string;
-  address?: string;
+/** "Active" in the UI = approved for clinical work. */
+const ONBOARDING_STATUS_LABELS: Record<PractitionerOnboardingStatus, string> = {
+  APPROVED: "Active",
+  PENDING_REVIEW: "Pending Approval",
+  DRAFT: "Draft",
+  REJECTED: "Rejected",
+  SUSPENDED: "Suspended",
 };
 
-export const PROVIDERS: ProviderRow[] = [
-  { name: "Dr. Michael Brown", credential: "MD", npi: "1234567890", specialty: "Internal Medicine", clinic: "Main Clinic", city: "New York, NY", license: "Valid", licenseTone: "success", dea: "Valid", deaTone: "success", status: "Active", statusTone: "success", email: "michael.brown@koolmd.com", phone: "+1 (555) 123-4567", address: "123 Medical Center Dr, New York, NY 10001" },
-  { name: "Dr. Sarah Lee", credential: "DO", npi: "9876543210", specialty: "Pediatrics", clinic: "West Clinic", city: "San Francisco, CA", license: "Valid", licenseTone: "success", dea: "Valid", deaTone: "success", status: "Active", statusTone: "success", email: "sarah.lee@koolmd.com", phone: "+1 (555) 987-6543", address: "456 Bay Street, San Francisco, CA 94102" },
-  { name: "Dr. James Wilson", credential: "MD", npi: "4567891230", specialty: "Cardiology", clinic: "East Clinic", city: "Boston, MA", license: "Expiring Soon", licenseTone: "warning", dea: "Valid", deaTone: "success", status: "Active", statusTone: "success", email: "james.wilson@koolmd.com", phone: "+1 (555) 456-7891", address: "789 Commonwealth Ave, Boston, MA 02215" },
-  { name: "Dr. Emily Davis", credential: "NP", npi: "3216549870", specialty: "Family Medicine", clinic: "North Clinic", city: "Chicago, IL", license: "Valid", licenseTone: "success", dea: "N/A", deaTone: "neutral", status: "Active", statusTone: "success", email: "emily.davis@koolmd.com", phone: "+1 (555) 321-6549", address: "321 Michigan Ave, Chicago, IL 60601" },
-  { name: "Dr. Robert Chen", credential: "MD", npi: "1597534860", specialty: "Dermatology", clinic: "Main Clinic", city: "New York, NY", license: "Expired", licenseTone: "danger", dea: "Valid", deaTone: "success", status: "Inactive", statusTone: "danger", email: "robert.chen@koolmd.com", phone: "+1 (555) 159-7534", address: "123 Medical Center Dr, New York, NY 10001" },
-  { name: "Dr. Amanda White", credential: "PA", npi: "7539519510", specialty: "Orthopedics", clinic: "South Clinic", city: "Austin, TX", license: "Valid", licenseTone: "success", dea: "N/A", deaTone: "neutral", status: "Active", statusTone: "success", email: "amanda.white@koolmd.com", phone: "+1 (555) 753-9519", address: "555 Congress Ave, Austin, TX 78701" },
-  { name: "Dr. Richard Taylor", credential: "MD", npi: "9517538640", specialty: "Neurology", clinic: "West Clinic", city: "San Francisco, CA", license: "Valid", licenseTone: "success", dea: "Valid", deaTone: "success", status: "Pending", statusTone: "warning", email: "richard.taylor@koolmd.com", phone: "+1 (555) 951-7538", address: "456 Bay Street, San Francisco, CA 94102" },
-  { name: "Dr. Olivia Martinez", credential: "MD", npi: "8529637410", specialty: "Emergency Medicine", clinic: "Central Clinic", city: "Dallas, TX", license: "Valid", licenseTone: "success", dea: "Valid", deaTone: "success", status: "Active", statusTone: "success", email: "olivia.martinez@koolmd.com", phone: "+1 (555) 852-9637", address: "999 Main St, Dallas, TX 75201" },
-];
+const ONBOARDING_STATUS_TONES: Record<PractitionerOnboardingStatus, TagTone> = {
+  APPROVED: "success",
+  PENDING_REVIEW: "warning",
+  DRAFT: "neutral",
+  REJECTED: "danger",
+  SUSPENDED: "danger",
+};
 
-/* ---------- Constants ---------- */
-const PAGE_SIZE = 8;
-const TOTAL_PROVIDERS = 156;
+/** Backend search needs at least 2 characters. */
+const MIN_SEARCH_LENGTH = 2;
 
 const checkboxCls =
   "h-4 w-4 cursor-pointer rounded border-border accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
 
+const getPractitionerDisplayName = (practitioner: Practitioner) =>
+  `Dr. ${practitioner.firstName} ${practitioner.lastName}`;
+
 /* ---------- Component ---------- */
 const Providers = () => {
   const router = useRouter();
-  const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const dispatch = useAppDispatch();
+  const listQuery = useAppSelector(selectPractitionerListQuery);
+  const practitionerList = useAppSelector(selectPractitionerList);
+  const practitionerStats = useAppSelector(selectPractitionerStats);
+  const specialties = useAppSelector(selectSpecialties);
 
-  const totalPages = Math.ceil(TOTAL_PROVIDERS / PAGE_SIZE);
+  const [searchInput, setSearchInput] = useState(listQuery.search);
+  const debouncedSearch = useDebouncedValue(searchInput.trim());
+  const [selectedPractitionerIds, setSelectedPractitionerIds] = useState<Set<string>>(new Set());
 
-  const allSelected =
-    selected.size > 0 && selected.size === PROVIDERS.length;
-  const someSelected =
-    selected.size > 0 && selected.size < PROVIDERS.length;
+  /* Typing settles → push the search into the store (too-short terms mean "no search"). */
+  useEffect(() => {
+    const nextSearch = debouncedSearch.length >= MIN_SEARCH_LENGTH ? debouncedSearch : "";
+    if (nextSearch !== listQuery.search) dispatch(setPractitionerSearch(nextSearch));
+  }, [debouncedSearch, listQuery.search, dispatch]);
 
-  const toggleOne = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  /* `listQuery` keeps its reference until a filter/page actually changes; the thunk also skips
+     identical in-flight or fresh requests, so this never fires duplicate calls. */
+  useEffect(() => {
+    dispatch(fetchPractitioners(listQuery));
+  }, [dispatch, listQuery]);
+
+  useEffect(() => {
+    dispatch(fetchPractitionerStats());
+    dispatch(fetchSpecialties());
+  }, [dispatch]);
+
+  const practitioners = practitionerList.items;
+  const pagination = practitionerList.pagination;
+
+  /* ---------- Filters ---------- */
+  const providerFilters = useMemo(
+    () => [
+      {
+        label: SPECIALTY_FILTER_LABEL,
+        options: specialties.map((specialty) => ({ value: specialty.id, label: specialty.name })),
+      },
+      {
+        label: STATUS_FILTER_LABEL,
+        options: ONBOARDING_STATUSES.map((status) => ({
+          value: status,
+          label: ONBOARDING_STATUS_LABELS[status],
+        })),
+      },
+    ],
+    [specialties],
+  );
+
+  const selectedFilters = useMemo(
+    () => ({
+      [SPECIALTY_FILTER_LABEL]: listQuery.specialtyId,
+      [STATUS_FILTER_LABEL]: listQuery.onboardingStatus,
+    }),
+    [listQuery.specialtyId, listQuery.onboardingStatus],
+  );
+
+  const handleFilterChange = (filterLabel: string, selectedValue: string) => {
+    if (filterLabel === SPECIALTY_FILTER_LABEL) {
+      dispatch(setPractitionerSpecialtyFilter(selectedValue));
+    } else if (filterLabel === STATUS_FILTER_LABEL) {
+      dispatch(setPractitionerStatusFilter(selectedValue as PractitionerOnboardingStatus | ""));
+    }
+  };
+
+  /* ---------- Stats ---------- */
+  const stats: StatItem[] = useMemo(() => {
+    const statsData = practitionerStats.data;
+    const displayCount = (count: number | undefined) =>
+      count === undefined ? "—" : formatCount(count);
+    return [
+      { label: "Total Providers", value: displayCount(statsData?.totalPractitioners), Icon: Users, accent: "primary" },
+      { label: "Active Providers", value: displayCount(statsData?.approvedPractitioners), Icon: UserCheck, accent: "success" },
+      { label: "Pending Approval", value: displayCount(statsData?.pendingReviewPractitioners), Icon: Clock, accent: "violet" },
+      {
+        label: "Inactive Providers",
+        value: displayCount(statsData?.inactivePractitioners),
+        Icon: UserX,
+        accent: "danger",
+        tag: { text: "Suspended / rejected", tone: "neutral" },
+      },
+    ];
+  }, [practitionerStats.data]);
+
+  /* ---------- Selection (current page only) ---------- */
+  const selectedOnPageCount = practitioners.filter((practitioner) =>
+    selectedPractitionerIds.has(practitioner.id),
+  ).length;
+  const allSelected = practitioners.length > 0 && selectedOnPageCount === practitioners.length;
+  const someSelected = selectedOnPageCount > 0 && !allSelected;
+
+  const togglePractitionerSelection = (practitionerId: string) => {
+    setSelectedPractitionerIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(practitionerId)) next.delete(practitionerId);
+      else next.add(practitionerId);
       return next;
     });
   };
 
-  const toggleAll = () => {
-    setSelected(
-      allSelected ? new Set() : new Set(PROVIDERS.map((p) => p.npi))
+  const toggleSelectAll = () => {
+    setSelectedPractitionerIds(
+      allSelected ? new Set() : new Set(practitioners.map((practitioner) => practitioner.id)),
     );
   };
 
   /* Columns — the select column carries the header checkbox */
-  const columns: TableColumn[] = useMemo(
-    () => [
-      {
-        key: "select",
-        label: "",
-        className: "w-10",
-        header: (
-          <input
-            type="checkbox"
-            checked={allSelected}
-            ref={(el) => {
-              if (el) el.indeterminate = someSelected;
-            }}
-            onChange={toggleAll}
-            aria-label="Select all"
-            className={checkboxCls}
-          />
-        ),
-      },
-      { key: "provider", label: "Provider" },
-      { key: "npi", label: "NPI" },
-      { key: "specialty", label: "Specialty" },
-      { key: "location", label: "Location" },
-      { key: "license", label: "License Status" },
-      { key: "dea", label: "DEA Status" },
-      { key: "status", label: "Status" },
-      {
-  key: "actions",
-  label: "Actions",
-  header: (
-    <div className="flex w-full items-center justify-center">Actions</div>
-  ),
-},
-    ],
-    [allSelected, someSelected]
-  );
+  const columns: TableColumn[] = [
+    {
+      key: "select",
+      label: "",
+      className: "w-10",
+      header: (
+        <input
+          type="checkbox"
+          checked={allSelected}
+          ref={(checkboxElement) => {
+            if (checkboxElement) checkboxElement.indeterminate = someSelected;
+          }}
+          onChange={toggleSelectAll}
+          aria-label="Select all"
+          className={checkboxCls}
+        />
+      ),
+    },
+    { key: "provider", label: "Provider" },
+    { key: "npi", label: "NPI" },
+    { key: "specialty", label: "Specialty" },
+    { key: "location", label: "Location" },
+    { key: "telemedicine", label: "Telemedicine" },
+    { key: "status", label: "Status" },
+    {
+      key: "actions",
+      label: "Actions",
+      header: <div className="flex w-full items-center justify-center">Actions</div>,
+    },
+  ];
 
-  /* Rows — checkboxes controlled by `selected` */
-  const rows = useMemo(
-    () =>
-      PROVIDERS.map((p) => ({
-        select: (
-          <input
-            type="checkbox"
-            checked={selected.has(p.npi)}
-            onChange={() => toggleOne(p.npi)}
-            aria-label={`Select ${p.name}`}
-            className={checkboxCls}
+  const rows = practitioners.map((practitioner) => {
+    const displayName = getPractitionerDisplayName(practitioner);
+    const [primaryLocation, ...otherLocations] = practitioner.locations;
+    return {
+      select: (
+        <input
+          type="checkbox"
+          checked={selectedPractitionerIds.has(practitioner.id)}
+          onChange={() => togglePractitionerSelection(practitioner.id)}
+          aria-label={`Select ${displayName}`}
+          className={checkboxCls}
+        />
+      ),
+      provider: <Name name={displayName} sub={practitioner.credentials ?? practitioner.email} />,
+      npi: <Content title={practitioner.npi ?? "—"} />,
+      specialty: (
+        <Content
+          title={practitioner.primarySpecialty?.name ?? practitioner.specialties[0]?.name ?? "—"}
+        />
+      ),
+      location: (
+        <Content
+          title={primaryLocation?.name ?? "—"}
+          description={otherLocations.length ? `+${otherLocations.length} more` : undefined}
+        />
+      ),
+      telemedicine: (
+        <Tags
+          text={practitioner.offersTelemedicine ? "Available" : "No"}
+          tone={practitioner.offersTelemedicine ? "info" : "neutral"}
+        />
+      ),
+      status: (
+        <Tags
+          text={ONBOARDING_STATUS_LABELS[practitioner.onboardingStatus] ?? humanizeEnum(practitioner.onboardingStatus)}
+          tone={ONBOARDING_STATUS_TONES[practitioner.onboardingStatus] ?? "neutral"}
+        />
+      ),
+      actions: (
+        <div className="flex w-full items-center justify-center">
+          <Actions
+            onAction={(action) => {
+              if (action === "view") router.push(`/view-provider?id=${practitioner.id}`);
+            }}
           />
-        ),
-        provider: (
-          <Name
-            name={p.name}
-            sub={p.credential}
-            subIcon={<Stethoscope className="hidden h-0 w-0" />}
-          />
-        ),
-        npi: <Content title={p.npi} />,
-        specialty: <Content title={p.specialty} />,
-        location: <Content title={p.clinic} description={p.city} />,
-        license: <Tags text={p.license} tone={p.licenseTone} />,
-        dea: <Tags text={p.dea} tone={p.deaTone} />,
-        status: <Tags text={p.status} tone={p.statusTone} />,
-        actions: (
-  <div className="flex w-full items-center justify-center">
-    <Actions onAction={(a) => {
-      if (a === "view") {
-        router.push(`/view-provider?id=${p.npi}`);
-      } else {
-        console.log("action:", a, p.name);
-      }
-    }} />
-  </div>
-),
-      })),
-    [selected]
-  );
+        </div>
+      ),
+    };
+  });
+
+  /* ---------- Table body state ---------- */
+  const isFirstLoad = practitionerList.status === "pending" && practitioners.length === 0;
+  const renderTableBody = () => {
+    if (practitionerList.status === "failed") {
+      return (
+        <TableStatus
+          variant="error"
+          message={practitionerList.error?.message}
+          onRetry={() => dispatch(fetchPractitioners(listQuery))}
+        />
+      );
+    }
+    if (isFirstLoad || practitionerList.status === "idle") {
+      return <TableStatus variant="loading" message="Loading providers…" />;
+    }
+    if (practitioners.length === 0) {
+      return <TableStatus variant="empty" message="No providers match your filters." />;
+    }
+    return (
+      <div className={practitionerList.status === "pending" ? "opacity-60 transition-opacity" : ""}>
+        <Table columns={columns} rows={rows} />
+      </div>
+    );
+  };
 
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-4 sm:space-y-5">
       {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Providers" },
-        ]}
-      />
+      <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Providers" }]} />
 
       {/* Title + actions */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -225,36 +305,40 @@ const Providers = () => {
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <AddButton
-            text="Add Provider"
-            onClick={() => router.push("/add-provider")}
-          />
+          <AddButton text="Add Provider" onClick={() => router.push("/add-provider")} />
         </div>
       </div>
 
       {/* Stat cards */}
-      <StatCards stats={STATS} />
+      <StatCards stats={stats} />
 
       {/* Search + filters */}
       <SearchAndFilter
-        placeholder="Search by name, email, NPI, specialty..."
-        filters={FILTERS}
+        placeholder="Search by name, email or NPI..."
+        filters={providerFilters}
+        value={listQuery.search}
+        onSearch={setSearchInput}
+        selectedFilters={selectedFilters}
+        onFilterChange={handleFilterChange}
+        showDateRange={false}
       />
 
       {/* Table */}
       <div className="space-y-3">
         <div className="overflow-hidden rounded-[14px] border border-border bg-card">
-          <Table columns={columns} rows={rows} />
+          {renderTableBody()}
         </div>
 
         {/* Pagination */}
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          totalItems={TOTAL_PROVIDERS}
-          pageSize={PAGE_SIZE}
-          onChange={setPage}
-        />
+        {pagination && pagination.totalItems > 0 && (
+          <Pagination
+            page={listQuery.page}
+            totalPages={Math.max(pagination.totalPages, 1)}
+            totalItems={pagination.totalItems}
+            pageSize={listQuery.limit}
+            onChange={(nextPage) => dispatch(setPractitionerPage(nextPage))}
+          />
+        )}
       </div>
     </div>
   );

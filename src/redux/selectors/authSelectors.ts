@@ -5,6 +5,12 @@ export const selectSessionStatus = (state: RootState) => state.auth.sessionStatu
 
 export const selectCurrentUser = (state: RootState) => state.auth.currentUser;
 
+const NO_PERMISSIONS: string[] = [];
+
+/** Stable array reference (same until the user changes) — safe to use as a memo dependency. */
+export const selectPermissionCodes = (state: RootState) =>
+  state.auth.currentUser?.permissionCodes ?? NO_PERMISSIONS;
+
 export const selectIsAuthenticated = (state: RootState) =>
   state.auth.sessionStatus === "authenticated";
 

@@ -25,7 +25,7 @@ export default function CatchAllPage() {
   const Page = route.component;
 
   return (
-    <RouteGuard access={route.access}>
+    <RouteGuard access={route.access} requiredPermission={route.requiredPermission}>
       {route.title ? (
         <MainLayout title={route.title}>
           <Page />

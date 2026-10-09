@@ -6,7 +6,13 @@ import { Calendar, Search, SlidersHorizontal, X } from "lucide-react";
 import SignupDropdown from "./SignupDropdown";
 import DatePicker from "./Datepicker";
 
-type Filter = { label: string; options: string[] };
+/** A plain string is used as both value and label. */
+export type FilterOption = string | { value: string; label: string };
+
+type Filter = { label: string; options: FilterOption[] };
+
+const toDropdownOption = (option: FilterOption) =>
+  typeof option === "string" ? { value: option, label: option } : option;
 
 export interface DateRange {
   start: string;
@@ -19,6 +25,8 @@ export interface SearchAndFilterProps {
   value?: string;
   onSearch?: (value: string) => void;
   onFilterChange?: (filterLabel: string, option: string) => void;
+  /** Controlled selection per filter label ("" = All). Omit to let the component manage it. */
+  selectedFilters?: Record<string, string>;
   showDateRange?: boolean;
   dateRange?: DateRange;
   onDateRangeChange?: (range: DateRange) => void;
@@ -49,6 +57,7 @@ const SearchAndFilter = ({
   value = "",
   onSearch,
   onFilterChange,
+  selectedFilters,
   showDateRange = true,
   dateRange = DEFAULT_DATE_RANGE,
   onDateRangeChange,
@@ -56,7 +65,8 @@ const SearchAndFilter = ({
   className = "",
 }: SearchAndFilterProps) => {
   const [searchTerm, setSearchTerm] = useState(value);
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [uncontrolledFilterValues, setFilterValues] = useState<Record<string, string>>({});
+  const filterValues = selectedFilters ?? uncontrolledFilterValues;
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [localDates, setLocalDates] = useState<DateRange>(dateRange);
 
@@ -160,7 +170,7 @@ const SearchAndFilter = ({
                 onChange={(v) => handleFilterSelect(f.label, v)}
                 options={[
                   { value: "all", label: "All" },
-                  ...f.options.map((o) => ({ value: o, label: o })),
+                  ...f.options.map(toDropdownOption),
                 ]}
                 className="[&>*:last-child]:hidden [&_button]:!h-11 [&_button]:!rounded-lg"
               />
@@ -249,17 +259,19 @@ const SearchAndFilter = ({
             </div>
           )}
 
-          {/* More Filters button */}
-          <div className="min-w-[8rem] flex-1 xl:w-36 xl:flex-none">
-            <button
-              type="button"
-              onClick={onMoreFilters}
-              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-card px-3.5 text-xs sm:text-sm font-medium text-heading transition-colors duration-200 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-            >
-              <SlidersHorizontal className="h-4 w-4 text-body" />
-              <span>More Filters</span>
-            </button>
-          </div>
+          {/* More Filters button — only when the page handles it */}
+          {onMoreFilters && (
+            <div className="min-w-[8rem] flex-1 xl:w-36 xl:flex-none">
+              <button
+                type="button"
+                onClick={onMoreFilters}
+                className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-card px-3.5 text-xs sm:text-sm font-medium text-heading transition-colors duration-200 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <SlidersHorizontal className="h-4 w-4 text-body" />
+                <span>More Filters</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

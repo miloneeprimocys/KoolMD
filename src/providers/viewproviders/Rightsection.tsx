@@ -23,7 +23,7 @@ import DatePicker from "@/components/Datepicker";
 import { LICENSE_TYPES, LICENSE_STATES } from "./ViewLicenses";
 import { DOCUMENT_TYPES } from "./Documents";
 import type { VerificationDetail, VerificationRow } from "./History";
-import type { ProviderRow } from "@/providers/Providers";
+import type { ProviderRow } from "@/providers/viewproviders/providerMockData";
 
 /* ---------- Public types ---------- */
 export type PanelState =

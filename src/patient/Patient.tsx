@@ -1,246 +1,306 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Ban,
-  Clock,
-  Stethoscope,
-  UserCheck,
-  UserPlus,
-  Users,
-} from "lucide-react";
+import { Ban, UserCheck, UserPlus, Users } from "lucide-react";
 
 import StatCards, { type StatItem } from "@/components/Statcards";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 import SearchAndFilter from "@/components/Searchandfilter";
 import Table from "@/components/Table";
+import TableStatus from "@/components/TableStatus";
 import { type TableColumn } from "@/components/Tableheader";
 import Name from "@/components/Name";
 import Content from "@/components/Content";
-import DateTime from "@/components/Datetime";
 import Tags, { type TagTone } from "@/components/Tags";
 import Actions from "@/components/Actions";
 import Pagination from "@/components/Pagination";
 import Breadcrumb from "@/components/Breadcrumb";
-
-/* ---------- Stats ---------- */
-const STATS: StatItem[] = [
-  { label: "Total Patients", value: "2,048", Icon: Users, accent: "primary", tag: { text: "↑ 12%", tone: "success" } },
-  { label: "Active Patients", value: "1,842", Icon: UserCheck, accent: "success", tag: { text: "↑ 10%", tone: "success" } },
-  { label: "New Patients", value: "206", Icon: UserPlus, accent: "violet", tag: { text: "↑ 18%", tone: "success" } },
-  { label: "Inactive Patients", value: "98", Icon: Ban, accent: "danger", tag: { text: "↓ 5%", tone: "danger" } },
-];
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import {
+  selectPatientList,
+  selectPatientListQuery,
+  selectPatientStats,
+} from "@/redux/selectors/patientSelectors";
+import {
+  setPatientGenderFilter,
+  setPatientPage,
+  setPatientSearch,
+  setPatientStatusFilter,
+} from "@/redux/slices/patientsSlice";
+import { fetchPatients, fetchPatientStats } from "@/redux/thunks/patientThunks";
+import type { AdministrativeGender, PatientStatus, PatientSummary } from "@/types/patient";
+import { calculateAgeInYears, formatCount, formatDateOnly, humanizeEnum } from "@/utils/formatters";
 
 /* ---------- Filters ---------- */
-const FILTERS = [
-  { label: "Status", options: ["Active", "Inactive", "Follow-up"] },
-  { label: "Gender", options: ["Male", "Female", "Other"] },
-  { label: "Insurance", options: ["Blue Cross", "Aetna", "Cigna", "UnitedHealth", "Kaiser"] },
+const STATUS_FILTER_LABEL = "Status";
+const GENDER_FILTER_LABEL = "Gender";
+
+const PATIENT_STATUSES: PatientStatus[] = ["ACTIVE", "INACTIVE", "DECEASED"];
+const ADMINISTRATIVE_GENDERS: AdministrativeGender[] = ["MALE", "FEMALE", "OTHER", "UNKNOWN"];
+
+const PATIENT_FILTERS = [
+  {
+    label: STATUS_FILTER_LABEL,
+    options: PATIENT_STATUSES.map((status) => ({ value: status, label: humanizeEnum(status) })),
+  },
+  {
+    label: GENDER_FILTER_LABEL,
+    options: ADMINISTRATIVE_GENDERS.map((gender) => ({ value: gender, label: humanizeEnum(gender) })),
+  },
 ];
 
-/* ---------- Data ---------- */
-type PatientRow = {
-  name: string;
-  age: number;
-  gender: "Male" | "Female";
-  patientId: string;
-  dob: string;
-  email: string;
-  phone: string;
-  insurance: string;
-  status: string;
-  tone: TagTone;
-  lastVisitDate: string;
-  lastVisitDoctor: string;
+const STATUS_TONES: Record<PatientStatus, TagTone> = {
+  ACTIVE: "success",
+  INACTIVE: "danger",
+  DECEASED: "neutral",
 };
 
-const PATIENTS: PatientRow[] = [
-  { name: "Sarah Johnson", age: 34, gender: "Female", patientId: "PT-000124", dob: "Jan 15, 1990", email: "sarah.johnson@email.com", phone: "+1 555 123 4567", insurance: "Blue Cross PPO", status: "Active", tone: "success", lastVisitDate: "Oct 6, 2026", lastVisitDoctor: "Dr. Michael Carter" },
-  { name: "Michael Brown", age: 42, gender: "Male", patientId: "PT-000123", dob: "Mar 22, 1982", email: "michael.brown@email.com", phone: "+1 555 987 6543", insurance: "Aetna PPO", status: "Active", tone: "success", lastVisitDate: "Sep 28, 2026", lastVisitDoctor: "Dr. Sarah Lee" },
-  { name: "Emma Wilson", age: 29, gender: "Female", patientId: "PT-000122", dob: "Jun 10, 1995", email: "emma.wilson@email.com", phone: "+1 555 456 7890", insurance: "Cigna HMO", status: "Active", tone: "success", lastVisitDate: "Oct 1, 2026", lastVisitDoctor: "Dr. Michael Carter" },
-  { name: "James Miller", age: 37, gender: "Male", patientId: "PT-000121", dob: "Nov 3, 1987", email: "james.miller@email.com", phone: "+1 555 321 0987", insurance: "UnitedHealth PPO", status: "Inactive", tone: "danger", lastVisitDate: "Aug 12, 2026", lastVisitDoctor: "Dr. Kevin White" },
-  { name: "Priya Patel", age: 31, gender: "Female", patientId: "PT-000120", dob: "Apr 18, 1993", email: "priya.patel@email.com", phone: "+1 555 654 3210", insurance: "Blue Cross PPO", status: "Active", tone: "success", lastVisitDate: "Oct 3, 2026", lastVisitDoctor: "Dr. Sarah Lee" },
-  { name: "Robert Chen", age: 45, gender: "Male", patientId: "PT-000119", dob: "Sep 8, 1979", email: "robert.chen@email.com", phone: "+1 (555) 789 0123", insurance: "Kaiser Permanente HMO", status: "Active", tone: "success", lastVisitDate: "Sep 15, 2026", lastVisitDoctor: "Dr. Michael Carter" },
-  { name: "Olivia Martinez", age: 28, gender: "Female", patientId: "PT-000118", dob: "Dec 25, 1996", email: "olivia.martinez@email.com", phone: "+1 555 147 2580", insurance: "Aetna PPO", status: "Active", tone: "success", lastVisitDate: "Oct 4, 2026", lastVisitDoctor: "Dr. Kevin White" },
-  { name: "Daniel Kim", age: 50, gender: "Male", patientId: "PT-000117", dob: "Feb 14, 1974", email: "daniel.kim@email.com", phone: "+1 555 369 7410", insurance: "Cigna PPO", status: "Active", tone: "success", lastVisitDate: "Aug 30, 2026", lastVisitDoctor: "Dr. Sarah Lee" },
-];
-
-/* ---------- Constants ---------- */
-const PAGE_SIZE = 8;
-const TOTAL_PATIENTS = 2048;
+/** Backend search needs at least 2 characters. */
+const MIN_SEARCH_LENGTH = 2;
 
 const checkboxCls =
   "h-4 w-4 cursor-pointer rounded border-border accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
 
+const getPatientFullName = (patient: PatientSummary) =>
+  [patient.firstName, patient.middleName, patient.lastName].filter(Boolean).join(" ");
+
 /* ---------- Component ---------- */
 const Patient = () => {
   const router = useRouter();
-  const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const dispatch = useAppDispatch();
+  const listQuery = useAppSelector(selectPatientListQuery);
+  const patientList = useAppSelector(selectPatientList);
+  const patientStats = useAppSelector(selectPatientStats);
 
-  const totalPages = Math.ceil(TOTAL_PATIENTS / PAGE_SIZE);
+  const [searchInput, setSearchInput] = useState(listQuery.search);
+  const debouncedSearch = useDebouncedValue(searchInput.trim());
+  const [selectedPatientIds, setSelectedPatientIds] = useState<Set<string>>(new Set());
 
-  const allSelected =
-    selected.size > 0 && selected.size === PATIENTS.length;
-  const someSelected =
-    selected.size > 0 && selected.size < PATIENTS.length;
+  /* Typing settles → push the search into the store (too-short terms mean "no search"). */
+  useEffect(() => {
+    const nextSearch = debouncedSearch.length >= MIN_SEARCH_LENGTH ? debouncedSearch : "";
+    if (nextSearch !== listQuery.search) dispatch(setPatientSearch(nextSearch));
+  }, [debouncedSearch, listQuery.search, dispatch]);
 
-  const toggleOne = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  /* `listQuery` keeps its reference until a filter/page actually changes; the thunk also skips
+     identical in-flight or fresh requests, so this never fires duplicate calls. */
+  useEffect(() => {
+    dispatch(fetchPatients(listQuery));
+  }, [dispatch, listQuery]);
+
+  useEffect(() => {
+    dispatch(fetchPatientStats());
+  }, [dispatch]);
+
+  const patients = patientList.items;
+  const pagination = patientList.pagination;
+
+  const handleFilterChange = (filterLabel: string, selectedValue: string) => {
+    if (filterLabel === STATUS_FILTER_LABEL) {
+      dispatch(setPatientStatusFilter(selectedValue as PatientStatus | ""));
+    } else if (filterLabel === GENDER_FILTER_LABEL) {
+      dispatch(setPatientGenderFilter(selectedValue as AdministrativeGender | ""));
+    }
+  };
+
+  const selectedFilters = useMemo(
+    () => ({
+      [STATUS_FILTER_LABEL]: listQuery.status,
+      [GENDER_FILTER_LABEL]: listQuery.administrativeGender,
+    }),
+    [listQuery.status, listQuery.administrativeGender],
+  );
+
+  /* ---------- Stats ---------- */
+  const stats: StatItem[] = useMemo(() => {
+    const statsData = patientStats.data;
+    const displayCount = (count: number | undefined) =>
+      count === undefined ? "—" : formatCount(count);
+    return [
+      { label: "Total Patients", value: displayCount(statsData?.totalPatients), Icon: Users, accent: "primary" },
+      { label: "Active Patients", value: displayCount(statsData?.activePatients), Icon: UserCheck, accent: "success" },
+      {
+        label: "New Patients",
+        value: displayCount(statsData?.newPatientsLast30Days),
+        Icon: UserPlus,
+        accent: "violet",
+        tag: { text: "Last 30 days", tone: "neutral" },
+      },
+      {
+        label: "Inactive Patients",
+        value: displayCount(statsData?.inactivePatients),
+        Icon: Ban,
+        accent: "danger",
+      },
+    ];
+  }, [patientStats.data]);
+
+  /* ---------- Selection (current page only) ---------- */
+  const selectedOnPageCount = patients.filter((patient) => selectedPatientIds.has(patient.id)).length;
+  const allSelected = patients.length > 0 && selectedOnPageCount === patients.length;
+  const someSelected = selectedOnPageCount > 0 && !allSelected;
+
+  const togglePatientSelection = (patientId: string) => {
+    setSelectedPatientIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(patientId)) next.delete(patientId);
+      else next.add(patientId);
       return next;
     });
   };
 
-  const toggleAll = () => {
-    setSelected(
-      allSelected ? new Set() : new Set(PATIENTS.map((p) => p.patientId))
-    );
+  const toggleSelectAll = () => {
+    setSelectedPatientIds(allSelected ? new Set() : new Set(patients.map((patient) => patient.id)));
   };
 
   /* Columns — the select column carries the header checkbox */
-  const columns: TableColumn[] = useMemo(
-    () => [
-      {
-        key: "select",
-        label: "",
-        className: "w-10",
-        header: (
-          <input
-            type="checkbox"
-            checked={allSelected}
-            ref={(el) => {
-              if (el) el.indeterminate = someSelected;
-            }}
-            onChange={toggleAll}
-            aria-label="Select all"
-            className={checkboxCls}
-          />
-        ),
-      },
-      { key: "patient", label: "Patient" },
-      { key: "patientId", label: "Patient ID" },
-      { key: "dob", label: "Date of Birth" },
-      { key: "gender", label: "Gender" },
-      { key: "contact", label: "Contact" },
-      { key: "insurance", label: "Insurance" },
-      { key: "status", label: "Status" },
-      { key: "lastVisit", label: "Last Visit" },
-      {
-        key: "actions",
-        label: "Actions",
-        header: (
-          <div className="flex w-full items-center justify-center">Actions</div>
-        ),
-      },
-    ],
-    [allSelected, someSelected]
-  );
+  const columns: TableColumn[] = [
+    {
+      key: "select",
+      label: "",
+      className: "w-10",
+      header: (
+        <input
+          type="checkbox"
+          checked={allSelected}
+          ref={(checkboxElement) => {
+            if (checkboxElement) checkboxElement.indeterminate = someSelected;
+          }}
+          onChange={toggleSelectAll}
+          aria-label="Select all"
+          className={checkboxCls}
+        />
+      ),
+    },
+    { key: "patient", label: "Patient" },
+    { key: "patientId", label: "Patient ID" },
+    { key: "dob", label: "Date of Birth" },
+    { key: "gender", label: "Gender" },
+    { key: "contact", label: "Contact" },
+    { key: "status", label: "Status" },
+    {
+      key: "actions",
+      label: "Actions",
+      header: <div className="flex w-full items-center justify-center">Actions</div>,
+    },
+  ];
 
-  /* Rows — checkboxes controlled by `selected` */
-  const rows = useMemo(
-    () =>
-      PATIENTS.map((p) => ({
-        select: (
-          <input
-            type="checkbox"
-            checked={selected.has(p.patientId)}
-            onChange={() => toggleOne(p.patientId)}
-            aria-label={`Select ${p.name}`}
-            className={checkboxCls}
-          />
-        ),
-        patient: (
-          <Name
-            name={p.name}
-            sub={`${p.age} years • ${p.gender}`}
-            subIcon={<Stethoscope className="hidden h-0 w-0" />}
-          />
-        ),
-        patientId: <Content title={p.patientId} />,
-        dob: <Content title={p.dob} />,
-        gender: <Content title={p.gender} />,
-        contact: <Content title={p.phone} description={p.email} />,
-        insurance: (
-          <Content
-            title={p.insurance.split(" ")[0]}
-            description={p.insurance.split(" ").slice(1).join(" ")}
-          />
-        ),
-        status: <Tags text={p.status} tone={p.tone} />,
-        lastVisit: (
-          <DateTime
-            date={p.lastVisitDate}
-            sub={p.lastVisitDoctor}
-            icon={<Clock className="h-3.5 w-3.5" />}
-          />
-        ),
-        actions: (
-          <div className="flex w-full items-center justify-center">
-            <Actions onAction={(a) => console.log("action:", a, p.name)} />
-          </div>
-        ),
-      })),
-    [selected]
-  );
+  const rows = patients.map((patient) => {
+    const fullName = getPatientFullName(patient);
+    const genderLabel = humanizeEnum(patient.administrativeGender);
+    return {
+      select: (
+        <input
+          type="checkbox"
+          checked={selectedPatientIds.has(patient.id)}
+          onChange={() => togglePatientSelection(patient.id)}
+          aria-label={`Select ${fullName}`}
+          className={checkboxCls}
+        />
+      ),
+      patient: (
+        <Name
+          name={fullName}
+          sub={`${calculateAgeInYears(patient.dateOfBirth)} years • ${genderLabel}`}
+        />
+      ),
+      patientId: <Content title={patient.medicalRecordNumber} />,
+      dob: <Content title={formatDateOnly(patient.dateOfBirth)} />,
+      gender: <Content title={genderLabel} />,
+      contact: (
+        <Content title={patient.phoneNumber ?? "—"} description={patient.email ?? undefined} />
+      ),
+      status: <Tags text={humanizeEnum(patient.status)} tone={STATUS_TONES[patient.status]} />,
+      actions: (
+        <div className="flex w-full items-center justify-center">
+          {/* View / edit screens are not built yet */}
+          <Actions onAction={() => undefined} />
+        </div>
+      ),
+    };
+  });
+
+  /* ---------- Table body state ---------- */
+  const isFirstLoad = patientList.status === "pending" && patients.length === 0;
+  const renderTableBody = () => {
+    if (patientList.status === "failed") {
+      return (
+        <TableStatus
+          variant="error"
+          message={patientList.error?.message}
+          onRetry={() => dispatch(fetchPatients(listQuery))}
+        />
+      );
+    }
+    if (isFirstLoad || patientList.status === "idle") {
+      return <TableStatus variant="loading" message="Loading patients…" />;
+    }
+    if (patients.length === 0) {
+      return <TableStatus variant="empty" message="No patients match your filters." />;
+    }
+    return (
+      <div className={patientList.status === "pending" ? "opacity-60 transition-opacity" : ""}>
+        <Table columns={columns} rows={rows} />
+      </div>
+    );
+  };
 
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-4 sm:space-y-5">
       {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Patients" },
-        ]}
-      />
+      <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Patients" }]} />
 
       {/* Title + actions */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-base font-semibold text-heading sm:text-lg 2xl:text-2xl">Patients</h2>
-          <p className="mt-0.5 text-sm text-body">
-            Manage patient records, registration and profiles.
-          </p>
+          <p className="mt-0.5 text-sm text-body">Manage patient records, registration and profiles.</p>
         </div>
 
         {/* Buttons — side by side on phones, no wrapping */}
-<div className="flex flex-row gap-2">
-  <ImportButton className="shrink-0 whitespace-nowrap" />
-  <AddButton
-    text="Add Patient"
-    onClick={() => router.push("/add-patient")}
-    className="shrink-0 whitespace-nowrap"
-  />
-</div>
+        <div className="flex flex-row gap-2">
+          <ImportButton className="shrink-0 whitespace-nowrap" />
+          <AddButton
+            text="Add Patient"
+            onClick={() => router.push("/add-patient")}
+            className="shrink-0 whitespace-nowrap"
+          />
+        </div>
       </div>
 
       {/* Search + filters */}
       <SearchAndFilter
         placeholder="Search by name, email, phone or patient ID..."
-        filters={FILTERS}
+        filters={PATIENT_FILTERS}
+        value={listQuery.search}
+        onSearch={setSearchInput}
+        selectedFilters={selectedFilters}
+        onFilterChange={handleFilterChange}
+        showDateRange={false}
       />
 
       {/* Stat cards */}
-      <StatCards stats={STATS} />
+      <StatCards stats={stats} />
 
       {/* Table */}
       <div className="space-y-3">
         <div className="overflow-hidden rounded-[14px] border border-border bg-card">
-          <Table columns={columns} rows={rows} />
+          {renderTableBody()}
         </div>
 
         {/* Pagination */}
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          totalItems={TOTAL_PATIENTS}
-          pageSize={PAGE_SIZE}
-          onChange={setPage}
-        />
+        {pagination && pagination.totalItems > 0 && (
+          <Pagination
+            page={listQuery.page}
+            totalPages={Math.max(pagination.totalPages, 1)}
+            totalItems={pagination.totalItems}
+            pageSize={listQuery.limit}
+            onChange={(nextPage) => dispatch(setPatientPage(nextPage))}
+          />
+        )}
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import Patient from "@/patient/Patient";
 import AddPatient from "@/patient/AddPatient";
 import Providers from "@/providers/Providers";
 import AddProvider from "@/providers/AddProvider";
+import { PERMISSIONS, type PermissionCode } from "@/auth/permissions";
 
 /**
  * protected → signed-in only · guest → signed-out only · public → anyone
@@ -19,6 +20,8 @@ export interface RouteConfig {
   access: RouteAccess;
   /** If set, the page is wrapped in MainLayout with this title */
   title?: string;
+  /** Protected pages only: signed-in users without it are sent to the dashboard. */
+  requiredPermission?: PermissionCode;
 }
 
 const LoginPage = () => <AuthPage variant="login" />;
@@ -39,9 +42,34 @@ export const ROUTES: Record<string, RouteConfig> = {
 
   // App (inside MainLayout)
   dashboard: { component: Dashboard, title: "Dashboard", access: "protected" },
-  patients: { component: Patient, title: "Patients", access: "protected" },
-  "add-patient": { component: AddPatient, title: "Add Patient", access: "protected" },
-  providers: { component: Providers, title: "Providers", access: "protected" },
-  "add-provider": { component: AddProvider, title: "Add Provider", access: "protected" },
-  "view-provider": { component: ViewProvider, title: "View Provider", access: "protected" },
+  patients: {
+    component: Patient,
+    title: "Patients",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PATIENT_READ,
+  },
+  "add-patient": {
+    component: AddPatient,
+    title: "Add Patient",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PATIENT_CREATE,
+  },
+  providers: {
+    component: Providers,
+    title: "Providers",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+  },
+  "add-provider": {
+    component: AddProvider,
+    title: "Add Provider",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRACTITIONER_MANAGE,
+  },
+  "view-provider": {
+    component: ViewProvider,
+    title: "View Provider",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+  },
 };

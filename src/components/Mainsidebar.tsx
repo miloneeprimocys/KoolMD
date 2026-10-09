@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
@@ -31,8 +31,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { FaShieldAlt } from "react-icons/fa";
+import { useAppSelector } from "@/hooks/useAppHooks";
+import { selectPermissionCodes } from "@/redux/selectors/authSelectors";
+import { PERMISSIONS, type PermissionCode } from "@/auth/permissions";
 
-type SubItem = { label: string; href: string; Icon: LucideIcon };
+type SubItem = {
+  label: string;
+  href: string;
+  Icon: LucideIcon;
+  requiredPermission?: PermissionCode;
+};
 
 type NavItem = {
   label: string;
@@ -40,6 +48,8 @@ type NavItem = {
   Icon: LucideIcon;
   children?: SubItem[];
   badge?: number; // red dot / count badge
+  /** Hidden for users without this backend permission; undefined = visible to everyone. */
+  requiredPermission?: PermissionCode;
 };
 
 /* ---------- Section groupings (matches the screenshot) ---------- */
@@ -57,11 +67,36 @@ const SECTIONS: NavSection[] = [
   {
     title: "PATIENTS & PROVIDERS",
     items: [
-      { label: "Patients", href: "/patients", Icon: Users },
-      { label: "Providers", href: "/providers", Icon: BookUser },
-      { label: "Appointments", href: "/appointments", Icon: CalendarDays },
-      { label: "Encounters", href: "/encounters", Icon: FileText },
-      { label: "Prescriptions", href: "/prescriptions", Icon: Receipt },
+      {
+        label: "Patients",
+        href: "/patients",
+        Icon: Users,
+        requiredPermission: PERMISSIONS.PATIENT_READ,
+      },
+      {
+        label: "Providers",
+        href: "/providers",
+        Icon: BookUser,
+        requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+      },
+      {
+        label: "Appointments",
+        href: "/appointments",
+        Icon: CalendarDays,
+        requiredPermission: PERMISSIONS.APPOINTMENT_READ,
+      },
+      {
+        label: "Encounters",
+        href: "/encounters",
+        Icon: FileText,
+        requiredPermission: PERMISSIONS.ENCOUNTER_READ,
+      },
+      {
+        label: "Prescriptions",
+        href: "/prescriptions",
+        Icon: Receipt,
+        requiredPermission: PERMISSIONS.PRESCRIPTION_READ,
+      },
       { label: "Referrals", href: "/referrals", Icon: Send },
     ],
   },
@@ -76,7 +111,12 @@ const SECTIONS: NavSection[] = [
   {
     title: "ADMINISTRATION",
     items: [
-      { label: "Staff Management", href: "/staff", Icon: UserCog },
+      {
+        label: "Staff Management",
+        href: "/staff",
+        Icon: UserCog,
+        requiredPermission: PERMISSIONS.STAFF_READ,
+      },
       { label: "Settings", href: "/settings", Icon: Settings },
     ],
   },
@@ -153,8 +193,36 @@ type MainSidebarProps = {
   onToggleMini: () => void;
 };
 
+/** Drops items (and sub-items) the user lacks permission for, then any section left empty. */
+const filterSectionsByPermission = (
+  sections: NavSection[],
+  permissionCodes: string[],
+): NavSection[] => {
+  const canSee = (requiredPermission?: PermissionCode) =>
+    !requiredPermission || permissionCodes.includes(requiredPermission);
+
+  return sections
+    .map((section) => ({
+      ...section,
+      items: section.items
+        .filter((item) => canSee(item.requiredPermission))
+        .map((item) =>
+          item.children
+            ? { ...item, children: item.children.filter((child) => canSee(child.requiredPermission)) }
+            : item,
+        ),
+    }))
+    .filter((section) => section.items.length > 0);
+};
+
 const MainSidebar = ({ isMini, onToggleMini }: MainSidebarProps) => {
   const pathname = usePathname();
+  const permissionCodes = useAppSelector(selectPermissionCodes);
+  // Recomputed only when the signed-in user's permissions change.
+  const visibleSections = useMemo(
+    () => filterSectionsByPermission(SECTIONS, permissionCodes),
+    [permissionCodes],
+  );
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
     Object.fromEntries(
       SECTIONS.flatMap((s) => s.items)
@@ -237,7 +305,7 @@ const handleToggleMini = () => {
           isMini ? "px-2" : "px-3 lg:px-4"
         }`}
       >
-        {SECTIONS.map((section, sIdx) => (
+        {visibleSections.map((section, sIdx) => (
           <div key={section.title ?? `section-${sIdx}`} className={sIdx > 0 ? "mt-5" : ""}>
             {/* Section label */}
             {section.title && !isMini && (

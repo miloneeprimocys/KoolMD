@@ -3,15 +3,21 @@
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/hooks/useAppHooks";
-import { selectSessionStatus } from "@/redux/selectors/authSelectors";
+import { selectCurrentUser, selectSessionStatus } from "@/redux/selectors/authSelectors";
 import type { SessionStatus } from "@/redux/slices/authSlice";
 import type { RouteAccess } from "@/app/routes";
+import { hasPermission, type PermissionCode } from "./permissions";
 
 export const LOGIN_PATH = "/auth/login";
 export const HOME_PATH = "/dashboard";
 
-function getRedirectPath(access: RouteAccess, sessionStatus: SessionStatus): string | null {
+function getRedirectPath(
+  access: RouteAccess,
+  sessionStatus: SessionStatus,
+  isPermitted: boolean,
+): string | null {
   if (access === "protected" && sessionStatus === "unauthenticated") return LOGIN_PATH;
+  if (access === "protected" && sessionStatus === "authenticated" && !isPermitted) return HOME_PATH;
   if (access === "guest" && sessionStatus === "authenticated") return HOME_PATH;
   return null;
 }
@@ -25,6 +31,8 @@ const FullScreenLoader = () => (
 
 interface RouteGuardProps {
   access: RouteAccess;
+  /** Protected routes only — missing it redirects to the dashboard. */
+  requiredPermission?: PermissionCode;
   children: ReactNode;
 }
 
@@ -32,10 +40,15 @@ interface RouteGuardProps {
  * protected → signed-in users only · guest → signed-out users only (login, register…)
  * public    → everyone (email-verification / reset links must open in any state)
  */
-const RouteGuard = ({ access, children }: RouteGuardProps) => {
+const RouteGuard = ({ access, requiredPermission, children }: RouteGuardProps) => {
   const router = useRouter();
   const sessionStatus = useAppSelector(selectSessionStatus);
-  const redirectPath = getRedirectPath(access, sessionStatus);
+  const currentUser = useAppSelector(selectCurrentUser);
+  const redirectPath = getRedirectPath(
+    access,
+    sessionStatus,
+    hasPermission(currentUser, requiredPermission),
+  );
   const isSessionResolving = sessionStatus === "idle" || sessionStatus === "restoring";
 
   useEffect(() => {
