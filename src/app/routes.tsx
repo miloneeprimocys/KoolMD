@@ -43,5 +43,5 @@ export const ROUTES: Record<string, RouteConfig> = {
   "add-patient": { component: AddPatient, title: "Add Patient", access: "protected" },
   providers: { component: Providers, title: "Providers", access: "protected" },
   "add-provider": { component: AddProvider, title: "Add Provider", access: "protected" },
-  "view-provider": { component: ViewProvider, title: "View Provider" },
+  "view-provider": { component: ViewProvider, title: "View Provider", access: "protected" },
 };
