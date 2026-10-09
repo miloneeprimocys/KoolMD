@@ -16,7 +16,7 @@ const Table = ({ columns, rows, fillHeight = false }: TableProps) => {
       }`}
     >
       <div
-        className={`hide-scrollbar min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-[14px] ${
+        className={`min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-[14px] custom-scrollbar ${
           fillHeight ? "2xl:flex-1" : ""
         }`}
       >

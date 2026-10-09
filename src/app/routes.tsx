@@ -7,6 +7,7 @@ import Patient from "@/patient/Patient";
 import AddPatient from "@/patient/AddPatient";
 import Providers from "@/providers/Providers";
 import AddProvider from "@/providers/AddProvider";
+import ViewProvider from "@/providers/viewproviders/Viewprovider";
 
 export interface RouteConfig {
   component: ComponentType;
@@ -27,4 +28,5 @@ export const ROUTES: Record<string, RouteConfig> = {
   "add-patient": { component: AddPatient, title: "Add Patient" },
   providers: { component: Providers, title: "Providers" },
   "add-provider": { component: AddProvider, title: "Add Provider" },
+  "view-provider": { component: ViewProvider, title: "View Provider" },
 };

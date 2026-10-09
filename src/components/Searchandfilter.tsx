@@ -1,44 +1,163 @@
 "use client";
 
-import React, { useState } from "react";
-import { Calendar, Search, SlidersHorizontal } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Calendar, Search, SlidersHorizontal, X } from "lucide-react";
 
 import SignupDropdown from "./SignupDropdown";
+import DatePicker from "./Datepicker";
 
 type Filter = { label: string; options: string[] };
 
-type SearchAndFilterProps = {
+export interface DateRange {
+  start: string;
+  end: string;
+}
+
+export interface SearchAndFilterProps {
   placeholder?: string;
   filters?: Filter[];
-};
+  value?: string;
+  onSearch?: (value: string) => void;
+  onFilterChange?: (filterLabel: string, option: string) => void;
+  showDateRange?: boolean;
+  dateRange?: DateRange;
+  onDateRangeChange?: (range: DateRange) => void;
+  onMoreFilters?: () => void;
+  className?: string;
+}
 
 const searchCls =
   "h-11 w-full rounded-lg border border-border bg-card pl-10 pr-4 text-sm text-heading outline-none transition-colors duration-200 placeholder:text-placeholder hover:border-primary/40 focus:border-primary";
 
+const formatDateLabel = (isoDate: string) => {
+  if (!isoDate) return "";
+  const [y, m, d] = isoDate.split("-").map(Number);
+  if (!y || !m || !d) return isoDate;
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  });
+};
+
+const DEFAULT_DATE_RANGE: DateRange = { start: "", end: "" };
+
 const SearchAndFilter = ({
   placeholder = "Search...",
   filters = [],
+  value = "",
+  onSearch,
+  onFilterChange,
+  showDateRange = true,
+  dateRange = DEFAULT_DATE_RANGE,
+  onDateRangeChange,
+  onMoreFilters,
+  className = "",
 }: SearchAndFilterProps) => {
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [searchTerm, setSearchTerm] = useState(value);
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+  const [localDates, setLocalDates] = useState<DateRange>(dateRange);
+
+  const datePopoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (dateRange) {
+      setLocalDates((prev) => {
+        if (prev.start === dateRange.start && prev.end === dateRange.end) {
+          return prev;
+        }
+        return { start: dateRange.start || "", end: dateRange.end || "" };
+      });
+    }
+  }, [dateRange?.start, dateRange?.end]);
+
+  // Click outside to close date popover
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (
+        datePopoverRef.current &&
+        !datePopoverRef.current.contains(e.target as Node)
+      ) {
+        setDatePopoverOpen(false);
+      }
+    };
+    if (datePopoverOpen) {
+      document.addEventListener("mousedown", onDocClick);
+    }
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [datePopoverOpen]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchTerm(val);
+    onSearch?.(val);
+  };
+
+  const handleFilterSelect = (filterLabel: string, opt: string) => {
+    const nextVal = opt === "all" ? "" : opt;
+    setFilterValues((prev) => ({ ...prev, [filterLabel]: nextVal }));
+    onFilterChange?.(filterLabel, nextVal);
+  };
+
+  const handleApplyDates = () => {
+    onDateRangeChange?.(localDates);
+    setDatePopoverOpen(false);
+  };
+
+  const handleClearDates = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const empty = { start: "", end: "" };
+    setLocalDates(empty);
+    onDateRangeChange?.(empty);
+  };
+
+  const hasActiveDateRange = Boolean(localDates.start || localDates.end);
+  const dateRangeDisplay = hasActiveDateRange
+    ? `${formatDateLabel(localDates.start) || "Start"} - ${
+        formatDateLabel(localDates.end) || "End"
+      }`
+    : "Date Range";
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 lg:flex-row lg:items-center">
+    <div
+      className={`flex w-full flex-col gap-3 rounded-xl border border-border bg-card p-3 xl:flex-row xl:items-center ${className}`}
+    >
       {/* Search */}
-      <div className="relative min-w-0 lg:flex-1">
+      <div className="relative min-w-0 flex-1">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-body" />
-        <input type="text" placeholder={placeholder} className={searchCls} />
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className={searchCls}
+        />
+        {searchTerm && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchTerm("");
+              onSearch?.("");
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-body hover:text-heading cursor-pointer"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
-      {/* Filters */}
-      {filters.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0">
+      {/* Dropdown Filters + Date Range + More Filters */}
+      {(filters.length > 0 || showDateRange) && (
+        <div className="flex flex-wrap gap-2 xl:shrink-0 xl:flex-nowrap xl:items-center">
           {filters.map((f) => (
-            <div key={f.label} className="w-full lg:w-40">
+            <div key={f.label} className="min-w-[8rem] flex-1 xl:w-40 xl:flex-none">
               <SignupDropdown
                 id={f.label}
                 placeholder={f.label}
-                value={values[f.label]}
-                onChange={(v) => setValues((s) => ({ ...s, [f.label]: v }))}
+                value={filterValues[f.label]}
+                onChange={(v) => handleFilterSelect(f.label, v)}
                 options={[
                   { value: "all", label: "All" },
                   ...f.options.map((o) => ({ value: o, label: o })),
@@ -48,22 +167,94 @@ const SearchAndFilter = ({
             </div>
           ))}
 
-          {/* Date Range button (static label to match the screenshot) */}
-          <div className="w-full lg:w-44">
-            <button
-              type="button"
-              className="flex h-11 w-full cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-3.5 text-sm text-heading transition-colors duration-200 hover:border-primary/40 hover:text-primary"
-            >
-              <Calendar className="h-4 w-4 text-body" />
-              <span>Date Range</span>
-            </button>
-          </div>
+          {/* Interactive Date Range Button with DatePicker popover */}
+          {showDateRange && (
+            <div className="relative min-w-[8rem] flex-1 xl:w-auto xl:flex-none" ref={datePopoverRef}>
+              <button
+                type="button"
+                onClick={() => setDatePopoverOpen((o) => !o)}
+                className={`flex h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-lg border px-3.5 text-xs sm:text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
+                  hasActiveDateRange || datePopoverOpen
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-border bg-card text-heading hover:border-primary/40 hover:text-primary"
+                }`}
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <Calendar className="h-4 w-4 shrink-0 text-body" />
+                  <span className="truncate">{dateRangeDisplay}</span>
+                </div>
+
+                {hasActiveDateRange && (
+                  <span
+                    onClick={handleClearDates}
+                    className="ml-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-body hover:bg-heading/10 hover:text-heading"
+                    title="Clear date range"
+                  >
+                    <X className="h-3 w-3" />
+                  </span>
+                )}
+              </button>
+
+              {/* DatePicker popover */}
+              {datePopoverOpen && (
+                <div className="absolute right-0 top-full z-[120] mt-2 w-72 sm:w-80 rounded-2xl border border-border bg-card p-4 shadow-2xl ring-1 ring-border/60 animate-in fade-in zoom-in-95">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-heading">
+                    Select Date Range
+                  </p>
+                  <div className="space-y-3">
+                    <DatePicker
+                      label="From Date"
+                      placeholder="Start date"
+                      value={localDates.start}
+                      onChange={(v) =>
+                        setLocalDates((prev) => ({ ...prev, start: v }))
+                      }
+                      align="left"
+                    />
+                    <DatePicker
+                      label="To Date"
+                      placeholder="End date"
+                      value={localDates.end}
+                      minDate={localDates.start || undefined}
+                      onChange={(v) =>
+                        setLocalDates((prev) => ({ ...prev, end: v }))
+                      }
+                      align="right"
+                    />
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-end gap-2 border-t border-divider pt-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const empty = { start: "", end: "" };
+                        setLocalDates(empty);
+                        onDateRangeChange?.(empty);
+                        setDatePopoverOpen(false);
+                      }}
+                      className="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-body hover:bg-heading/5 hover:text-heading"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleApplyDates}
+                      className="cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-hover shadow-xs"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* More Filters button */}
-          <div className="w-full lg:w-40">
+          <div className="min-w-[8rem] flex-1 xl:w-36 xl:flex-none">
             <button
               type="button"
-              className="flex h-11 w-full cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-3.5 text-sm text-heading transition-colors duration-200 hover:border-primary/40 hover:text-primary"
+              onClick={onMoreFilters}
+              className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-card px-3.5 text-xs sm:text-sm font-medium text-heading transition-colors duration-200 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               <SlidersHorizontal className="h-4 w-4 text-body" />
               <span>More Filters</span>

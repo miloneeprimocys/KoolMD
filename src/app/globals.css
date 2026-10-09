@@ -347,6 +347,29 @@ optgroup {
   background: transparent;
   display: none;
 }
+
+/* ==========================================================================
+   Custom visible scrollbar
+   Usage: <div class="custom-scrollbar overflow-x-auto">…</div>
+   ========================================================================== */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
 /* Continuous shine loop (used by "selected" quick-action / global button) */
 @keyframes shineLoop {
   0%   { transform: translateX(-120%) skewX(-12deg); opacity: 0; }
