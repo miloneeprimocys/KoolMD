@@ -12,6 +12,7 @@ import AddProvider from "@/providers/AddProvider";
  * protected → signed-in only · guest → signed-out only · public → anyone
  */
 export type RouteAccess = "protected" | "guest" | "public";
+import ViewProvider from "@/providers/viewproviders/Viewprovider";
 
 export interface RouteConfig {
   component: ComponentType;
@@ -42,4 +43,5 @@ export const ROUTES: Record<string, RouteConfig> = {
   "add-patient": { component: AddPatient, title: "Add Patient", access: "protected" },
   providers: { component: Providers, title: "Providers", access: "protected" },
   "add-provider": { component: AddProvider, title: "Add Provider", access: "protected" },
+  "view-provider": { component: ViewProvider, title: "View Provider" },
 };

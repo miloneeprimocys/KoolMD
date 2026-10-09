@@ -56,6 +56,7 @@ const AuthPage = ({ variant }: AuthPageProps) => {
         </div>
       </div>
     </main>
+ 
   );
 };
 

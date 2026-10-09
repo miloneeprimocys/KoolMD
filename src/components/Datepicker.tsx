@@ -35,6 +35,8 @@ export interface DatePickerProps {
   onBlur?: () => void;
   /** Space needed below the field before the popover flips upward (desktop) */
   minSpaceBelow?: number;
+  /** Horizontal alignment: 'left', 'right', or 'auto' (detects screen/container edge) */
+  align?: "left" | "right" | "auto";
 }
 
 /* ---------------------------------------------------------------- */
@@ -105,6 +107,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       maxDate,
       onBlur,
       minSpaceBelow = 400,
+      align = "auto",
     },
     ref,
   ) => {
@@ -115,6 +118,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
     const [viewMonth, setViewMonth] = useState(() => new Date().getMonth());
     const [yearPageStart, setYearPageStart] = useState(0);
     const [placement, setPlacement] = useState<"down" | "up">("down");
+    const [horizontalAlign, setHorizontalAlign] = useState<"left" | "right">("left");
 
     const wrapRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -161,7 +165,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       onBlur?.();
     }, [onBlur]);
 
-    /* ---- Desktop placement (flip up if no room below) ---- */
+    /* ---- Desktop placement (flip up if no room below & flip horizontal if no room on right) ---- */
     const computePlacement = useCallback(() => {
       const el = triggerRef.current;
       if (!el) return;
@@ -171,7 +175,19 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       setPlacement(
         spaceBelow < minSpaceBelow && spaceAbove > spaceBelow ? "up" : "down",
       );
-    }, [minSpaceBelow]);
+
+      if (align === "left" || align === "right") {
+        setHorizontalAlign(align);
+      } else {
+        // Popover width is ~320px. Check distance to right edge of viewport
+        const spaceRight = window.innerWidth - rect.left;
+        if (spaceRight < 340) {
+          setHorizontalAlign("right");
+        } else {
+          setHorizontalAlign("left");
+        }
+      }
+    }, [minSpaceBelow, align]);
 
     useLayoutEffect(() => {
       if (open && !isMobile) computePlacement();
@@ -519,7 +535,9 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
           {/* Desktop popover */}
           {open && !disabled && !isMobile && (
             <div
-              className={`absolute left-0 z-[100] w-[320px] max-w-[calc(100vw-2rem)] shadow-2xl shadow-black/20 dark:shadow-black/60 animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both] ${
+              className={`absolute z-[100] w-[310px] sm:w-[320px] max-w-[calc(100vw-2rem)] shadow-2xl shadow-black/20 dark:shadow-black/60 animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both] ${
+                horizontalAlign === "right" ? "right-0" : "left-0"
+              } ${
                 placement === "down" ? "top-full mt-1.5" : "bottom-full mb-1.5"
               }`}
             >
