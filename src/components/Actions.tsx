@@ -1,7 +1,7 @@
 import React from "react";
-import { Eye, SquarePen, Trash2 } from "lucide-react";
+import { Eye, SquarePen, Trash2, Download } from "lucide-react";
 
-export type ActionType = "view" | "edit" | "delete";
+export type ActionType = "view" | "edit" | "delete" | "download";
 
 const CONFIG = {
   view: {
@@ -18,6 +18,11 @@ const CONFIG = {
     Icon: Trash2,
     label: "Delete",
     hover: "hover:bg-danger/10 hover:text-danger",
+  },
+  download: {
+    Icon: Download,
+    label: "Download",
+    hover: "hover:bg-primary/10 hover:text-primary",
   },
 } as const;
 

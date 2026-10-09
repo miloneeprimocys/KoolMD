@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MainSidebar from "../components/Mainsidebar";
 import MainHeader from "../components/Mainheader";
 
@@ -9,8 +9,53 @@ interface MainLayoutProps {
   title?: string;
 }
 
+// Global cache to maintain mini state across client-side page navigations
+let cachedIsMini: boolean | null = null;
+
+const getInitialIsMini = (): boolean => {
+  if (cachedIsMini !== null) return cachedIsMini;
+  if (typeof window !== "undefined") {
+    try {
+      const saved = localStorage.getItem("koolmd_sidebar_mini");
+      if (saved !== null) {
+        cachedIsMini = JSON.parse(saved);
+        return cachedIsMini!;
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
+  return false;
+};
+
 const MainLayout = ({ children, title }: MainLayoutProps) => {
-  const [isMini, setIsMini] = useState(false);
+  const [isMini, setIsMini] = useState<boolean>(getInitialIsMini);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("koolmd_sidebar_mini");
+      if (saved !== null) {
+        const parsed = JSON.parse(saved);
+        cachedIsMini = parsed;
+        setIsMini(parsed);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  const handleToggleMini = () => {
+    setIsMini((prev) => {
+      const next = !prev;
+      cachedIsMini = next;
+      try {
+        localStorage.setItem("koolmd_sidebar_mini", JSON.stringify(next));
+      } catch {
+        // Ignore localStorage errors
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="relative flex h-screen w-full overflow-hidden bg-page text-heading">
@@ -24,7 +69,7 @@ const MainLayout = ({ children, title }: MainLayoutProps) => {
 
       <MainSidebar
         isMini={isMini}
-        onToggleMini={() => setIsMini((m) => !m)}
+        onToggleMini={handleToggleMini}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">

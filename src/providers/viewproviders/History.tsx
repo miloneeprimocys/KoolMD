@@ -297,7 +297,7 @@ const History = ({
       <StatCards stats={stats} />
 
       {/* Search + filters + date range */}
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-start 2xl:items-center">
         <div className="min-w-0 flex-1">
           <SearchAndFilter
             placeholder="Search by document, type or reference..."

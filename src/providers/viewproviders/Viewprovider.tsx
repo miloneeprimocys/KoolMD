@@ -2,10 +2,8 @@
 
 import React, { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 
 import Breadcrumb from "@/components/Breadcrumb";
-import ImportButton from "@/components/ImportButton";
 import Tags from "@/components/Tags";
 import SuccessToast from "@/components/SuccessToast";
 
@@ -371,7 +369,7 @@ const ViewProvider = () => {
 
       {/* Main content — smoothly gives margin/space to the right panel when docked on 2xl+ */}
       <div
-        className={`min-w-0 w-full max-w-[1600px] space-y-4 sm:space-y-5 transition-all duration-300 ${
+        className={`mx-auto min-w-0 w-full max-w-[1600px] space-y-4 sm:space-y-5 transition-all duration-300 ${
           panel ? "2xl:pr-[460px]" : ""
         }`}
       >

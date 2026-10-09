@@ -257,7 +257,7 @@ const ViewLicenses = ({
       <StatCards stats={stats} />
 
       {/* Search + filters + add */}
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-start 2xl:items-center">
         <div className="min-w-0 flex-1">
           <SearchAndFilter
             placeholder="Search by license number, state, type..."
