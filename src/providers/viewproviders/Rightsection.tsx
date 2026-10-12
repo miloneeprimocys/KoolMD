@@ -23,7 +23,7 @@ import DatePicker from "@/components/Datepicker";
 import { LICENSE_TYPES, LICENSE_STATES } from "./ViewLicenses";
 import { DOCUMENT_TYPES } from "./Documents";
 import type { VerificationDetail, VerificationRow } from "./History";
-import type { ProviderRow } from "@/providers/viewproviders/providerMockData";
+import type { ProviderSummary } from "./providerDetailMappers";
 
 /* ---------- Public types ---------- */
 export type PanelState =
@@ -56,18 +56,24 @@ export type SavedDocumentPayload = {
 type Props = {
   panel: PanelState;
   onClose: () => void;
-  onSaveLicense?: (data: SavedLicensePayload) => void;
-  onSaveDocument?: (data: SavedDocumentPayload) => void;
-  provider?: ProviderRow;
+  /** Resolves true when saved — the panel closes only then (stays open to retry on error). */
+  onSaveLicense?: (data: SavedLicensePayload) => Promise<boolean>;
+  onSaveDocument?: (data: SavedDocumentPayload) => Promise<boolean>;
+  onDownloadDocument?: (documentId: string) => void;
+  /** A save is in flight — disables the submit button. */
+  isSaving?: boolean;
+  provider?: ProviderSummary;
 };
 
 /* ---------- Add License ---------- */
 const LicenseForm = ({
   onCancel,
   onSave,
+  isSaving = false,
 }: {
   onCancel: () => void;
   onSave: (data: SavedLicensePayload) => void;
+  isSaving?: boolean;
 }) => {
   const [v, setV] = useState({
     type: "",
@@ -211,7 +217,12 @@ const LicenseForm = ({
       </div>
 
       {/* Sticky Bottom Actions */}
-      <PanelFooter cancel={onCancel} submit={submit} submitText="Save License" />
+      <PanelFooter
+        cancel={onCancel}
+        submit={submit}
+        submitText={isSaving ? "Saving…" : "Save License"}
+        isSubmitting={isSaving}
+      />
     </>
   );
 };
@@ -220,9 +231,11 @@ const LicenseForm = ({
 const DocumentForm = ({
   onCancel,
   onSave,
+  isSaving = false,
 }: {
   onCancel: () => void;
   onSave: (data: SavedDocumentPayload) => void;
+  isSaving?: boolean;
 }) => {
   const [v, setV] = useState({
     name: "",
@@ -342,7 +355,12 @@ const DocumentForm = ({
       </div>
 
       {/* Sticky Bottom Actions */}
-      <PanelFooter cancel={onCancel} submit={submit} submitText="Upload Document" />
+      <PanelFooter
+        cancel={onCancel}
+        submit={submit}
+        submitText={isSaving ? "Uploading…" : "Upload Document"}
+        isSubmitting={isSaving}
+      />
     </>
   );
 };
@@ -377,7 +395,13 @@ const DetailItem = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-const VerificationDetails = ({ row }: { row: VerificationRow }) => {
+const VerificationDetails = ({
+  row,
+  onDownloadDocument,
+}: {
+  row: VerificationRow;
+  onDownloadDocument?: (documentId: string) => void;
+}) => {
   const d = buildDetail(row);
   const last = d.timeline.length - 1;
 
@@ -466,14 +490,16 @@ const VerificationDetails = ({ row }: { row: VerificationRow }) => {
           <p className="truncate text-xs font-semibold text-heading">{d.fileName}</p>
           <p className="text-[11px] text-body">{d.fileSize}</p>
         </div>
-        <button
-          type="button"
-          aria-label={`Download ${d.fileName}`}
-          onClick={() => console.log("Downloading", d.fileName)}
-          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-        >
-          <Download className="h-4 w-4" />
-        </button>
+        {d.documentId && onDownloadDocument && (
+          <button
+            type="button"
+            aria-label={`Download ${d.fileName}`}
+            onClick={() => onDownloadDocument(d.documentId!)}
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          >
+            <Download className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -484,22 +510,11 @@ const ProviderProfile = ({
   provider,
   onClose,
 }: {
-  provider?: ProviderRow;
+  provider?: ProviderSummary;
   onClose: () => void;
 }) => {
-  const p = provider || {
-    name: "Dr. Michael Brown",
-    credential: "MD",
-    specialty: "Internal Medicine",
-    npi: "1234567890",
-    dea: "AB1234567",
-    clinic: "Main Clinic",
-    city: "New York, NY",
-    email: "michael.brown@koolmd.com",
-    phone: "+1 (555) 123-4567",
-    address: "123 Medical Center Dr, New York, NY 10001",
-    status: "Active",
-  };
+  if (!provider) return null;
+  const p = provider;
 
   const init = p.name
     .replace(/^Dr\.?\s+/i, "")
@@ -525,7 +540,7 @@ const ProviderProfile = ({
           <DetailItem label="NPI Number" value={p.npi} />
           <DetailItem label="DEA Number" value={p.dea || "N/A"} />
           <DetailItem label="Specialty" value={p.specialty} />
-          <DetailItem label="Status" value={`${p.status} Provider`} />
+          <DetailItem label="Status" value={p.status} />
         </div>
 
         {/* Contact Information */}
@@ -534,9 +549,9 @@ const ProviderProfile = ({
           <div className="space-y-3">
             <DetailItem
               label="Email"
-              value={p.email || `${p.name.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@koolmd.com`}
+              value={p.email}
             />
-            <DetailItem label="Phone" value={p.phone || "+1 (555) 123-4567"} />
+            <DetailItem label="Phone" value={p.phone} />
           </div>
         </div>
 
@@ -545,7 +560,7 @@ const ProviderProfile = ({
           <p className="mb-3 text-sm font-semibold text-heading">Practice Location</p>
           <div className="space-y-3">
             <DetailItem label="Clinic" value={p.clinic} />
-            <DetailItem label="Address" value={p.address || `${p.clinic}, ${p.city}`} />
+            <DetailItem label="Address" value={p.address} />
           </div>
         </div>
       </div>
@@ -560,15 +575,19 @@ const PanelFooter = ({
   submit,
   submitText,
   showSubmit = true,
+  isSubmitting = false,
 }: {
   cancel: () => void;
   submit: () => void;
   submitText: string;
   showSubmit?: boolean;
+  isSubmitting?: boolean;
 }) => (
   <div className={`grid gap-3 border-t border-border bg-card px-6 py-4 shrink-0 ${showSubmit ? "grid-cols-2" : "grid-cols-1"}`}>
     <ImportButton text="Cancel" icon={null} onClick={cancel} />
-    {showSubmit && <AddButton text={submitText} icon={null} onClick={submit} />}
+    {showSubmit && (
+      <AddButton text={submitText} icon={null} onClick={submit} disabled={isSubmitting} />
+    )}
   </div>
 );
 
@@ -597,6 +616,8 @@ const RightSection = ({
   onClose,
   onSaveLicense,
   onSaveDocument,
+  onDownloadDocument,
+  isSaving = false,
   provider,
 }: Props) => {
   // Close on Escape
@@ -649,23 +670,23 @@ const RightSection = ({
         {panel.type === "license" && (
           <LicenseForm
             onCancel={onClose}
-            onSave={(data) => {
-              onSaveLicense?.(data);
-              onClose();
+            isSaving={isSaving}
+            onSave={async (data) => {
+              if (await onSaveLicense?.(data)) onClose();
             }}
           />
         )}
         {panel.type === "document" && (
           <DocumentForm
             onCancel={onClose}
-            onSave={(data) => {
-              onSaveDocument?.(data);
-              onClose();
+            isSaving={isSaving}
+            onSave={async (data) => {
+              if (await onSaveDocument?.(data)) onClose();
             }}
           />
         )}
         {panel.type === "verification" && (
-          <VerificationDetails row={panel.row} />
+          <VerificationDetails row={panel.row} onDownloadDocument={onDownloadDocument} />
         )}
         {panel.type === "profile" && <ProviderProfile provider={provider} onClose={onClose} />}
       </aside>

@@ -79,7 +79,9 @@ async function sendRequest(
   { method = "GET", body, isAuthenticated = false, signal }: ApiRequestOptions,
 ): Promise<Response> {
   const headers: Record<string, string> = { Accept: "application/json" };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  // FormData (file uploads): the browser sets the multipart boundary itself.
+  const isMultipart = body instanceof FormData;
+  if (body !== undefined && !isMultipart) headers["Content-Type"] = "application/json";
 
   const accessToken = tokenStorage.getAccessToken();
   if (isAuthenticated && accessToken) headers.Authorization = `Bearer ${accessToken}`;
@@ -88,7 +90,7 @@ async function sendRequest(
     return await fetch(`${API_BASE_URL}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : isMultipart ? body : JSON.stringify(body),
       signal,
     });
   } catch (error) {
@@ -202,6 +204,24 @@ export async function apiPaginatedRequest<TItem>(
     throw new ApiError("Unexpected response from the server.", 0, "INVALID_RESPONSE");
   }
   return { items: envelope.data, pagination: envelope.meta.pagination };
+}
+
+/** Binary download (e.g. a document file) with the same auth / refresh handling. */
+export async function apiBlobRequest(
+  path: string,
+): Promise<{ blob: Blob; fileName: string | null }> {
+  const response = await sendWithSessionRecovery(path, { isAuthenticated: true });
+  if (!response.ok) {
+    const errorEnvelope = await readJsonSafely<ApiErrorEnvelope>(response);
+    throw toApiError(response.status, errorEnvelope);
+  }
+  const contentDisposition = response.headers.get("content-disposition") ?? "";
+  const encodedName = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition)?.[1];
+  const plainName = /filename="?([^";]+)"?/i.exec(contentDisposition)?.[1];
+  return {
+    blob: await response.blob(),
+    fileName: encodedName ? decodeURIComponent(encodedName) : (plainName ?? null),
+  };
 }
 
 /** Builds `?a=1&b=x`, skipping empty values so the backend applies its defaults. */

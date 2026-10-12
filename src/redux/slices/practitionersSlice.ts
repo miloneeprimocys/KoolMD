@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { PaginationMeta, RequestStatus } from "@/types/api";
 import type {
+  OrganizationLocation,
   Practitioner,
   PractitionerListQuery,
   PractitionerOnboardingStatus,
@@ -8,9 +9,11 @@ import type {
   SpecialtySummary,
 } from "@/types/practitioner";
 import {
+  fetchLocations,
   fetchPractitioners,
   fetchPractitionerStats,
   fetchSpecialties,
+  onboardProvider,
 } from "@/redux/thunks/practitionerThunks";
 import { toQueryKey, type RequestError } from "@/redux/thunks/thunkHelpers";
 import { logoutUser } from "@/redux/thunks/authThunks";
@@ -41,6 +44,16 @@ export interface PractitionersState {
     items: SpecialtySummary[];
     status: RequestStatus;
   };
+  /** Organization locations a provider can be assigned to. */
+  locations: {
+    items: OrganizationLocation[];
+    status: RequestStatus;
+  };
+  /** Add Provider request. */
+  create: {
+    status: RequestStatus;
+    error: RequestError | null;
+  };
 }
 
 const initialQuery: PractitionerListQuery = {
@@ -49,8 +62,9 @@ const initialQuery: PractitionerListQuery = {
   search: "",
   onboardingStatus: "",
   specialtyId: "",
-  sortBy: "lastName",
-  sortOrder: "asc", // A → Z (backend default is desc)
+  // Newest first, so a just-added provider is at the top of page 1.
+  sortBy: "createdAt",
+  sortOrder: "desc",
 };
 
 const initialState: PractitionersState = {
@@ -66,6 +80,8 @@ const initialState: PractitionersState = {
   },
   stats: { data: null, status: "idle", error: null, fetchedAt: null },
   specialties: { items: [], status: "idle" },
+  locations: { items: [], status: "idle" },
+  create: { status: "idle", error: null },
 };
 
 const practitionersSlice = createSlice({
@@ -87,6 +103,9 @@ const practitionersSlice = createSlice({
     },
     setPractitionerPage(state, action: PayloadAction<number>) {
       state.query.page = action.payload;
+    },
+    resetCreatePractitionerRequest(state) {
+      state.create = initialState.create;
     },
   },
   extraReducers: (builder) => {
@@ -135,6 +154,30 @@ const practitionersSlice = createSlice({
         state.specialties.status = "failed";
       })
 
+      .addCase(fetchLocations.pending, (state) => {
+        state.locations.status = "pending";
+      })
+      .addCase(fetchLocations.fulfilled, (state, action) => {
+        state.locations.items = action.payload;
+        state.locations.status = "succeeded";
+      })
+      .addCase(fetchLocations.rejected, (state) => {
+        state.locations.status = "failed";
+      })
+
+      .addCase(onboardProvider.pending, (state) => {
+        state.create = { status: "pending", error: null };
+      })
+      .addCase(onboardProvider.fulfilled, (state) => {
+        state.create = { status: "succeeded", error: null };
+        // A new provider changes the list and the counts — force a fresh load next time.
+        state.list.fetchedAt = null;
+        state.stats.fetchedAt = null;
+      })
+      .addCase(onboardProvider.rejected, (state, action) => {
+        state.create = { status: "failed", error: action.payload ?? null };
+      })
+
       .addCase(logoutUser.fulfilled, () => initialState)
       .addCase(sessionExpired, () => initialState);
   },
@@ -145,6 +188,7 @@ export const {
   setPractitionerStatusFilter,
   setPractitionerSpecialtyFilter,
   setPractitionerPage,
+  resetCreatePractitionerRequest,
 } = practitionersSlice.actions;
 
 export default practitionersSlice.reducer;

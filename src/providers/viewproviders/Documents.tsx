@@ -41,29 +41,9 @@ export type DocumentRow = {
   fileSize?: string;
 };
 
-export const DOCUMENT_TYPES = [
-  "Medical License",
-  "DEA Registration",
-  "State License",
-  "Certification",
-  "Insurance",
-  "Professional",
-  "Identification",
-  "Education",
-];
+/** The backend stores a document as a LICENSE or a PRACTITIONER_CREDENTIAL file. */
+export const DOCUMENT_TYPES = ["License", "Professional Credential"];
 
-export const INITIAL_DOCUMENTS: DocumentRow[] = [
-  { id: "d1", name: "Medical License - California", file: "medical_license_ca.pdf", type: "Medical License", category: "Medical", issuedOn: "Jan 15, 2020", expiryDate: "Jan 14, 2026", status: "Active", statusTone: "success", uploadedOn: "Mar 01, 2024", iconTone: "blue", fileSize: "2.4 MB" },
-  { id: "d2", name: "DEA Registration", file: "dea_certificate.pdf", type: "DEA Registration", category: "Medical", issuedOn: "Mar 10, 2021", expiryDate: "Mar 09, 2026", status: "Active", statusTone: "success", uploadedOn: "Mar 01, 2024", iconTone: "violet", fileSize: "1.8 MB" },
-  { id: "d3", name: "State Medical License - Texas", file: "state_license_tx.pdf", type: "State License", category: "Certifications", issuedOn: "Jun 01, 2022", expiryDate: "May 31, 2025", status: "Expiring Soon", statusTone: "warning", uploadedOn: "Mar 01, 2024", iconTone: "red", fileSize: "1.2 MB" },
-  { id: "d4", name: "Board Certification", file: "board_certification.pdf", type: "Certification", category: "Certifications", issuedOn: "Dec 12, 2019", expiryDate: "Dec 11, 2029", status: "Active", statusTone: "success", uploadedOn: "Mar 01, 2024", iconTone: "green", fileSize: "3.1 MB" },
-  { id: "d5", name: "Malpractice Insurance", file: "malpractice_insurance.pdf", type: "Insurance", category: "Others", issuedOn: "Jan 01, 2024", expiryDate: "Jan 01, 2025", status: "Active", statusTone: "success", uploadedOn: "Mar 01, 2024", iconTone: "red", fileSize: "2.0 MB" },
-  { id: "d6", name: "CV / Resume", file: "cv_michael_brown.pdf", type: "Professional", category: "Others", issuedOn: "-", expiryDate: "-", status: "Active", statusTone: "success", uploadedOn: "Mar 01, 2024", iconTone: "red", fileSize: "850 KB" },
-  { id: "d7", name: "Government ID", file: "passport.pdf", type: "Identification", category: "Identification", issuedOn: "Jun 15, 2018", expiryDate: "Jun 15, 2028", status: "Active", statusTone: "success", uploadedOn: "Mar 01, 2024", iconTone: "blue", fileSize: "1.5 MB" },
-  { id: "d8", name: "Education Degree", file: "medical_degree.pdf", type: "Education", category: "Education", issuedOn: "May 20, 2015", expiryDate: "-", status: "Active", statusTone: "success", uploadedOn: "Mar 01, 2024", iconTone: "blue", fileSize: "2.7 MB" },
-];
-
-export const DOCUMENTS = INITIAL_DOCUMENTS;
 
 type CategoryKey = "All" | DocumentRow["category"];
 
@@ -95,7 +75,7 @@ type Props = {
 };
 
 const Documents = ({
-  items = INITIAL_DOCUMENTS,
+  items = [],
   onUploadDocument,
   onViewDocument,
 }: Props) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { LICENSE_TYPES } from "./ViewLicenses";
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import {
   Calendar,
@@ -36,6 +37,8 @@ export type VerificationDetail = {
   notes: string;
   fileName: string;
   fileSize: string;
+  /** Backend document id, when a file is attached (enables download). */
+  documentId?: string;
   timeline: { label: string; date: string }[];
 };
 
@@ -54,84 +57,9 @@ export type VerificationRow = {
   detail?: VerificationDetail;
 };
 
-export const INITIAL_VERIFICATIONS: VerificationRow[] = [
-  {
-    id: "v1",
-    name: "Medical License - California",
-    sub: "License #MD123456",
-    type: "Medical License",
-    submittedOn: "Jan 15, 2020",
-    verifiedOn: "Jan 18, 2020",
-    status: "Verified",
-    statusTone: "success",
-    verifiedBy: "State Board",
-    nextRenewal: "Jan 14, 2026",
-    iconTone: "blue",
-    detail: {
-      documentType: "Medical License",
-      licenseNumber: "MD123456",
-      jurisdiction: "California (CA)",
-      issuedDate: "Jan 15, 2020",
-      expirationDate: "Jan 14, 2026",
-      verifiedBy: "State Medical Board of California",
-      method: "Online Verification (NPI/State Board)",
-      notes: "License verified and active. No restrictions found.",
-      fileName: "medical_license_ca.pdf",
-      fileSize: "2.4 MB",
-      timeline: [
-        { label: "Document Submitted", date: "Jan 15, 2020  10:30 AM" },
-        { label: "Under Review", date: "Jan 16, 2020  02:15 PM" },
-        { label: "Verified", date: "Jan 18, 2020  09:20 AM" },
-      ],
-    },
-  },
-  {
-    id: "v2",
-    name: "DEA Registration",
-    sub: "#AB1234567",
-    type: "DEA Registration",
-    submittedOn: "Mar 10, 2021",
-    verifiedOn: "Mar 12, 2021",
-    status: "Verified",
-    statusTone: "success",
-    verifiedBy: "DEA",
-    nextRenewal: "Mar 09, 2026",
-    iconTone: "violet",
-    detail: {
-      documentType: "DEA Registration",
-      licenseNumber: "AB1234567",
-      jurisdiction: "Federal (US)",
-      issuedDate: "Mar 10, 2021",
-      expirationDate: "Mar 09, 2026",
-      verifiedBy: "Drug Enforcement Administration",
-      method: "Federal DEA Registry Check",
-      notes: "DEA Registration verified active with Schedule II-V privileges.",
-      fileName: "dea_certificate.pdf",
-      fileSize: "1.8 MB",
-      timeline: [
-        { label: "Document Submitted", date: "Mar 10, 2021  11:00 AM" },
-        { label: "Under Review", date: "Mar 11, 2021  03:30 PM" },
-        { label: "Verified", date: "Mar 12, 2021  10:15 AM" },
-      ],
-    },
-  },
-  { id: "v3", name: "State Medical License - Texas", sub: "License #MD654321", type: "State License", submittedOn: "Jun 01, 2022", verifiedOn: "Jun 03, 2022", status: "Verified", statusTone: "success", verifiedBy: "Texas Medical Board", nextRenewal: "May 31, 2025", iconTone: "red" },
-  { id: "v4", name: "Board Certification", sub: "Internal Medicine", type: "Certification", submittedOn: "Dec 12, 2019", verifiedOn: "Dec 15, 2019", status: "Verified", statusTone: "success", verifiedBy: "ABIM", nextRenewal: "Dec 11, 2029", iconTone: "green" },
-  { id: "v5", name: "Malpractice Insurance", sub: "Policy #MP987654", type: "Insurance", submittedOn: "Jan 10, 2024", verifiedOn: "Jan 12, 2024", status: "In Progress", statusTone: "warning", verifiedBy: "Admin Review", nextRenewal: "Jan 10, 2025", iconTone: "red" },
-  { id: "v6", name: "CV / Resume", sub: "cv_michael_brown.pdf", type: "Professional", submittedOn: "Jan 05, 2024", verifiedOn: "Jan 06, 2024", status: "Verified", statusTone: "success", verifiedBy: "HR Team", nextRenewal: "-", iconTone: "red" },
-  { id: "v7", name: "Government ID", sub: "passport.pdf", type: "Identification", submittedOn: "Jun 15, 2018", verifiedOn: "Jun 16, 2018", status: "Verified", statusTone: "success", verifiedBy: "Admin", nextRenewal: "-", iconTone: "blue" },
-  { id: "v8", name: "Education Degree", sub: "MD - Harvard University", type: "Education", submittedOn: "May 20, 2015", verifiedOn: "May 25, 2015", status: "Verified", statusTone: "success", verifiedBy: "Education Board", nextRenewal: "-", iconTone: "blue" },
-  { id: "v9", name: "BLS Certification", sub: "BLS_2024.pdf", type: "Certification", submittedOn: "Feb 01, 2024", verifiedOn: "-", status: "Failed", statusTone: "danger", verifiedBy: "System", nextRenewal: "Feb 01, 2026", iconTone: "red" },
-  { id: "v10", name: "ACLS Certification", sub: "ACLS_2026.pdf", type: "Certification", submittedOn: "Mar 10, 2026", verifiedOn: "-", status: "Expired", statusTone: "neutral", verifiedBy: "System", nextRenewal: "Mar 10, 2026", iconTone: "red" },
-];
-
-export const VERIFICATIONS = INITIAL_VERIFICATIONS;
 
 const FILTERS = [
-  {
-    label: "All Document Types",
-    options: ["Medical License", "DEA Registration", "State License", "Certification", "Insurance", "Professional", "Identification", "Education"],
-  },
+  { label: "All Document Types", options: LICENSE_TYPES },
   { label: "All Statuses", options: ["Verified", "In Progress", "Failed", "Expired"] },
 ];
 
@@ -152,7 +80,7 @@ type Props = {
 };
 
 const History = ({
-  items = INITIAL_VERIFICATIONS,
+  items = [],
   selectedId,
   onSelect,
 }: Props) => {

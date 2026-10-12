@@ -14,30 +14,25 @@ import {
 import SignupField from "@/components/SignupField";
 import SignupDropdown from "@/components/SignupDropdown";
 import {
-  AddressFields,
-  AddressValues,
   ChipSelect,
   Errors,
   Opt,
   PROVIDER_TYPES,
   Req,
-  SPECIALTIES,
   SectionCard,
   StepProps,
   Switch,
   TextArea,
   US_STATE_OPTIONS,
-  emptyAddress,
-  getSubspecialtyOptions,
   uid,
-  validateAddress,
 } from "./Shared";
+import { useLocationOptions, useSpecialtyOptions } from "./useProviderCatalogs";
 
 /* ---------- Values ---------- */
+/** One practice location — an existing organization location (backend id). */
 export interface LocationRow {
   id: string;
-  name: string;
-  address: AddressValues;
+  locationId: string;
 }
 
 export interface PracticeValues {
@@ -58,7 +53,7 @@ export const initialPractice = (): PracticeValues => ({
   providerType: "",
   years: "",
   practiceType: "single",
-  locations: [{ id: "loc-1", name: "", address: emptyAddress() }],
+  locations: [{ id: "loc-1", locationId: "" }],
   telemedicine: true,
   jurisdictions: [],
   bio: "",
@@ -77,9 +72,12 @@ export const validatePractice = (v: PracticeValues): Errors => {
     e.years = "Enter a value between 0 and 60.";
 
   const active = v.practiceType === "single" ? v.locations.slice(0, 1) : v.locations;
+  const seenLocationIds = new Set<string>();
   active.forEach((loc, i) => {
-    if (!loc.name.trim()) e[`loc${i}_name`] = "Practice name is required.";
-    Object.assign(e, validateAddress(loc.address, `loc${i}_`));
+    if (!loc.locationId) e[`loc${i}_location`] = "Select a practice location.";
+    else if (seenLocationIds.has(loc.locationId))
+      e[`loc${i}_location`] = "This location is already added.";
+    seenLocationIds.add(loc.locationId);
   });
 
   if (v.telemedicine && v.jurisdictions.length === 0)
@@ -94,7 +92,9 @@ const PracticeInfo = ({
   errors,
   onChange,
 }: StepProps<PracticeValues>) => {
-  const subOptions = getSubspecialtyOptions(v.primarySpecialty);
+  const { specialtyOptions, getSubspecialtyOptionsFor } = useSpecialtyOptions();
+  const { locationOptions, formatLocationAddress } = useLocationOptions();
+  const subOptions = getSubspecialtyOptionsFor(v.primarySpecialty);
   const multiple = v.practiceType === "multiple";
   const shown = multiple ? v.locations : v.locations.slice(0, 1);
 
@@ -125,7 +125,7 @@ const PracticeInfo = ({
             name="primarySpecialty"
             label="Primary Specialty *"
             placeholder="Select specialty"
-            options={SPECIALTIES}
+            options={specialtyOptions}
             value={v.primarySpecialty}
             onChange={(val) =>
               onChange({ primarySpecialty: val, subspecialty: "" })
@@ -232,25 +232,21 @@ const PracticeInfo = ({
               </div>
             )}
 
-            <div className="mb-4">
-              <SignupField
-                name={`loc${i}_name`}
-                label={<>Practice Name<Req /></>}
-                placeholder="Enter practice name"
-                value={loc.name}
-                onChange={(e) => updateLocation(i, { name: e.target.value })}
-                error={errors[`loc${i}_name`]}
-              />
-            </div>
-
-            <AddressFields
-              prefix={`loc${i}_`}
-              values={loc.address}
-              errors={errors}
-              onChange={(patch) =>
-                updateLocation(i, { address: { ...loc.address, ...patch } })
+            <SignupDropdown
+              id={`loc${i}_location`}
+              name={`loc${i}_location`}
+              label="Practice Location *"
+              placeholder={
+                locationOptions.length ? "Select a location" : "No locations configured"
               }
+              options={locationOptions}
+              value={loc.locationId}
+              onChange={(locationId) => updateLocation(i, { locationId })}
+              error={errors[`loc${i}_location`]}
             />
+            {loc.locationId && (
+              <p className="mt-2 text-xs text-body">{formatLocationAddress(loc.locationId)}</p>
+            )}
           </div>
         ))}
 
@@ -261,7 +257,7 @@ const PracticeInfo = ({
               onChange({
                 locations: [
                   ...v.locations,
-                  { id: uid(), name: "", address: emptyAddress() },
+                  { id: uid(), locationId: "" },
                 ],
               })
             }

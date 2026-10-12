@@ -1,13 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Copy, Plus, Trash2, X } from "lucide-react";
+import { Copy, Plus, X } from "lucide-react";
 
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
-import AddButton from "@/components/Addbutton";
-import ImportButton from "@/components/ImportButton";
 import { Errors, Switch, pad, uid } from "../Shared";
-import AddInternalButton from "@/components/AddInternalButton";
 /* ---------------------------------------------------------------- */
 /*  Types + defaults (shared with Telemedicine.tsx)                 */
 /* ---------------------------------------------------------------- */
@@ -333,9 +330,6 @@ const LocationTab = ({
   onChange,
 }: LocationTabProps) => {
   const [activeId, setActiveId] = useState(locations?.[0]?.id ?? "");
-  const [adding, setAdding] = useState(false);
-  const [name, setName] = useState("");
-  const [nameErr, setNameErr] = useState("");
 
   const active = locations?.find((l) => l.id === activeId) ?? locations?.[0];
 
@@ -357,104 +351,33 @@ const LocationTab = ({
   const updateWeek = (id: string, week: WeekSchedule) =>
     onChange(locations.map((l) => (l.id === id ? { ...l, week } : l)));
 
-  const closeAdd = () => {
-    setAdding(false);
-    setName("");
-    setNameErr("");
-  };
-
-  const addLocation = () => {
-    const n = name.trim();
-    if (!n) {
-      setNameErr("Enter a location name.");
-      return;
-    }
-    if (locations.some((l) => l.name.toLowerCase() === n.toLowerCase())) {
-      setNameErr("This location already exists.");
-      return;
-    }
-    const id = uid();
-    onChange([...locations, { id, name: n, week: defaultWeek(id) }]);
-    setActiveId(id);
-    closeAdd();
-  };
-
-  const removeActive = () => {
-    if (!active || locations.length < 2) return;
-    const rest = locations.filter((l) => l.id !== active.id);
-    onChange(rest);
-    setActiveId(rest[0].id);
-  };
+  // Locations come from the Practice Information step (backend: assigned practice locations).
+  if (locations.length === 0) {
+    return (
+      <p className="rounded-xl border border-dashed border-border p-4 text-sm text-body">
+        No physical practice location selected. Add a clinic location in Practice Information
+        (step 3), or turn off in-person availability.
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {/* Select location + Add another */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex w-full items-end gap-2 sm:max-w-md">
-          <SignupDropdown
-            className="min-w-0 flex-1"
-            name="activeLocation"
-            label="Select Location"
-            placeholder="Select location"
-            options={options}
-            value={active?.id ?? ""}
-            onChange={setActiveId}
-          />
-          {locations.length > 1 && (
-            <button
-              type="button"
-              aria-label="Remove this location"
-              title="Remove this location"
-              onClick={removeActive}
-              className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-border text-danger transition-colors hover:bg-danger/10"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-       <AddInternalButton
-  text="Add Another Location"
-  onClick={() => setAdding((a) => !a)}
-/>
+      {/* Select location */}
+      <div className="flex w-full flex-col gap-1 sm:max-w-md">
+        <SignupDropdown
+          className="min-w-0 flex-1"
+          name="activeLocation"
+          label="Select Location"
+          placeholder="Select location"
+          options={options}
+          value={active?.id ?? ""}
+          onChange={setActiveId}
+        />
+        <p className="text-xs text-body">
+          Practice locations are managed in Practice Information (step 3).
+        </p>
       </div>
-
-      {/* Inline add-location form */}
-      {adding && (
-        <div className="rounded-xl border border-border p-3 sm:p-4">
-          <label
-            htmlFor="newLocationName"
-            className="mb-1.5 block text-sm font-medium text-label"
-          >
-            Location name <span className="text-danger">*</span>
-          </label>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-              id="newLocationName"
-              autoFocus
-              value={name}
-              maxLength={80}
-              placeholder="e.g. Sunrise Medical Group – Los Angeles, CA"
-              onChange={(e) => {
-                setName(e.target.value);
-                setNameErr("");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addLocation();
-                }
-              }}
-              className={`h-12 min-w-0 flex-1 rounded-xl border bg-card px-4 text-sm text-heading outline-none placeholder:text-body/60 focus:border-primary ${
-                nameErr ? "border-danger" : "border-border"
-              }`}
-            />
-            <AddButton text="Add Location" icon={null} onClick={addLocation} />
-            <ImportButton text="Cancel" icon={null} onClick={closeAdd} />
-          </div>
-          {nameErr && <p className="mt-1 text-xs text-danger">{nameErr}</p>}
-        </div>
-      )}
 
       {/* Weekly availability for the selected location */}
       {active && (

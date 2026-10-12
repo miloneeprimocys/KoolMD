@@ -10,7 +10,6 @@ import { Errors, StepProps, Switch, cardCls } from "../Shared";
 
 import LocationTab, {
   LocationItem,
-  initialLocations,
   validateLocations,
 } from "./Location";
 import TelemedicineTab, {
@@ -53,7 +52,8 @@ export const initialAvailability = (): AvailabilityValues => ({
   buffer: "5",
   telemedicineEnabled: true,
   inPersonEnabled: true,
-  locations: initialLocations(),
+  // Filled from the Practice Information locations when the user reaches this step.
+  locations: [],
   blocked: [],
   ...initialTelemedicine(),
 });
@@ -93,7 +93,11 @@ export const validateAvailability = (v: AvailabilityValues): Errors => {
   if (!v.inPersonEnabled && !v.telemedicineEnabled)
     e.modes = "Turn on telemedicine or in-person availability.";
 
-  if (v.inPersonEnabled) validateLocations(v.locations, e);
+  if (v.inPersonEnabled) {
+    if (v.locations.length === 0)
+      e.modes = "Select a clinic location in Practice Information, or turn off in-person availability.";
+    validateLocations(v.locations, e);
+  }
   if (v.telemedicineEnabled) validateTelemedicine(v, v.inPersonEnabled, e);
 
   return e;

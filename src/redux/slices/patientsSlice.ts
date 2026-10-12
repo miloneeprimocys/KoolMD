@@ -46,8 +46,9 @@ const initialQuery: PatientListQuery = {
   search: "",
   status: "",
   administrativeGender: "",
-  sortBy: "lastName",
-  sortOrder: "asc", // A → Z (backend default is desc)
+  // Newest first, so a just-added patient is at the top of page 1.
+  sortBy: "createdAt",
+  sortOrder: "desc",
 };
 
 const initialState: PatientsState = {

@@ -1,5 +1,6 @@
 "use client";
 
+import { State } from "country-state-city";
 import React, { useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -40,92 +41,23 @@ export type LicenseRow = {
   fileSize?: string;
 };
 
+/** Labels match the backend license types (see providerDetailMappers). */
 export const LICENSE_TYPES = [
-  "Medical License",
-  "DEA Registration",
   "State Medical License",
+  "DEA Registration",
+  "State Controlled Substance",
   "Board Certification",
   "BLS Certification",
   "ACLS Certification",
+  "PALS Certification",
+  "Other Credential",
 ];
 
 export const LICENSE_STATES = [
-  "California (CA)",
-  "Texas (TX)",
-  "New York (NY)",
-  "Florida (FL)",
-  "Illinois (IL)",
+  ...State.getStatesOfCountry("US").map((state) => `${state.name} (${state.isoCode})`),
   "Federal (US)",
 ];
 
-export const INITIAL_LICENSES: LicenseRow[] = [
-  {
-    id: "l1",
-    type: "Medical License",
-    subType: "Physician License",
-    number: "MD123456",
-    state: "California",
-    stateCode: "(CA)",
-    issueDate: "Jan 15, 2020",
-    expiryDate: "Jan 14, 2026",
-    status: "Active",
-    statusTone: "success",
-    iconTone: "blue",
-    authority: "State Medical Board of California",
-    fileName: "medical_license_ca.pdf",
-    fileSize: "2.4 MB",
-  },
-  {
-    id: "l2",
-    type: "DEA Registration",
-    subType: "Controlled Substances",
-    number: "AB1234567",
-    state: "Federal",
-    stateCode: "(US)",
-    issueDate: "Mar 10, 2021",
-    expiryDate: "Mar 9, 2026",
-    status: "Active",
-    statusTone: "success",
-    iconTone: "violet",
-    authority: "Drug Enforcement Administration",
-    fileName: "dea_certificate.pdf",
-    fileSize: "1.8 MB",
-  },
-  {
-    id: "l3",
-    type: "State Medical License",
-    subType: "Physician License",
-    number: "MD654321",
-    state: "Texas",
-    stateCode: "(TX)",
-    issueDate: "Jun 1, 2022",
-    expiryDate: "May 31, 2025",
-    status: "Expiring Soon",
-    statusTone: "warning",
-    iconTone: "violet",
-    authority: "Texas Medical Board",
-    fileName: "state_license_tx.pdf",
-    fileSize: "1.2 MB",
-  },
-  {
-    id: "l4",
-    type: "Board Certification",
-    subType: "Internal Medicine",
-    number: "IM987654",
-    state: "American Board",
-    stateCode: "of Internal Medicine",
-    issueDate: "Dec 12, 2019",
-    expiryDate: "Dec 11, 2029",
-    status: "Active",
-    statusTone: "success",
-    iconTone: "green",
-    authority: "American Board of Internal Medicine",
-    fileName: "board_certification.pdf",
-    fileSize: "3.1 MB",
-  },
-];
-
-export const LICENSES = INITIAL_LICENSES;
 
 const FILTERS = [
   { label: "All Types", options: LICENSE_TYPES },
@@ -148,7 +80,7 @@ type Props = {
 };
 
 const ViewLicenses = ({
-  items = INITIAL_LICENSES,
+  items = [],
   onAddLicense,
   onViewLicense,
 }: Props) => {

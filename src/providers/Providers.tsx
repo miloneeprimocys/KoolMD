@@ -336,6 +336,7 @@ const Providers = () => {
             totalPages={Math.max(pagination.totalPages, 1)}
             totalItems={pagination.totalItems}
             pageSize={listQuery.limit}
+            itemLabel="providers"
             onChange={(nextPage) => dispatch(setPractitionerPage(nextPage))}
           />
         )}

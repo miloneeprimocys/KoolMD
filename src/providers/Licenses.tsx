@@ -80,6 +80,7 @@ export const validateLicenses = (v: LicenseValues): Errors => {
     if (!started) return;
     if (!c.type) e[`cert_${c.id}_type`] = "Select a certification type.";
     if (!c.number.trim()) e[`cert_${c.id}_number`] = "Enter the number.";
+    if (!c.expiry) e[`cert_${c.id}_expiry`] = "Expiration date is required.";
   });
 
   return e;
@@ -271,6 +272,7 @@ const Licenses = ({ values: v, errors, onChange }: StepProps<LicenseValues>) => 
                   value={c.expiry}
                   onChange={(val) => updateCert(c.id, { expiry: val })}
                   minDate={today}
+                  error={errors[`cert_${c.id}_expiry`]}
                 />
                 {v.certs.length > 1 && (
                   <div className="flex items-end pb-5">

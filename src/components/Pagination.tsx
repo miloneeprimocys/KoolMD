@@ -8,6 +8,8 @@ interface PaginationProps {
   totalPages: number;
   totalItems?: number;
   pageSize?: number;
+  /** Plural noun in "Showing 1 to 10 of 42 …" */
+  itemLabel?: string;
   onChange: (page: number) => void;
   className?: string;
 }
@@ -46,6 +48,7 @@ const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   totalItems,
   pageSize,
+  itemLabel = "patients",
   onChange,
   className = "",
 }) => {
@@ -93,7 +96,7 @@ const Pagination: React.FC<PaginationProps> = ({
             <span className="font-medium text-heading">
               {totalItems.toLocaleString()}
             </span>{" "}
-            patients
+            {itemLabel}
           </span>
         </p>
       )}

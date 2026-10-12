@@ -14,14 +14,13 @@ import {
   PROVIDER_TYPES,
   Req,
   SectionCard,
-  SPECIALTIES,
   StepProps,
   TITLES,
   emptyAddress,
-  getSubspecialtyOptions,
   validateAddress,
   validatePhone,
 } from "./Shared";
+import { useSpecialtyOptions } from "./useProviderCatalogs";
 
 /* ---------- Values ---------- */
 export interface BasicValues {
@@ -103,7 +102,8 @@ const BasicInformation = ({
   errors,
   onChange,
 }: StepProps<BasicValues>) => {
-  const subOptions = getSubspecialtyOptions(v.specialty);
+  const { specialtyOptions, getSubspecialtyOptionsFor } = useSpecialtyOptions();
+  const subOptions = getSubspecialtyOptionsFor(v.specialty);
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -151,7 +151,7 @@ const BasicInformation = ({
             name="specialty"
             label="Specialty *"
             placeholder="Select specialty"
-            options={SPECIALTIES}
+            options={specialtyOptions}
             value={v.specialty}
             onChange={(val) => onChange({ specialty: val, subspecialty: "" })}
             error={errors.specialty}

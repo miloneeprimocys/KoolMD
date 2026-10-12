@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer, { sessionExpired } from "./slices/authSlice";
 import patientsReducer from "./slices/patientsSlice";
 import practitionersReducer from "./slices/practitionersSlice";
+import providerDetailReducer from "./slices/providerDetailSlice";
 import { registerSessionExpiredHandler } from "./services/apiClient";
 
 export const store = configureStore({
@@ -9,6 +10,7 @@ export const store = configureStore({
     auth: authReducer,
     patients: patientsReducer,
     practitioners: practitionersReducer,
+    providerDetail: providerDetailReducer,
   },
 });
 

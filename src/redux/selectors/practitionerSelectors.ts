@@ -4,3 +4,6 @@ export const selectPractitionerListQuery = (state: RootState) => state.practitio
 export const selectPractitionerList = (state: RootState) => state.practitioners.list;
 export const selectPractitionerStats = (state: RootState) => state.practitioners.stats;
 export const selectSpecialties = (state: RootState) => state.practitioners.specialties.items;
+export const selectOrganizationLocations = (state: RootState) =>
+  state.practitioners.locations.items;
+export const selectCreatePractitionerRequest = (state: RootState) => state.practitioners.create;
