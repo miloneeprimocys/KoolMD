@@ -120,6 +120,7 @@ const CalendarView = () => {
   const [now, setNow] = useState<Date | null>(null);
   const [picked, setPicked] = useState<Appt | null>(null);
   const [showPanel, setShowPanel] = useState(false);
+  const [showDesktopPanel, setShowDesktopPanel] = useState(true);
 
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
@@ -173,6 +174,7 @@ const CalendarView = () => {
   const pickAppointment = (appointment: Appt) => {
     setPicked(appointment);
     setShowPanel(true);
+    setShowDesktopPanel(true);
   };
 
   /* ---------- Filters ---------- */
@@ -208,6 +210,19 @@ const CalendarView = () => {
   );
 
   const panelAppt = picked ?? dayItems[0] ?? null;
+  const panelData = panelAppt
+    ? toAppointmentPanel({
+        patient: panelAppt.name,
+        type: panelAppt.type,
+        date: panelAppt.date,
+        start: panelAppt.start,
+        dur: panelAppt.dur,
+        provider: PROVIDERS[panelAppt.col].name,
+        specialty: PROVIDERS[panelAppt.col].specialty,
+        location: LOCATIONS[panelAppt.loc].full,
+        status: panelAppt.status,
+      })
+    : undefined;
 
   const heading =
     view === "Day"
@@ -313,41 +328,40 @@ const CalendarView = () => {
           />
         </div>
 
-        {/* Right section — follows the clicked appointment */}
-        <div
-          ref={rightSectionRef}
-          className={
-            showPanel
-              ? "h-0 w-0 shrink-0 overflow-visible 2xl:h-auto 2xl:w-[360px]"
-              : "hidden"
-          }
-        >
-          {showPanel && panelAppt ? (
+        {/* Persistent desktop details panel */}
+        {showDesktopPanel && (
+          <div
+            ref={rightSectionRef}
+            className="hidden shrink-0 2xl:block 2xl:h-auto 2xl:w-[360px]"
+          >
+            {panelData ? (
+              <RightSection
+                variant="appointment"
+                onClose={() => setShowDesktopPanel(false)}
+                data={panelData}
+              />
+            ) : (
+              <aside className="hidden w-[360px] shrink-0 flex-col items-center justify-center rounded-[14px] border border-border bg-card px-6 py-12 text-center 2xl:flex">
+                <CalendarDays className="mb-3 h-8 w-8 text-body" />
+                <p className="text-sm font-semibold text-heading">No appointment selected</p>
+                <p className="mt-1 text-xs text-body">
+                  There are no appointments for this day. Pick another date or appointment.
+                </p>
+              </aside>
+            )}
+          </div>
+        )}
+
+        {/* Mobile appointment drawer */}
+        {showPanel && panelData && (
+          <div className="2xl:hidden">
             <RightSection
               variant="appointment"
               onClose={() => setShowPanel(false)}
-              data={toAppointmentPanel({
-                patient: panelAppt.name,
-                type: panelAppt.type,
-                date: panelAppt.date,
-                start: panelAppt.start,
-                dur: panelAppt.dur,
-                provider: PROVIDERS[panelAppt.col].name,
-                specialty: PROVIDERS[panelAppt.col].specialty,
-                location: LOCATIONS[panelAppt.loc].full,
-                status: panelAppt.status,
-              })}
+              data={panelData}
             />
-          ) : showPanel && !panelAppt ? (
-            <aside className="hidden w-[360px] shrink-0 flex-col items-center justify-center rounded-[14px] border border-border bg-card px-6 py-12 text-center 2xl:flex">
-              <CalendarDays className="mb-3 h-8 w-8 text-body" />
-              <p className="text-sm font-semibold text-heading">No appointment selected</p>
-              <p className="mt-1 text-xs text-body">
-                There are no appointments for this day. Pick another date or appointment.
-              </p>
-            </aside>
-          ) : null}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

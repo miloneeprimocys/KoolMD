@@ -378,13 +378,21 @@ type Props = {
   /** Overrides the preset content (used by Calendar View). */
   data?: PanelData;
   className?: string;
+  closeButtonClassName?: string;
   onHeightChange?: (height: number) => void;
 };
 
 const iconBtn =
   "flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-body transition-colors hover:bg-heading/5 hover:text-heading focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
 
-const RightSection = ({ variant, onClose, data, className = "", onHeightChange }: Props) => {
+const RightSection = ({
+  variant,
+  onClose,
+  data,
+  className = "",
+  closeButtonClassName = "",
+  onHeightChange,
+}: Props) => {
   const panelRef = useRef<HTMLElement>(null);
   const c: Config = { ...PRESETS[variant], ...(data ?? {}) };
   const p = c.patient;
@@ -415,7 +423,7 @@ const RightSection = ({ variant, onClose, data, className = "", onHeightChange }
       <aside
         ref={panelRef}
         aria-label={c.title}
-        className={`fixed right-0 top-14 z-[150] flex h-[calc(100dvh-3.5rem)] w-full max-w-[420px] flex-col overflow-y-auto border-y border-l border-border bg-card shadow-2xl transition-transform duration-300 animate-in slide-in-from-right xl:top-16 xl:h-[calc(100dvh-4rem)] 2xl:relative 2xl:bottom-auto 2xl:right-auto 2xl:top-auto 2xl:z-auto 2xl:h-auto 2xl:overflow-y-visible 2xl:w-[360px] 2xl:max-w-none 2xl:shrink-0 2xl:rounded-[14px] 2xl:border 2xl:shadow-none 2xl:animate-none hide-scrollbar ${className}`}
+        className={`fixed right-0 top-14 z-[150] flex h-[calc(100dvh-3.5rem)] w-full max-w-[420px] flex-col overflow-y-auto border-y border-l border-border bg-card shadow-2xl transition-transform duration-300 animate-in slide-in-from-right xl:top-16 xl:h-[calc(100dvh-4rem)] 2xl:relative 2xl:bottom-auto 2xl:right-auto 2xl:top-auto 2xl:z-auto 2xl:h-auto 2xl:overflow-y-visible 2xl:w-[360px] 2xl:max-w-none 2xl:shrink-0 2xl:rounded-[14px] 2xl:border-[1.5px] 2xl:shadow-none 2xl:animate-none hide-scrollbar ${className}`}
       >
       {/* Header */}
       <header className="sticky top-0 z-20 flex shrink-0 items-center justify-between gap-3 bg-card px-4 py-3.5 2xl:static">
@@ -436,7 +444,12 @@ const RightSection = ({ variant, onClose, data, className = "", onHeightChange }
             </button>
           )}
           {onClose && (
-            <button type="button" aria-label="Close panel" onClick={onClose} className={iconBtn}>
+            <button
+              type="button"
+              aria-label="Close panel"
+              onClick={onClose}
+              className={`${iconBtn} ${closeButtonClassName}`}
+            >
               <X className="h-5 w-5" />
             </button>
           )}
