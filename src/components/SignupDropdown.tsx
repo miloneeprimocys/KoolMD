@@ -98,7 +98,7 @@ const leftPad = hasTriggerIcon
   : compact
     ? "pl-2.5"
     : "pl-4";
-const rightPad = compact ? "pr-8" : "pr-10";
+const rightPad = compact ? "pr-6" : "pr-10";
 const iconLeft = compact ? "left-2" : "left-3.5";
 const chevronRight = compact ? "right-2" : "right-3.5";
     const chevronSize = compact ? "h-4 w-4" : "h-4.5 w-4.5";
@@ -293,7 +293,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
             /* ===== Searchable input ===== */
             <div
               className={`
-                relative flex h-12 w-full items-center
+                relative flex h-12 w-full min-w-0 items-center
                 rounded-xl border bg-card
                 ${leftPad} ${rightPad}
                 transition-colors duration-200
@@ -314,6 +314,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                 name={name}
                 type="text"
                 disabled={disabled}
+                title={open ? undefined : displayLabel}
                 role="combobox"
                 aria-haspopup="listbox"
                 aria-expanded={open}
@@ -337,13 +338,13 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                 onClick={() => {
                   if (!disabled) setOpen(true);
                 }}
-             className={`
-  h-full min-w-0 bg-transparent
-  ${compact ? "w-auto flex-none pr-6" : "flex-1 pr-0"}
-  truncate text-sm text-heading outline-none
-  placeholder:text-placeholder
-  disabled:cursor-not-allowed disabled:opacity-60
-`}
+                className={`
+                  h-full min-w-0 flex-1 bg-transparent
+                  pr-0
+                  truncate text-sm text-heading outline-none
+                  placeholder:text-placeholder
+                  disabled:cursor-not-allowed disabled:opacity-60
+                `}
               />
 
               {/* Chevron / clear button */}
@@ -388,7 +389,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
               }}
               onKeyDown={handleKeyDown}
               className={`
-                relative flex h-12 w-full items-center
+                relative flex h-12 w-full min-w-0 items-center
                 rounded-xl border bg-card
                 ${leftPad} ${rightPad}
                 text-sm text-left
@@ -406,7 +407,8 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                 </span>
               )}
               <span
-                className={`truncate ${
+                title={selected?.label ?? placeholder}
+                className={`min-w-0 flex-1 truncate ${
                   selected ? "text-heading" : "text-placeholder"
                 }`}
               >

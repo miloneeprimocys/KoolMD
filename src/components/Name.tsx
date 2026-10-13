@@ -5,6 +5,7 @@ type NameProps = {
   sub?: React.ReactNode; // email, role, id … shown below the name
   subIcon?: React.ReactNode;
   image?: string; // optional avatar url, falls back to initials
+  truncate?: boolean;
 };
 
 const getInitials = (n: string) =>
@@ -16,9 +17,9 @@ const getInitials = (n: string) =>
     .join("")
     .toUpperCase();
 
-const Name = ({ name, sub, subIcon, image }: NameProps) => {
+const Name = ({ name, sub, subIcon, image, truncate = false }: NameProps) => {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex w-full min-w-0 items-center gap-3">
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -32,10 +33,10 @@ const Name = ({ name, sub, subIcon, image }: NameProps) => {
         </span>
       )}
 
-      <div className="min-w-0 leading-snug">
-        <p className="whitespace-nowrap text-sm font-medium text-heading">{name}</p>
+      <div className="min-w-0 flex-1 leading-snug">
+        <p className={`${truncate ? "truncate" : "whitespace-nowrap"} text-sm font-medium text-heading`}>{name}</p>
         {sub && (
-          <p className="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-body">
+          <p className={`mt-0.5 flex items-center gap-1.5 text-xs text-body ${truncate ? "truncate" : "whitespace-nowrap"}`}>
             {subIcon}
             {sub}
           </p>

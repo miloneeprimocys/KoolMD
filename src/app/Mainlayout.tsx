@@ -74,7 +74,7 @@ const MainLayout = ({ children, title }: MainLayoutProps) => {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <MainHeader title={title} />
-        <main className="flex-1 overflow-y-auto bg-page p-4 sm:p-6">
+        <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-page p-4 sm:p-6 custom-scrollbar">
           {children}
         </main>
       </div>

@@ -350,11 +350,12 @@ optgroup {
 
 /* ==========================================================================
    Custom visible scrollbar
-   Usage: <div class="custom-scrollbar overflow-x-auto">…</div>
+   Usage: <div class="custom-scrollbar overflow-auto">…</div>
    ========================================================================== */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
+  -webkit-overflow-scrolling: touch;
 }
 .custom-scrollbar::-webkit-scrollbar {
   height: 6px;
@@ -369,6 +370,18 @@ optgroup {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
+}
+/* Table scrollbar: vertical track starts below the sticky header.
+   Chrome ignores ::-webkit-scrollbar when scrollbar-width/color are set,
+   so reset them here (must come AFTER .custom-scrollbar). */
+@supports selector(::-webkit-scrollbar) {
+  .table-scrollbar {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+}
+.table-scrollbar::-webkit-scrollbar-track:vertical {
+  margin-top: 58px; /* must equal the header height */
 }
 /* Continuous shine loop (used by "selected" quick-action / global button) */
 @keyframes shineLoop {

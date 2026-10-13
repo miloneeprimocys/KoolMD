@@ -425,9 +425,9 @@ const VerificationDetails = ({
       </div>
 
       {/* Verification Timeline */}
-      <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+      <div className="rounded-xl border border-border/80 bg-card p-4 shadow-xs">
         <p className="mb-4 text-sm font-semibold text-heading">Verification Timeline</p>
-        <ol className="space-y-4">
+        <ol className="space-y-4 pb-2">
           {d.timeline.map((t, i) => {
             const isCompleted = i <= last;
             const isVerifiedStep = t.label.toLowerCase().includes("verified");
@@ -463,7 +463,7 @@ const VerificationDetails = ({
       </div>
 
       {/* Details List */}
-      <div className="space-y-3.5 rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+      <div className="space-y-3.5 rounded-xl border border-border/80 bg-card p-4 shadow-xs">
         <DetailItem label="Document Type" value={d.documentType} />
         <DetailItem label="License Number" value={d.licenseNumber} />
         <DetailItem label="State / Jurisdiction" value={d.jurisdiction} />
@@ -536,7 +536,7 @@ const ProviderProfile = ({
         </div>
 
         {/* NPI, DEA, Specialty */}
-        <div className="space-y-3 rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+        <div className="space-y-3 rounded-xl border border-border/80 bg-card p-4 shadow-xs">
           <DetailItem label="NPI Number" value={p.npi} />
           <DetailItem label="DEA Number" value={p.dea || "N/A"} />
           <DetailItem label="Specialty" value={p.specialty} />
@@ -544,7 +544,7 @@ const ProviderProfile = ({
         </div>
 
         {/* Contact Information */}
-        <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+        <div className="rounded-xl border border-border/80 bg-card p-4 shadow-xs">
           <p className="mb-3 text-sm font-semibold text-heading">Contact Information</p>
           <div className="space-y-3">
             <DetailItem
@@ -556,7 +556,7 @@ const ProviderProfile = ({
         </div>
 
         {/* Practice Location */}
-        <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+        <div className="rounded-xl border border-border/80 bg-card p-4 shadow-xs">
           <p className="mb-3 text-sm font-semibold text-heading">Practice Location</p>
           <div className="space-y-3">
             <DetailItem label="Clinic" value={p.clinic} />

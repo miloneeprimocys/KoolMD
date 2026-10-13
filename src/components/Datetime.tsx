@@ -12,6 +12,8 @@ type DateTimeProps = {
   icon?: React.ReactNode;
   /** Text alignment */
   align?: DateTimeAlign;
+  /** Truncate date and time lines to fit a narrow table cell */
+  truncate?: boolean;
   /** Extra class names */
   className?: string;
 };
@@ -29,29 +31,31 @@ const DateTime = ({
   sub,
   icon,
   align = "left",
+  truncate = false,
   className = "",
 }: DateTimeProps) => {
-  const top = [day, time].filter(Boolean).join(", ");
+  const dateLabel = [day, date].filter(Boolean).join(", ");
+  const lineClass = truncate ? "block truncate" : "whitespace-nowrap";
 
   return (
     <div className={`leading-snug ${ALIGN[align]} ${className}`}>
-      {top && (
-        <p className="flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-heading">
-          {icon && <span className="shrink-0 text-body">{icon}</span>}
-          <span>{top}</span>
+      {dateLabel && (
+        <p className={`${lineClass} text-sm font-medium text-heading`}>
+          {icon && <span className="mr-1.5 inline-flex align-middle text-body">{icon}</span>}
+          {dateLabel}
         </p>
       )}
-      {date && (
+      {time && (
         <p
-          className={`whitespace-nowrap ${
-            top ? "mt-0.5 text-xs text-body" : "text-sm font-medium text-heading"
+          className={`${lineClass} ${
+            dateLabel ? "mt-0.5 text-xs text-body" : "text-sm font-medium text-heading"
           }`}
         >
-          {date}
+          {time}
         </p>
       )}
       {sub && (
-        <p className="mt-0.5 whitespace-nowrap text-xs text-body">{sub}</p>
+        <p className={`mt-0.5 ${lineClass} text-xs text-body`}>{sub}</p>
       )}
     </div>
   );

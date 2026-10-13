@@ -178,13 +178,13 @@ const Documents = ({
         ),
         name: (
           <div
-            className="flex items-center gap-3 cursor-pointer"
+            className="flex min-w-0 cursor-pointer items-center gap-3"
             onClick={() => onViewDocument?.(d)}
           >
             <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconToneCls[d.iconTone]}`}>
               {d.iconTone === "green" ? <ShieldCheck className="h-4 w-4" /> : <FileBadge className="h-4 w-4" />}
             </span>
-            <Content title={d.name} description={d.file} />
+            <Content title={d.name} description={d.file} className="min-w-0 flex-1" truncate />
           </div>
         ),
         type: <Content title={d.type} />,

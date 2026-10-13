@@ -168,18 +168,22 @@ const SearchAndFilter = ({
 
           {/* Interactive Date Range Button with DatePicker popover */}
           {showDateRange && (
-            <div className="relative min-w-[8rem] flex-1 xl:w-auto xl:flex-none 2xl:w-auto 2xl:flex-none" ref={datePopoverRef}>
+            <div
+              className="relative min-w-0 flex-1 xl:w-40 xl:flex-none 2xl:w-44"
+              ref={datePopoverRef}
+            >
               <button
                 type="button"
                 onClick={() => setDatePopoverOpen((o) => !o)}
+                title={dateRangeDisplay}
                 className={`flex h-12 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border px-3.5 text-xs sm:text-sm font-normal transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${hasActiveDateRange || datePopoverOpen
                     ? "border-primary bg-primary/5 text-heading"
                     : "border-border bg-card text-placeholder hover:border-primary/40 hover:text-primary"
                   }`}
               >
-                <div className="flex items-center gap-2 truncate">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   <Calendar className="h-4 w-4 shrink-0 text-body" />
-                  <span className="truncate">{dateRangeDisplay}</span>
+                  <span className="min-w-0 truncate">{dateRangeDisplay}</span>
                 </div>
 
                 {hasActiveDateRange && (

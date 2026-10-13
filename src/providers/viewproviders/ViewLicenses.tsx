@@ -155,13 +155,13 @@ const ViewLicenses = ({
         return {
           type: (
             <div
-              className="flex items-center gap-3 cursor-pointer"
+              className="flex min-w-0 cursor-pointer items-center gap-3"
               onClick={() => onViewLicense?.(l)}
             >
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconToneCls[l.iconTone]}`}>
                 <Icon className="h-4 w-4" />
               </span>
-              <Content title={l.type} description={l.subType} />
+              <Content title={l.type} description={l.subType} className="min-w-0 flex-1" truncate />
             </div>
           ),
           number: <Content title={l.number} />,

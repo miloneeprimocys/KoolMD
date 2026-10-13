@@ -7,13 +7,14 @@ import Patient from "@/patient/Patient";
 import AddPatient from "@/patient/AddPatient";
 import Providers from "@/providers/Providers";
 import AddProvider from "@/providers/AddProvider";
+import ViewProvider from "@/providers/viewproviders/Viewprovider";
+import AppointmentScheduling from "@/appointments/Appointmentscheduling";
 import { PERMISSIONS, type PermissionCode } from "@/auth/permissions";
 
 /**
  * protected → signed-in only · guest → signed-out only · public → anyone
  */
 export type RouteAccess = "protected" | "guest" | "public";
-import ViewProvider from "@/providers/viewproviders/Viewprovider";
 
 export interface RouteConfig {
   component: ComponentType;
@@ -71,5 +72,11 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "View Provider",
     access: "protected",
     requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+  },
+  appointments: {
+    component: AppointmentScheduling,
+    title: "Appointments",
+    access: "protected",
+    requiredPermission: PERMISSIONS.APPOINTMENT_READ,
   },
 };

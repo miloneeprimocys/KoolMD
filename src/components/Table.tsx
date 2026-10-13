@@ -9,18 +9,31 @@ type TableProps = {
 };
 
 const Table = ({ columns, rows, fillHeight = false }: TableProps) => {
+  const getFixedWidth = (column: TableColumn) =>
+    column.width ?? (column.className?.split(/\s+/).includes("w-10") ? 40 : undefined);
+
   return (
     <div
-      className={`flex h-full w-full flex-col rounded-[14px] border border-border bg-card ${
+      className={`flex ${
+        rows.length === 0 ? "h-[65vh]" : "max-h-[65vh]"
+      } w-full flex-col overflow-hidden rounded-[14px] border border-border bg-card  ${
         fillHeight ? "2xl:flex" : ""
       }`}
     >
       <div
-        className={`min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-[14px] custom-scrollbar ${
+        className={`relative min-h-0 flex-1 overflow-x-auto overflow-y-auto custom-scrollbar table-scrollbar bg-[linear-gradient(to_bottom,#F0F0F0_0,#F0F0F0_57px,var(--border)_57px,var(--border)_58px,transparent_58px)] dark:bg-[linear-gradient(to_bottom,#1b2544_0,#1b2544_57px,var(--border)_57px,var(--border)_58px,transparent_58px)] ${
           fillHeight ? "2xl:flex-1" : ""
         }`}
       >
-        <table className="w-full min-w-[860px] border-collapse text-left">
+        <table
+          className="w-max min-w-full border-collapse text-left"
+        >
+          <colgroup>
+            {columns.map((column) => {
+              const width = getFixedWidth(column);
+              return <col key={column.key} style={width ? { width } : undefined} />;
+            })}
+          </colgroup>
           <TableHeader columns={columns} />
           <tbody>
             {rows.map((row, i) => (
@@ -42,6 +55,14 @@ const Table = ({ columns, rows, fillHeight = false }: TableProps) => {
             ))}
           </tbody>
         </table>
+        {rows.length === 0 && (
+          <div
+            role="status"
+            className="pointer-events-none absolute inset-x-0 bottom-0 top-[58px] flex items-center justify-center text-sm text-label"
+          >
+            No data found
+          </div>
+        )}
       </div>
     </div>
   );

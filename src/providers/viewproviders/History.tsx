@@ -189,7 +189,7 @@ const History = ({
       paginatedItems.map((v) => ({
         name: (
           <div
-            className="flex items-center gap-3 cursor-pointer"
+            className="flex min-w-0 cursor-pointer items-center gap-3"
             onClick={() => onSelect(v)}
           >
             <span
@@ -199,7 +199,7 @@ const History = ({
             >
               {v.iconTone === "green" ? <ShieldCheck className="h-4 w-4" /> : <FileBadge className="h-4 w-4" />}
             </span>
-            <Content title={v.name} description={v.sub} />
+            <Content title={v.name} description={v.sub} className="min-w-0 flex-1" truncate />
           </div>
         ),
         type: <Content title={v.type} />,
