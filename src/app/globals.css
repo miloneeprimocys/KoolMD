@@ -45,6 +45,12 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-violet: var(--violet);
+  --color-pink: var(--pink);
+
+  /* sidebar (navy panel) → bg-sidebar-from / bg-sidebar-to, e.g. bg-linear-to-b from-sidebar-from to-sidebar-to */
+  --color-sidebar-from: var(--sidebar-from);
+  --color-sidebar-to: var(--sidebar-to);
+  --color-glow-primary: var(--glow-primary);
 
   --color-google-red: var(--google-red);
   --color-google-blue: var(--google-blue);
@@ -57,6 +63,21 @@
   --color-btn-to: var(--btn-to);
   --color-btn-text: var(--btn-text);
   --color-btn-border: var(--btn-border);
+
+  /* gradients → bg-grad-primary, bg-grad-blue, bg-grad-violet, bg-grad-green,
+     bg-grad-orange, bg-grad-pink, bg-grad-red */
+  --background-image-grad-primary: var(--grad-primary);
+  --background-image-grad-blue: var(--grad-blue);
+  --background-image-grad-violet: var(--grad-violet);
+  --background-image-grad-green: var(--grad-green);
+  --background-image-grad-orange: var(--grad-orange);
+  --background-image-grad-pink: var(--grad-pink);
+  --background-image-grad-red: var(--grad-red);
+
+  /* glow shadows → shadow-glow, shadow-glow-lg */
+  --shadow-glow: 0 0 24px var(--glow-primary);
+  --shadow-glow-lg: 0 8px 32px var(--glow-primary);
+
   /* ---- Fonts: Poppins only ---- */
   --font-sans: "Poppins", ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
@@ -351,9 +372,11 @@ optgroup {
 /* ==========================================================================
    Custom visible scrollbar
    Usage: <div class="custom-scrollbar overflow-auto">…</div>
+   Adapts to light/dark automatically via theme tokens.
    ========================================================================== */
 .custom-scrollbar {
   scrollbar-width: thin;
+  /* thumb / track — track matches the new dark card surface */
   scrollbar-color: var(--border) transparent;
   -webkit-overflow-scrolling: touch;
 }
@@ -362,13 +385,16 @@ optgroup {
   width: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
+  /* match the card surface so the track blends with new dark bg */
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--border);
+  /* border colour already differs light vs. dark (#d9e5f5 vs #294a97) */
+  background: color-mix(in srgb, var(--border) 90%, var(--card) 10%);
   border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  /* primary is #2d7ff9 (light) / #3b8cff (dark) — good contrast on both */
   background: var(--primary);
 }
 /* Table scrollbar: vertical track starts below the sticky header.
@@ -411,4 +437,47 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background-color: rgba(0, 137, 201, 0.12);
   opacity: 1;
+}
+/* ==========================================================================
+   Calendar – active appointment: soft moving border
+   ========================================================================== */
+@property --appt-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes apptShine {
+  to { --appt-angle: 360deg; }
+}
+
+.appt-shine::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: inherit;
+  pointer-events: none;
+  /* faint ring in the appointment's own colour, with one soft brighter arc travelling along it */
+  background: conic-gradient(
+    from var(--appt-angle),
+    color-mix(in srgb, var(--appt-color, var(--primary)) 35%, transparent) 0%,
+    color-mix(in srgb, var(--appt-color, var(--primary)) 35%, transparent) 55%,
+    color-mix(in srgb, var(--appt-color, var(--primary)) 70%, transparent) 75%,
+    var(--appt-color, var(--primary)) 85%,
+    color-mix(in srgb, var(--appt-color, var(--primary)) 35%, transparent) 100%
+  );
+  /* keep only the 2px edge, hide the middle */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: apptShine 3.5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appt-shine::before {
+    animation: none;
+    background: color-mix(in srgb, var(--appt-color, var(--primary)) 60%, transparent);
+  }
 }

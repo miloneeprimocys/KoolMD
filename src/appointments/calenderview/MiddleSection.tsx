@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, MousePointerClick } from "lucide-react";
 
 import { initials } from "../Rightsection";
 import {
@@ -20,11 +20,11 @@ import {
 export type ColorKey = keyof typeof COLORS;
 
 const COLORS = {
-  blue: "border-l-primary bg-primary/10",
-  green: "border-l-emerald-500 bg-emerald-100 dark:bg-emerald-950/40",
-  red: "border-l-red-400 bg-red-100 dark:bg-red-950/40",
-  purple: "border-l-violet-500 bg-violet-100 dark:bg-violet-950/40",
-  amber: "border-l-amber-400 bg-amber-100 dark:bg-amber-950/40",
+  blue: "border-l-primary bg-primary/10 [--appt-color:var(--primary)]",
+  green: "border-l-emerald-500 bg-emerald-100 dark:bg-emerald-950/40 [--appt-color:var(--color-emerald-500)]",
+  red: "border-l-red-400 bg-red-100 dark:bg-red-950/40 [--appt-color:var(--color-red-400)]",
+  purple: "border-l-violet-500 bg-violet-100 dark:bg-violet-950/40 [--appt-color:var(--color-violet-500)]",
+  amber: "border-l-amber-400 bg-amber-100 dark:bg-amber-950/40 [--appt-color:var(--color-amber-400)]",
 } as const;
 
 export type Appt = {
@@ -82,9 +82,10 @@ const ApptChip = ({
   <button
     type="button"
     onClick={() => onPick(a)}
-    title={`${fmtTime(a.start)} · ${a.name} · ${a.type}`}
-    className={`block w-full cursor-pointer truncate rounded border-l-[3px] px-2 py-1 text-left text-[10px] leading-tight text-heading transition-shadow hover:shadow-sm ${COLORS[a.color]} ${
-      active ? "ring-2 ring-primary/40" : ""
+    aria-pressed={active}
+    title={`${fmtTime(a.start)} · ${a.name} · ${a.type} (click for details)`}
+    className={`relative block w-full cursor-pointer truncate rounded border-l-[3px] px-2 py-1 text-left text-[10px] leading-tight text-heading transition-shadow ${COLORS[a.color]} ${
+      active ? "appt-shine" : "hover:shadow-sm"
     }`}
   >
     <span className="text-body">{fmtTime(a.start)}</span> {a.name}
@@ -141,7 +142,13 @@ const MiddleSection = ({
       className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[14px] border border-border bg-card"
       style={height ? { height } : undefined}
     >
-      <h3 className="shrink-0 px-4 py-4 text-sm font-semibold text-heading sm:text-base">{heading}</h3>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-4">
+        <h3 className="text-sm font-semibold text-heading sm:text-base">{heading}</h3>
+        <p className="flex items-center gap-1.5 text-xs text-body">
+          <MousePointerClick className="h-3.5 w-3.5 shrink-0" />
+          Click an appointment to view its details
+        </p>
+      </div>
 
       {/* ---------- DAY ---------- */}
       {view === "Day" &&
@@ -198,15 +205,18 @@ const MiddleSection = ({
                         const height = a.dur * (HOUR / 60) - 4;
                         // 30-min slots are ~40px tall: too short for 3 lines
                         const compact = height < 56;
+                        const isActive = panelAppt?.id === a.id;
 
                         return (
                           <button
                             key={a.id}
                             type="button"
                             onClick={() => setPicked(a)}
+                            aria-pressed={isActive}
+                            title={`View details – ${a.name}`}
                             style={{ top, height }}
-                            className={`absolute inset-x-1.5 flex cursor-pointer flex-col justify-center gap-0.5 overflow-hidden rounded-md border-l-4 px-2.5 py-1.5 text-left leading-[1.2] transition-shadow hover:shadow-md ${COLORS[a.color]} ${
-                              panelAppt?.id === a.id ? "ring-2 ring-primary/40" : ""
+                            className={`absolute inset-x-1.5 flex cursor-pointer flex-col justify-center gap-0.5 overflow-hidden rounded-md border-l-4 px-2.5 py-1.5 text-left leading-[1.2] transition-shadow ${COLORS[a.color]} ${
+                              isActive ? "appt-shine" : "hover:shadow-md"
                             }`}
                           >
                             {compact ? (
@@ -227,6 +237,7 @@ const MiddleSection = ({
                                 <span className="block truncate text-[10px] text-body">{a.type}</span>
                               </>
                             )}
+ 
                           </button>
                         );
                       })}

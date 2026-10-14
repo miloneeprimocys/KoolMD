@@ -121,6 +121,8 @@ const CalendarView = () => {
   const [picked, setPicked] = useState<Appt | null>(null);
   const [showPanel, setShowPanel] = useState(false);
   const [showDesktopPanel, setShowDesktopPanel] = useState(true);
+  const [isDesktopPanelExpanded, setIsDesktopPanelExpanded] = useState(true);
+  const hasMountedDesktopPanelRef = useRef(false);
 
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
@@ -157,6 +159,22 @@ const CalendarView = () => {
       desktop.removeEventListener("change", updateHeight);
     };
   }, []);
+
+  useEffect(() => {
+    if (!showDesktopPanel) {
+      setIsDesktopPanelExpanded(false);
+      return;
+    }
+
+    if (!hasMountedDesktopPanelRef.current) {
+      hasMountedDesktopPanelRef.current = true;
+      setIsDesktopPanelExpanded(true);
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => setIsDesktopPanelExpanded(true));
+    return () => cancelAnimationFrame(frame);
+  }, [showDesktopPanel]);
   const today = now ? startOfDay(now) : null;
 
   /* ---------- Navigation ---------- */
@@ -332,12 +350,17 @@ const CalendarView = () => {
         {showDesktopPanel && (
           <div
             ref={rightSectionRef}
-            className="hidden shrink-0 2xl:block 2xl:h-auto 2xl:w-[360px]"
+            className={`hidden shrink-0 overflow-hidden 2xl:block 2xl:h-auto 2xl:transition-[width] 2xl:duration-300 2xl:ease-out ${
+              isDesktopPanelExpanded ? "2xl:w-[360px]" : "2xl:w-0"
+            }`}
           >
             {panelData ? (
               <RightSection
                 variant="appointment"
                 onClose={() => setShowDesktopPanel(false)}
+                onCloseStart={() => setIsDesktopPanelExpanded(false)}
+                initiallyOpen={!hasMountedDesktopPanelRef.current}
+                desktopLayoutControlled
                 data={panelData}
               />
             ) : (

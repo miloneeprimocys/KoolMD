@@ -25,7 +25,7 @@ import {
   uploadProviderDocument,
 } from "@/redux/thunks/providerDetailThunks";
 import { toRequestError } from "@/redux/thunks/thunkHelpers";
-
+import Overview from "./Overview";
 import Licenses, { type LicenseRow } from "./ViewLicenses";
 import Documents, { type DocumentRow } from "./Documents";
 import History, { type VerificationRow } from "./History";
@@ -43,7 +43,7 @@ import {
 } from "./providerDetailMappers";
 
 /* ---------- Tabs ---------- */
-type TabKey = "licenses" | "documents" | "history";
+type TabKey = "overview" | "licenses" | "documents" | "history";
 
 const initials = (name: string) =>
   name
@@ -80,8 +80,9 @@ const ViewProvider = () => {
   const addLicenseRequest = useAppSelector(selectAddLicenseRequest);
   const uploadDocumentRequest = useAppSelector(selectUploadDocumentRequest);
 
-  const [tab, setTab] = useState<TabKey>("licenses");
+  const [tab, setTab] = useState<TabKey>("overview");
   const [panel, setPanel] = useState<PanelState>(null);
+  const [isPanelClosing, setIsPanelClosing] = useState(false);
   const [toast, setToast] = useState<ToastState>({ type: null, title: "", message: "" });
 
   /* The thunk skips repeat loads of the same provider; locations are a once-per-session catalog. */
@@ -92,6 +93,10 @@ const ViewProvider = () => {
   useEffect(() => {
     dispatch(fetchLocations());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (panel) setIsPanelClosing(false);
+  }, [panel]);
 
   useEffect(() => () => void dispatch(resetProviderMutations()), [dispatch]);
 
@@ -121,6 +126,13 @@ const ViewProvider = () => {
     subtitle: string;
   }[] = useMemo(
     () => [
+      {
+        key: "overview",
+        label: "Overview",
+        crumb: "Profile",
+        title: "Provider Profile",
+        subtitle: "View and manage provider information, licenses, documents and availability.",
+      },
       {
         key: "licenses",
         label: "Licenses & Certifications",
@@ -153,7 +165,10 @@ const ViewProvider = () => {
     setPanel(null);
   };
 
-  const closePanel = useCallback(() => setPanel(null), []);
+  const closePanel = useCallback(() => {
+    setIsPanelClosing(false);
+    setPanel(null);
+  }, []);
 
   const openVerification = useCallback(
     (row: VerificationRow) => setPanel({ type: "verification", row }),
@@ -332,8 +347,8 @@ const ViewProvider = () => {
 
       {/* Main content — smoothly gives margin/space to the right panel when docked on 2xl+ */}
       <div
-        className={`mx-auto min-w-0 w-full max-w-[1600px] space-y-4 sm:space-y-5 transition-all duration-300 ${
-          panel ? "2xl:pr-[460px]" : ""
+        className={`mx-auto min-w-0 w-full max-w-[1600px] space-y-4 sm:space-y-5 transition-all duration-300 ease-out ${
+          panel && !isPanelClosing ? "2xl:pr-[460px]" : ""
         }`}
       >
         {/* Breadcrumb */}
@@ -413,6 +428,7 @@ const ViewProvider = () => {
 
         {/* Active tab */}
         <div role="tabpanel">
+          {tab === "overview" && <Overview />}
           {tab === "licenses" && (
             <Licenses
               items={licenseRows}
@@ -442,6 +458,7 @@ const ViewProvider = () => {
         panel={panel}
         provider={providerSummary}
         onClose={closePanel}
+        onCloseStart={() => setIsPanelClosing(true)}
         onSaveLicense={handleSaveLicense}
         onSaveDocument={handleSaveDocument}
         onDownloadDocument={handleDownloadDocument}

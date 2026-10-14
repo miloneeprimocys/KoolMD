@@ -174,7 +174,7 @@ const Requests = () => {
 
           <div className="space-y-3">
             <div className="overflow-hidden rounded-[14px] border border-border bg-card">
-              <Table columns={COLUMNS} rows={rows} />
+              <Table columns={COLUMNS} rows={rows} bordered={false} />
             </div>
             <Pagination
               page={page}

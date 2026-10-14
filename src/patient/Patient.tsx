@@ -216,8 +216,13 @@ const Patient = () => {
       status: <Tags text={humanizeEnum(patient.status)} tone={STATUS_TONES[patient.status]} />,
       actions: (
         <div className="flex w-full items-center justify-center">
-          {/* View / edit screens are not built yet */}
-          <Actions onAction={() => undefined} />
+          <Actions
+            onAction={(action) => {
+              if (action === "view") {
+                router.push(`/view-patient?id=${patient.id}`);
+              }
+            }}
+          />
         </div>
       ),
     };
@@ -243,7 +248,7 @@ const Patient = () => {
     }
     return (
       <div className={patientList.status === "pending" ? "opacity-60 transition-opacity" : ""}>
-        <Table columns={columns} rows={rows} />
+        <Table columns={columns} rows={rows} bordered={false} />
       </div>
     );
   };

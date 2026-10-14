@@ -6,9 +6,10 @@ type TableProps = {
   columns: TableColumn[];
   rows: Record<string, React.ReactNode>[];
   fillHeight?: boolean;
+  bordered?: boolean;
 };
 
-const Table = ({ columns, rows, fillHeight = false }: TableProps) => {
+const Table = ({ columns, rows, fillHeight = false, bordered = true }: TableProps) => {
   const getFixedWidth = (column: TableColumn) =>
     column.width ?? (column.className?.split(/\s+/).includes("w-10") ? 40 : undefined);
 
@@ -16,12 +17,14 @@ const Table = ({ columns, rows, fillHeight = false }: TableProps) => {
     <div
       className={`flex ${
         rows.length === 0 ? "h-[65vh]" : "max-h-[65vh]"
-      } w-full flex-col overflow-hidden rounded-[14px] border border-border bg-card  ${
+      } w-full flex-col overflow-hidden rounded-[14px] bg-card ${
+        bordered ? "border border-border" : ""
+      } ${
         fillHeight ? "2xl:flex" : ""
       }`}
     >
       <div
-        className={`relative min-h-0 flex-1 overflow-x-auto overflow-y-auto custom-scrollbar table-scrollbar bg-[linear-gradient(to_bottom,#F0F0F0_0,#F0F0F0_57px,var(--border)_57px,var(--border)_58px,transparent_58px)] dark:bg-[linear-gradient(to_bottom,#1b2544_0,#1b2544_57px,var(--border)_57px,var(--border)_58px,transparent_58px)] ${
+        className={`relative min-h-0 flex-1 overflow-x-auto overflow-y-auto custom-scrollbar table-scrollbar bg-[linear-gradient(to_bottom,#f1f6fc_0,#f1f6fc_57px,var(--border)_57px,var(--border)_58px,transparent_58px)] dark:bg-[linear-gradient(to_bottom,#002148_0,#002148_57px,var(--border)_57px,var(--border)_58px,transparent_58px)] ${
           fillHeight ? "2xl:flex-1" : ""
         }`}
       >

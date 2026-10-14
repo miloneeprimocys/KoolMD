@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Calendar,
   CalendarDays,
@@ -375,6 +375,9 @@ type Props = {
   variant: PanelVariant;
   /** When provided, an X button closes the panel. */
   onClose?: () => void;
+  onCloseStart?: () => void;
+  initiallyOpen?: boolean;
+  desktopLayoutControlled?: boolean;
   /** Overrides the preset content (used by Calendar View). */
   data?: PanelData;
   className?: string;
@@ -382,21 +385,47 @@ type Props = {
   onHeightChange?: (height: number) => void;
 };
 
+
 const iconBtn =
   "flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-body transition-colors hover:bg-heading/5 hover:text-heading focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
 
 const RightSection = ({
   variant,
   onClose,
+  onCloseStart,
+  initiallyOpen = false,
+  desktopLayoutControlled = false,
   data,
   className = "",
   closeButtonClassName = "",
   onHeightChange,
 }: Props) => {
   const panelRef = useRef<HTMLElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isOpen, setIsOpen] = useState(initiallyOpen);
+  const [isClosing, setIsClosing] = useState(false);
   const c: Config = { ...PRESETS[variant], ...(data ?? {}) };
   const p = c.patient;
   const valueCls = c.plain ? "text-sm text-heading" : "text-sm font-semibold text-heading";
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setIsOpen(true));
+    return () => {
+      cancelAnimationFrame(frame);
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    };
+  }, []);
+
+  const closePanel = () => {
+    if (!onClose || closeTimer.current) return;
+    setIsClosing(true);
+    onCloseStart?.();
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 300;
+    closeTimer.current = setTimeout(() => {
+      closeTimer.current = null;
+      onClose();
+    }, duration);
+  };
 
   useEffect(() => {
     if (!onHeightChange || !panelRef.current) return;
@@ -413,18 +442,26 @@ const RightSection = ({
 
   return (
     <>
+  {/* fixed inset-x-0 bottom-0 t */}
       {onClose && (
         <div
-          className="fixed inset-x-0 bottom-0 top-14 z-[140] bg-black/40 backdrop-blur-xs xl:top-16 2xl:hidden"
-          onClick={onClose}
+          className={`fixed inset-x-0 bottom-0 top-14 z-[140] bg-black/40 backdrop-blur-xs transition-opacity duration-300 ease-out xl:top-16 2xl:hidden ${isOpen && !isClosing ? "opacity-100" : "opacity-0"}`}
+          onClick={closePanel}
           aria-hidden="true"
         />
       )}
-      <aside
-        ref={panelRef}
-        aria-label={c.title}
-        className={`fixed right-0 top-14 z-[150] flex h-[calc(100dvh-3.5rem)] w-full max-w-[420px] flex-col overflow-y-auto border-y border-l border-border bg-card shadow-2xl transition-transform duration-300 animate-in slide-in-from-right xl:top-16 xl:h-[calc(100dvh-4rem)] 2xl:relative 2xl:bottom-auto 2xl:right-auto 2xl:top-auto 2xl:z-auto 2xl:h-auto 2xl:overflow-y-visible 2xl:w-[360px] 2xl:max-w-none 2xl:shrink-0 2xl:rounded-[14px] 2xl:border-[1.5px] 2xl:shadow-none 2xl:animate-none hide-scrollbar ${className}`}
+      <div
+        className={`contents 2xl:relative 2xl:block 2xl:shrink-0 2xl:overflow-hidden ${
+          desktopLayoutControlled
+            ? "2xl:w-[360px]"
+            : `2xl:transition-[width] 2xl:duration-300 2xl:ease-out ${isOpen && !isClosing ? "2xl:w-[360px]" : "2xl:w-0"}`
+        }`}
       >
+        <aside
+          ref={panelRef}
+          aria-label={c.title}
+          className={`fixed right-0 top-14 z-[150] flex h-[calc(100dvh-3.5rem)] w-full max-w-[420px] flex-col overflow-y-auto border-y border-l border-border bg-card shadow-2xl transition-transform duration-300 ease-out xl:top-16 xl:h-[calc(100dvh-4rem)] 2xl:relative 2xl:bottom-auto 2xl:right-auto 2xl:top-auto 2xl:z-auto 2xl:h-auto 2xl:overflow-hidden 2xl:w-[360px] 2xl:max-w-none 2xl:shrink-0 2xl:rounded-[14px] 2xl:border-[1.5px] 2xl:shadow-none 2xl:transition-transform 2xl:duration-300 2xl:ease-out hide-scrollbar ${isOpen && !isClosing ? "translate-x-0" : "translate-x-full"} ${className}`}
+        >
       {/* Header */}
       <header className="sticky top-0 z-20 flex shrink-0 items-center justify-between gap-3 bg-card px-4 py-3.5 2xl:static">
         <h3 className="text-sm font-semibold text-heading sm:text-base">{c.title}</h3>
@@ -447,7 +484,7 @@ const RightSection = ({
             <button
               type="button"
               aria-label="Close panel"
-              onClick={onClose}
+              onClick={closePanel}
               className={`${iconBtn} ${closeButtonClassName}`}
             >
               <X className="h-5 w-5" />
@@ -464,7 +501,7 @@ const RightSection = ({
             <ChevronDown className="h-4 w-4 text-body" />
           </div>
         )}
-
+        
         {/* Patient */}
         <div className="flex items-start gap-3">
           <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-semibold text-primary">
@@ -515,7 +552,8 @@ const RightSection = ({
           <PanelActions variant={variant} />
         </div>
       </div>
-      </aside>
+        </aside>
+      </div>
     </>
   );
 };

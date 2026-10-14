@@ -311,7 +311,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       <div
         role="dialog"
         aria-label="Choose date"
-        className="w-full select-none rounded-2xl border border-border bg-card p-4 text-heading"
+        className="w-full select-none overflow-hidden rounded-2xl border border-border bg-card p-4 text-heading"
       >
         {/* Header */}
         <div className="mb-3 flex items-center justify-between gap-2">
@@ -535,7 +535,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
           {/* Desktop popover */}
           {open && !disabled && !isMobile && (
             <div
-              className={`absolute z-[100] w-[310px] sm:w-[320px] max-w-[calc(100vw-2rem)] shadow-2xl shadow-black/20 dark:shadow-black/60 animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both] ${
+              className={`absolute z-[100] w-[310px] sm:w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60 animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both] ${
                 horizontalAlign === "right" ? "right-0" : "left-0"
               } ${
                 placement === "down" ? "top-full mt-1.5" : "bottom-full mb-1.5"
@@ -558,13 +558,13 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
                 onClick={closePicker}
                 className="absolute inset-0 animate-[fadeIn_0.2s_ease-out_both] bg-[#1e3a8a]/35 backdrop-blur-md"
               />
-              <div className="relative w-full max-w-[340px] animate-[dropdownIn_0.2s_cubic-bezier(0.16,1,0.3,1)_both] shadow-2xl shadow-[#1e3a8a]/40">
+              <div className="relative w-full max-w-[340px] animate-[dropdownIn_0.2s_cubic-bezier(0.16,1,0.3,1)_both] rounded-2xl shadow-2xl shadow-[#1e3a8a]/40">
                 {panel}
               </div>
             </div>,
             document.body,
           )}
-
+{/*  */}
         {/* Error / hint */}
         {hasError ? (
           <FieldError message={error} />

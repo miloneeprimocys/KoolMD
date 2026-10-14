@@ -101,7 +101,7 @@ const LeftSection = ({
   const miniCells = buildMonth(miniMonth);
 
   return (
-    <div className="grid w-full gap-5 rounded-[14px] border border-border bg-card p-4 md:grid-cols-3 2xl:w-[280px] 2xl:shrink-0 2xl:grid-cols-1">
+    <div className="grid w-full gap-5 rounded-[14px] border border-border bg-card p-4 md:grid-cols-3 2xl:flex 2xl:w-[280px] 2xl:shrink-0 2xl:flex-col 2xl:self-stretch">
       {/* Mini calendar (any month) */}
       <div>
         <div className="mb-3 flex items-center justify-between">
@@ -172,7 +172,7 @@ const LeftSection = ({
             className="h-10 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-xs text-heading outline-none placeholder:text-placeholder focus:border-primary"
           />
         </div>
-        <label className="mb-2.5 flex cursor-pointer items-center gap-2.5 text-sm font-medium text-heading">
+        <label className="mb-2.5 flex cursor-pointer items-center gap-2.5 text-sm font-medium text-heading 2xl:mb-4">
           <input
             type="checkbox"
             checked={provOn.size === PROVIDERS.length}
@@ -183,7 +183,7 @@ const LeftSection = ({
           />
           All Providers
         </label>
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 2xl:space-y-4">
           {PROVIDERS.map((p, i) => ({ ...p, i }))
             .filter((p) => p.name.toLowerCase().includes(provQuery.trim().toLowerCase()))
             .map((p) => (
@@ -207,7 +207,7 @@ const LeftSection = ({
       {/* Locations */}
       <div>
         <p className="mb-3 text-sm font-semibold text-heading">Locations</p>
-        <label className="mb-2.5 flex cursor-pointer items-center gap-2.5 text-sm font-medium text-heading">
+        <label className="mb-2.5 flex cursor-pointer items-center gap-2.5 text-sm font-medium text-heading 2xl:mb-4">
           <input
             type="checkbox"
             checked={locOn.size === LOCATIONS.length}
@@ -218,7 +218,7 @@ const LeftSection = ({
           />
           All Locations
         </label>
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 2xl:space-y-4">
           {LOCATIONS.map((l, i) => (
             <label key={l.name} className="flex cursor-pointer items-center gap-2.5">
               <input

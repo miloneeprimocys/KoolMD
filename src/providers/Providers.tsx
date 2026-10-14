@@ -286,7 +286,7 @@ const Providers = () => {
     }
     return (
       <div className={practitionerList.status === "pending" ? "opacity-60 transition-opacity" : ""}>
-        <Table columns={columns} rows={rows} />
+        <Table columns={columns} rows={rows} bordered={false} />
       </div>
     );
   };

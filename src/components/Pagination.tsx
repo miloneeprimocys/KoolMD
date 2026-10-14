@@ -132,11 +132,11 @@ const Pagination: React.FC<PaginationProps> = ({
               type="button"
               onClick={() => onChange(p)}
               aria-current={isActive ? "page" : undefined}
-              className={`${pageBtn} ${
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-heading hover:bg-primary/5 hover:text-primary"
-              }`}
+            className={`${pageBtn} ${
+            isActive  
+              ? "bg-primary/20 text-label/80"
+              : "text-heading hover:bg-primary/10 hover:text-primary"
+          }`}
             >
               {p}
             </button>

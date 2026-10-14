@@ -5,6 +5,7 @@ import VerifyPage from "@/auth/verifyEmail/Verifypage";
 import Dashboard from "@/dashboard/Dashboard";
 import Patient from "@/patient/Patient";
 import AddPatient from "@/patient/AddPatient";
+import ViewPatient from "@/patient/viewpatients/Viewpatient";
 import Providers from "@/providers/Providers";
 import AddProvider from "@/providers/AddProvider";
 import ViewProvider from "@/providers/viewproviders/Viewprovider";
@@ -54,6 +55,12 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "Add Patient",
     access: "protected",
     requiredPermission: PERMISSIONS.PATIENT_CREATE,
+  },
+  "view-patient": {
+    component: ViewPatient,
+    title: "View Patient",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PATIENT_READ,
   },
   providers: {
     component: Providers,

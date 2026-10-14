@@ -174,7 +174,7 @@ const AppointmentHistory = () => {
           {/* Table */}
           <div className="min-w-0 space-y-3">
             <div className="w-full min-w-0 overflow-hidden rounded-[14px] border border-border bg-card">
-              <Table columns={COLUMNS} rows={rows} />
+              <Table columns={COLUMNS} rows={rows} bordered={false} />
             </div>
             <Pagination
               page={page}

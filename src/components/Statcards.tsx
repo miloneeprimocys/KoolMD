@@ -3,7 +3,7 @@ import { Activity, AlertCircle, ArrowDown, ArrowUp, CalendarDays, Users, type Lu
 
 import { type TagTone } from "./Tags";
 
-type Accent = "primary" | "success" | "warning" | "danger" | "violet";
+type Accent = "primary" | "success" | "warning" | "danger" | "violet" | "pink";
 
 export type StatItem = {
   label: string;
@@ -17,13 +17,19 @@ export type StatItem = {
   tag?: { text: string; tone: TagTone };
 };
 
-/* Full class strings (not built dynamically) so Tailwind can detect them */
+/*
+  Full class strings (not built dynamically) so Tailwind can detect them.
+  - tone:  gradient icon tile (bg-grad-* comes from the global theme) + tinted shadow
+  - color: wave / animated border colour (global CSS variable)
+  - glow:  card hover shadow
+*/
 const ACCENTS: Record<Accent, { tone: string; color: string; glow: string }> = {
-  primary: { tone: "bg-primary/10 text-primary", color: "var(--primary)", glow: "hover:shadow-primary/15" },
-  success: { tone: "bg-success/10 text-success", color: "var(--success)", glow: "hover:shadow-success/15" },
-  warning: { tone: "bg-warning/10 text-warning", color: "var(--warning)", glow: "hover:shadow-warning/15" },
-  danger:  { tone: "bg-danger/10 text-danger",   color: "var(--danger)",  glow: "hover:shadow-danger/15" },
-  violet:  { tone: "bg-violet/10 text-violet",   color: "var(--violet)",  glow: "hover:shadow-violet/15" },
+  primary: { tone: "bg-grad-blue shadow-primary/30",     color: "var(--primary)", glow: "hover:shadow-primary/15" },
+  success: { tone: "bg-grad-green shadow-success/30",    color: "var(--success)", glow: "hover:shadow-success/15" },
+  warning: { tone: "bg-grad-orange shadow-warning/30",   color: "var(--warning)", glow: "hover:shadow-warning/15" },
+  danger:  { tone: "bg-grad-red shadow-danger/30",       color: "var(--danger)",  glow: "hover:shadow-danger/15" },
+  violet:  { tone: "bg-grad-violet shadow-violet/30",    color: "var(--violet)",  glow: "hover:shadow-violet/15" },
+  pink:    { tone: "bg-grad-pink shadow-pink/30",        color: "var(--pink)",    glow: "hover:shadow-pink/15" },
 };
 
 /* Text colour for the tag, by tone */
@@ -108,9 +114,9 @@ const StatCards = ({ stats = DEFAULT_STATS }: { stats?: StatItem[] }) => {
 
             {/* ── Body: icon on the left, content on the right ── */}
             <div className="relative flex items-start gap-4">
-              {/* Icon tile */}
+              {/* Icon tile: global gradient + white icon + tinted glow */}
               <span
-                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] ${tone} transition-transform duration-300 group-hover:scale-105`}
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] text-white shadow-lg ${tone} transition-transform duration-300 group-hover:scale-105`}
               >
                 <Icon className="h-7 w-7" />
               </span>

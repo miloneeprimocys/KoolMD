@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { FileText, X } from "lucide-react";
+import { CloudUpload, FileText, Plus, X } from "lucide-react";
 import { FieldError } from "./SignupField";
 
 const ALLOWED = ["application/pdf", "image/jpeg", "image/png"];
-const MAX_BYTES = 5 * 1024 * 1024;
 
 interface FileDropzoneProps {
   /** Text after "Drag and drop", e.g. "your medical license here" */
@@ -14,6 +13,8 @@ interface FileDropzoneProps {
   onChange: (file: File | null) => void;
   error?: string;
   className?: string;
+  compact?: boolean;
+  maxSizeMB?: number;
 }
 
 const formatSize = (bytes: number) =>
@@ -30,6 +31,8 @@ const FileDropzone = ({
   onChange,
   error,
   className = "",
+  compact = false,
+  maxSizeMB = 5,
 }: FileDropzoneProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -54,8 +57,8 @@ const FileDropzone = ({
       setLocalError("Only PDF, JPG or PNG files are allowed.");
       return;
     }
-    if (f.size > MAX_BYTES) {
-      setLocalError("File is larger than 5MB.");
+    if (f.size > maxSizeMB * 1024 * 1024) {
+      setLocalError(`File is larger than ${maxSizeMB}MB.`);
       return;
     }
     setLocalError("");
@@ -86,12 +89,18 @@ const FileDropzone = ({
           setDragging(false);
           handleFiles(e.dataTransfer.files);
         }}
-        className={`relative flex h-full min-w-0 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed px-3 py-5 text-center outline-none transition-colors duration-200 focus-visible:ring-4 focus-visible:ring-primary/20 sm:px-4 sm:py-6 ${
+        className={`relative flex h-full min-w-0 cursor-pointer ${
+          compact
+            ? "flex-row flex-wrap justify-start rounded-xl border border-primary/20 bg-primary/[0.04] px-4 py-3 text-left"
+            : "flex-col items-center justify-center rounded-xl border border-dashed px-3 py-5 text-center sm:px-4 sm:py-6"
+        } outline-none transition-colors duration-200 focus-visible:ring-4 focus-visible:ring-primary/20 ${
           message
             ? "border-danger bg-danger/5"
             : dragging
               ? "border-primary bg-primary/10"
-              : "border-border bg-primary/5 hover:border-primary/60"
+              : compact
+                ? "border-primary/20 bg-primary/[0.04] hover:border-primary/50"
+                : "border-primary/70 bg-primary/5 dark:bg-primary/20 hover:border-primary/90"
         }`}
       >
         <input
@@ -107,10 +116,10 @@ const FileDropzone = ({
 
         {file ? (
           /* ---------- Selected: responsive card ---------- */
-          <div className="flex w-full min-w-0 flex-col items-stretch gap-3 rounded-lg border border-border bg-card p-3 text-left sm:flex-row sm:items-center sm:gap-3 sm:p-2">
+          <div className={`flex w-full min-w-0 items-center gap-3 text-left ${compact ? "" : "flex-col items-stretch rounded-lg border border-border bg-card p-3 sm:flex-row sm:items-center sm:p-2"}`}>
             {/* Thumbnail wrapper — relative so mobile ✕ can sit at its top-right */}
-            <div className="relative mx-auto sm:mx-0 sm:shrink-0">
-              <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-md border border-border bg-primary/5 sm:h-14 sm:w-14">
+            <div className={`relative shrink-0 ${compact ? "" : "mx-auto sm:mx-0"}`}>
+              <span className={`flex items-center justify-center overflow-hidden rounded-md border border-border bg-primary/5 ${compact ? "h-12 w-12" : "h-20 w-20 sm:h-14 sm:w-14"}`}>
                 {isImage(file) && previewUrl ? (
                   <img
                     src={previewUrl}
@@ -119,7 +128,7 @@ const FileDropzone = ({
                   />
                 ) : (
                   <FileText
-                    className="h-7 w-7 text-primary sm:h-6 sm:w-6"
+                    className={`${compact ? "h-6 w-6" : "h-7 w-7 text-primary sm:h-6 sm:w-6"}`}
                     strokeWidth={1.75}
                   />
                 )}
@@ -134,7 +143,7 @@ const FileDropzone = ({
                   setLocalError("");
                   onChange(null);
                 }}
-                className="absolute -right-2 -top-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-body shadow-sm transition-colors hover:bg-danger/10 hover:text-danger sm:hidden"
+                className={`absolute -right-2 -top-2 h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-body shadow-sm transition-colors hover:bg-danger/10 hover:text-danger ${compact ? "flex" : "flex sm:hidden"}`}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -142,7 +151,7 @@ const FileDropzone = ({
 
             {/* File meta + desktop ✕ */}
             <div className="flex min-w-0 flex-1 items-center gap-2">
-              <span className="min-w-0 flex-1 text-center sm:text-left">
+              <span className={`min-w-0 flex-1 ${compact ? "" : "text-center sm:text-left"}`}>
                 <span className="block truncate text-sm font-medium text-heading">
                   {file.name}
                 </span>
@@ -161,7 +170,7 @@ const FileDropzone = ({
                   setLocalError("");
                   onChange(null);
                 }}
-                className="hidden h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-body transition-colors hover:bg-danger/10 hover:text-danger sm:flex"
+                className={`h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-body transition-colors hover:bg-danger/10 hover:text-danger ${compact ? "hidden" : "hidden sm:flex"}`}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -169,16 +178,33 @@ const FileDropzone = ({
           </div>
         ) : (
           /* ---------- Empty state ---------- */
-          <>
-            <FileText className="h-6 w-6 text-label" strokeWidth={1.5} />
-            <p className="mt-2 text-sm font-semibold text-heading">
-              Drag and drop {title}
-            </p>
-            <p className="text-xs text-body">or click to browse</p>
-            <p className="mt-1 text-[11px] text-body">
-              PDF, JPG or PNG (Max 5MB)
-            </p>
-          </>
+          compact ? (
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+              <CloudUpload className="h-7 w-7 shrink-0 text-primary" strokeWidth={2} />
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-heading">Upload Documents</span>
+                <span className="block text-xs text-body">
+                  Drag and drop {title}, or <span className="font-medium text-primary">click to browse</span>
+                </span>
+                <span className="block text-[10px] text-body">Supports PDF, JPG, PNG (Max {maxSizeMB} MB per file)</span>
+              </span>
+              <span className="ml-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-medium text-on-primary shadow-sm sm:px-4 sm:text-sm">
+                <Plus className="h-4 w-4" />
+                Upload Document
+              </span>
+            </div>
+          ) : (
+            <>
+              <FileText className="h-6 w-6 text-label" strokeWidth={1.5} />
+              <p className="mt-2 text-sm font-semibold text-heading">
+                Drag and drop {title}
+              </p>
+              <p className="text-xs text-body">or click to browse</p>
+              <p className="mt-1 text-[11px] text-body">
+                PDF, JPG or PNG (Max {maxSizeMB}MB)
+              </p>
+            </>
+          )
         )}
       </div>
       <FieldError message={message} />

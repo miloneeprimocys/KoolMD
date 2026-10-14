@@ -16,7 +16,7 @@ const TableHeader = ({ columns }: { columns: TableColumn[] }) => (
         <th
           key={c.key}
           scope="col"
-          className={`sticky top-0 z-10 whitespace-nowrap bg-[#F0F0F0]  h-[58px] px-4 text-[13px] font-semibold text-label shadow-[inset_0_-1px_0_var(--border)] dark:bg-[#1b2544] sm:px-5 sm:text-sm ${
+          className={`sticky top-0 z-10 whitespace-nowrap bg-[#f1f6fc]  h-[58px] px-4 text-[13px] font-semibold text-label shadow-[inset_0_-1px_0_var(--border)] dark:bg-[#002148] sm:px-5 sm:text-sm ${
             c.className ?? ""
           }`}
         >

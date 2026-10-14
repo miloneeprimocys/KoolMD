@@ -2,43 +2,60 @@
   color-scheme: light;
 
   /* Brand */
-  --primary: #2f7bf5;
-  --primary-hover: #1f6ae6;
-  --link: #2563eb;
-  --brand-navy: #0f1d5c;
-  --brand-teal: #1fb5c9;
-  --brand-green: #3ddc97;
-  --brand-sky: #4aa3ff;
+  --primary: #2d7ff9;
+  --primary-hover: #1c6cec;
+  --link: #1f6fff;
+  --brand-navy: #0c1a5a;
+  --brand-teal: #19c2e0;
+  --brand-green: #34dc9c;
+  --brand-sky: #4aa8ff;
 
   /* Text */
-  --heading: #0f1d4a;
-  --body: #6b7894;
-  --label: #1b2559;
-  --placeholder: #8a96ae;
+  --heading: #0c1a4e;
+  --body: #66779b;
+  --label: #19245c;
+  --placeholder: #8796b3;
   --on-primary: #ffffff;
 
   /* Surfaces */
   --card: #ffffff;
-  --page: #fafdff;
-  --surface-start: #f4f9ff;
-  --surface-end: #e6f1fd;
+  --page: #f7faff;
+  --surface-start: #eef5ff;
+  --surface-end: #dcebff;
 
   /* Borders & dividers */
-  --border: #dfe7f2;
-  --divider: #e6ecf5;
-  --accent-line: #2f7bf5;
+  --border: #d9e5f5;
+  --divider: #e3ecf8;
+  --accent-line: #2d7ff9;
 
   /* Decorative shapes (left panel) */
-  --shape-mint: #b9f0de;
-  --shape-sky: #bfe0ff;
-  --shape-blue: #8cc4ff;
-  --shape-deep: #5aa2f5;
+  --shape-mint: #b4f2dc;
+  --shape-sky: #c4e3ff;
+  --shape-blue: #8fc7ff;
+  --shape-deep: #4f9bff;
 
   /* Status (dashboard) */
   --success: #0f9d6c;
-  --warning: #f0642b;
+  --warning: #f2850f;
   --danger: #e5484d;
-  --violet: #8b5cf6;
+  --violet: #7c5cf6;
+  --pink: #d946ef;
+
+  /* Sidebar (navy panel in the dashboard mockups) */
+  --sidebar-from: #0f2a78;
+  --sidebar-to: #0a1a55;
+
+  /* Gradient accents (stat cards, hero tiles) — use as background-image */
+  --grad-primary: linear-gradient(135deg, #2d7ff9 0%, #19c2e0 100%);
+  --grad-blue: linear-gradient(135deg, #2d7ff9 0%, #4aa8ff 100%);
+  --grad-violet: linear-gradient(135deg, #7c4dff 0%, #b07bff 100%);
+  --grad-green: linear-gradient(135deg, #10b981 0%, #3ddc97 100%);
+  --grad-orange: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+  --grad-red: linear-gradient(135deg, #e5484d 0%, #fb7185 100%);
+  --grad-pink: linear-gradient(135deg, #d946ef 0%, #f472b6 100%);
+
+  /* Soft glow used behind primary elements */
+  --glow-primary: rgba(45, 127, 249, 0.28);
 
   /* Google logo (brand-mandated colours) */
   --google-red: #ea4335;
@@ -48,58 +65,76 @@
 
   /* Button tokens — light mode */
   --btn-from: rgba(255, 255, 255, 0.70);
-  --btn-to:   rgba(244, 249, 255, 0.85);
-  --btn-border: rgba(15, 29, 74, 0.10);
-  --btn-text: #0f1d4a;
-  --btn-shadow: rgba(15, 29, 74, 0.06);
-  --btn-shadow-hover: rgba(15, 29, 74, 0.12);
-  --btn-glow: rgba(15, 157, 108, 0.20);
+  --btn-to:   rgba(238, 245, 255, 0.90);
+  --btn-border: rgba(12, 26, 78, 0.10);
+  --btn-text: #0c1a4e;
+  --btn-shadow: rgba(12, 26, 78, 0.06);
+  --btn-shadow-hover: rgba(12, 26, 78, 0.12);
+  --btn-glow: rgba(45, 127, 249, 0.22);
 }
 
 /* ==========================================================================
    Dark theme – applied when <html class="dark">
+   Deep navy surfaces, glowing blue borders, neon blue / cyan accents
    ========================================================================== */
 :root.dark {
   color-scheme: dark;
 
   /* Brand */
-  --primary: #4d8ff8;
-  --primary-hover: #6aa3fa;
-  --link: #6aa8ff;
+  --primary: #3b8cff;
+  --primary-hover: #5ba0ff;
+  --link: #5eb0ff;
   --brand-navy: #d6e4ff;
-  --brand-teal: #2cc7db;
-  --brand-green: #3ddc97;
-  --brand-sky: #5aaeff;
+  --brand-teal: #25d0f0;
+  --brand-green: #34e0a1;
+  --brand-sky: #52b4ff;
 
   /* Text */
-  --heading: #eaf0ff;
-  --body: #9aa7c4;
-  --label: #d3dcf5;
-  --placeholder: #6f7b99;
+  --heading: #eaf2ff;
+  --body: #9fb3dd;
+  --label: #cfe0ff;
+  --placeholder: #6f85b5;
   --on-primary: #ffffff;
 
   /* Surfaces */
-  --card: #121a33;
-  --page: #0b1226;
-  --surface-start: #0f1834;
-  --surface-end: #0a1124;
+  --page: #073c6e;
+  --card: #001d49;
+  --surface-start: #0c1740;
+  --surface-end: #081030;
 
   /* Borders & dividers */
-  --border: #243053;
-  --divider: #1d2747;
-  --accent-line: #4d8ff8;
+  --border: #294a97;
+  --divider: #172a5c;
+  --accent-line: #3b8cff;
 
   /* Decorative shapes */
-  --shape-mint: #1b6b57;
-  --shape-sky: #1d3f73;
-  --shape-blue: #2a5aa3;
-  --shape-deep: #3b7ad8;
+  --shape-mint: #14604f;
+  --shape-sky: #1a3f7d;
+  --shape-blue: #2559ad;
+  --shape-deep: #3a7ff0;
 
   /* Status (dashboard) */
-  --success: #07875F;
-  --warning: #ff7a45;
-  --danger: #f0555a;
-  --violet: #9b7bf7;
+  --success: #13ad7c;
+  --warning: #ff9a3d;
+  --danger: #ff5a64;
+  --violet: #a07bff;
+  --pink: #f06ae0;
+
+  /* Sidebar */
+  --sidebar-from: #0b1d55;
+  --sidebar-to: #071238;
+
+  /* Gradient accents — slightly brighter on dark */
+  --grad-primary: linear-gradient(135deg, #3b8cff 0%, #25d0f0 100%);
+  --grad-blue: linear-gradient(135deg, #2f7bf5 0%, #52b4ff 100%);
+  --grad-violet: linear-gradient(135deg, #8b5cf6 0%, #c084fc 100%);
+  --grad-green: linear-gradient(135deg, #12b886 0%, #4ae8a8 100%);
+  --grad-orange: linear-gradient(135deg, #fb7a1a 0%, #ffc233 100%);
+  --grad-red: linear-gradient(135deg, #ff5a64 0%, #ff8a8f 100%);
+  --grad-pink: linear-gradient(135deg, #e04bd0 0%, #f78fc0 100%);
+
+  /* Soft glow used behind primary elements */
+  --glow-primary: rgba(59, 140, 255, 0.40);
 
   /* Google logo (brand-mandated colours) – unchanged */
   --google-red: #ea4335;
@@ -108,11 +143,11 @@
   --google-green: #34a853;
 
   /* Button tokens — dark mode */
-  --btn-from: #0d1430;
-  --btn-to:   #0a1026;
-  --btn-border: #1f2b4f;
-  --btn-text: #eaf0ff;
-  --btn-shadow: rgba(0, 0, 0, 0.45);
-  --btn-shadow-hover: rgba(0, 0, 0, 0.60);
-  --btn-glow: rgba(77, 143, 248, 0.22);
+  --btn-from: #0e2150;
+  --btn-to:   #0a1840;
+  --btn-border: #2a4a96;
+  --btn-text: #eaf2ff;
+  --btn-shadow: rgba(0, 0, 0, 0.50);
+  --btn-shadow-hover: rgba(0, 0, 0, 0.65);
+  --btn-glow: rgba(61, 150, 255, 0.35);
 }
