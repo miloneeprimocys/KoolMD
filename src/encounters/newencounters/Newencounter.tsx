@@ -74,7 +74,7 @@ const NewEncounter = () => {
               text="Cancel"
               icon={null}
               className="whitespace-nowrap"
-              onClick={() => router.push(viewHref)}
+              onClick={() => router.back()}
             />
           ) : (
             <ImportButton

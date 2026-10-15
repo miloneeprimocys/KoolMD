@@ -103,18 +103,16 @@ const ViewPatient = () => {
             icon={<ArrowLeft className="h-4 w-4" />}
             onClick={() => router.push("/patients")}
           /> */}
-          <AddButton
-            text="Edit Patient"
-            icon={<Pencil className="h-4 w-4" />}
-            onClick={() =>
-              router.push(
-                patientId
-                  ? `/edit-patient?id=${encodeURIComponent(patientId)}`
-                  : "/edit-patient",
-              )
-            }
-            className="w-fit whitespace-nowrap"
-          />
+          {patientId && (
+            <AddButton
+              text="Edit Patient"
+              icon={<Pencil className="h-4 w-4" />}
+              onClick={() =>
+                router.push(`/edit-patient?id=${encodeURIComponent(patientId)}`)
+              }
+              className="w-fit whitespace-nowrap"
+            />
+          )}
         </div>
       </div>
 

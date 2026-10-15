@@ -46,6 +46,9 @@ const ACCOUNT: { icon: LucideIcon; label: string; value: string }[] = [
   { icon: UserCheck, label: "Assigned Provider", value: "Not assigned" },
 ];
 
+const hasProvidedValue = (value: string) =>
+  value.trim() !== "" && value !== NOT_PROVIDED && value !== "Not assigned";
+
 /* ---------- Small building blocks ---------- */
 const IconBadge = ({
   icon: Icon,
@@ -149,7 +152,11 @@ const OverviewPatient = ({ onEdit }: Props) => (
           className="flex-1"
           icon={Phone}
           title="Contact Information"
-          action={<EditButton section="Contact Information" onEdit={onEdit} />}
+          action={
+            CONTACT.some((item) => hasProvidedValue(item.value)) ? (
+              <EditButton section="Contact Information" onEdit={onEdit} />
+            ) : undefined
+          }
         >
           <ul className="space-y-4">
             {CONTACT.map((c) => (
@@ -162,7 +169,6 @@ const OverviewPatient = ({ onEdit }: Props) => (
           className="flex-1"
           icon={Users}
           title="Emergency Contact"
-          action={<EditButton section="Emergency Contact" onEdit={onEdit} />}
         >
           <EmptyState
             icon={Users}
@@ -181,7 +187,11 @@ const OverviewPatient = ({ onEdit }: Props) => (
           className="flex-1"
           icon={User}
           title="Personal Information"
-          action={<EditButton section="Personal Information" onEdit={onEdit} />}
+          action={
+            PERSONAL.some((item) => hasProvidedValue(item.value)) ? (
+              <EditButton section="Personal Information" onEdit={onEdit} />
+            ) : undefined
+          }
         >
           <ul className="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
             {PERSONAL.map((p) => (
@@ -194,7 +204,6 @@ const OverviewPatient = ({ onEdit }: Props) => (
           className="flex-1"
           icon={ShieldCheck}
           title="Insurance Information"
-          action={<EditButton section="Insurance Information" onEdit={onEdit} />}
         >
           <EmptyState
             icon={ShieldCheck}
@@ -238,15 +247,6 @@ const OverviewPatient = ({ onEdit }: Props) => (
           className="flex-1"
           icon={CalendarDays}
           title="Recent Appointments"
-          action={
-            <EditButton
-              variant="viewAll"
-              section="Recent Appointments"
-              onEdit={() => {
-                /* TODO: navigate to full appointments list */
-              }}
-            />
-          }
         >
           <EmptyState
             icon={CalendarDays}

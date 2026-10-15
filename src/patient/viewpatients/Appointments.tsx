@@ -438,7 +438,11 @@ const Appointments = ({
             icon={ClipboardList}
             tone="blue"
             title={`Appointment History (${HISTORY.length + 5})`}
-            action={<EditButton section="Appointment History" variant="viewAll" onEdit={() => {}} />}
+            action={
+              HISTORY.length > 0 ? (
+                <EditButton section="Appointment History" variant="viewAll" onEdit={() => {}} />
+              ) : undefined
+            }
           >
             <Table columns={HISTORY_COLUMNS} rows={historyRows} />
           </SectionCard>

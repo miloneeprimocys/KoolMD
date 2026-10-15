@@ -134,7 +134,9 @@ const Allergies = () => {
           tone="blue"
           title="Allergy Notes"
           action={
-            editingNotes ? undefined : <EditButton section="Allergy Notes" onEdit={startEditNotes} />
+            !editingNotes ? (
+              <EditButton section="Allergy Notes" onEdit={startEditNotes} />
+            ) : undefined
           }
         >
           {editingNotes ? (

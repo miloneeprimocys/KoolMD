@@ -48,7 +48,7 @@ const VerticalSteps = ({ steps, current, onStepClick, className = "" }: Vertical
     >
       <ol
         ref={listRef}
-        className="custom-scrollbar flex w-full min-w-0 flex-nowrap overflow-x-auto overscroll-x-contain touch-pan-x px-1.5 py-1.5 xl:flex-col xl:overflow-visible xl:p-0"
+        className="custom-scrollbar relative flex w-full min-w-0 flex-nowrap overflow-x-auto overscroll-x-contain touch-pan-x px-1.5 py-1.5 before:absolute before:bottom-[30px] before:left-[29px] before:top-[30px] before:hidden before:w-0.5 before:bg-divider before:content-[''] xl:flex-col xl:overflow-visible xl:p-0 xl:before:block"
       >
         {steps.map((s, i) => {
           const complete = s.id < current;
@@ -58,14 +58,6 @@ const VerticalSteps = ({ steps, current, onStepClick, className = "" }: Vertical
 
           return (
             <li key={s.id} className="relative flex shrink-0 items-center xl:block xl:shrink">
-              {/* connector line to the next step (desktop only) */}
-              {!isLast && (
-                <span
-                  aria-hidden="true"
-                  className="absolute left-[29px] top-[48px] hidden h-[calc(100%-36px)] w-0.5 bg-divider xl:block"
-                />
-              )}
-
               <button
                 ref={isCurrent ? activeStepRef : undefined}
                 type="button"
@@ -94,7 +86,7 @@ const VerticalSteps = ({ steps, current, onStepClick, className = "" }: Vertical
                         ? "bg-success text-white"
                         : isCurrent
                           ? "animate-toast-icon bg-primary text-white ring-4 ring-primary/20"
-                          : "bg-primary/10 text-primary"
+                          : "bg-[color-mix(in_srgb,var(--primary)_10%,var(--card))] text-primary"
                     }`}
                   >
                     {complete ? <Check className="h-4 w-4" /> : s.id}

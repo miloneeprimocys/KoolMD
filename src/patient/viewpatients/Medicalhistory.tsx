@@ -335,7 +335,13 @@ routes.tsx updated the routes */}
   icon={FileText}
   tone="blue"
   title="Lifestyle & Social History"
-  action={<EditButton section="Lifestyle & Social History" onEdit={() => {}} />}
+  action={
+    [...LIFESTYLE_LEFT, ...LIFESTYLE_RIGHT].some(
+      (item) => item.value.trim() && item.value !== "Not provided",
+    ) ? (
+      <EditButton section="Lifestyle & Social History" onEdit={() => {}} />
+    ) : undefined
+  }
 >
   {/* own wrapper instead of <ScrollArea>: scrolls on small screens, fills the card on sm+ */}
   <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto">

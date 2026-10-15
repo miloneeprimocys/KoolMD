@@ -172,7 +172,9 @@ const Encounters = () => {
           className="w-fit whitespace-nowrap"
         />
       </div>
-
+{/* the hydration error is caused by a browser extension adding the cz-shortcut attribute to the body tag. this listen="true"
+attribute is not valid HTML and causes a hydration error is a common issue with browser extensions
+that modify the DOM, the solution is to disable the extension or use a different browser. */}
       {/* Search + filters + reset / export */}
       <div className="flex flex-col gap-3 xl:flex-row xl:items-start 2xl:items-center">
         <div className="min-w-0 flex-1">

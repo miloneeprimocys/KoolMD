@@ -179,6 +179,7 @@ const VisitInformation = () => {
           value={provider}
           onChange={setProvider}
           searchable={false}
+          triggerClassName="!h-auto !min-h-12 !py-2"
           renderSelected={(option) => (
             <Name
               name={option.label}
