@@ -15,7 +15,6 @@ import {
   MessageSquare,
   MoreVertical,
   Paperclip,
-  Pencil,
   Phone,
   Stethoscope,
   StickyNote,
@@ -28,6 +27,9 @@ import {
 } from "lucide-react";
 
 import Tags, { type TagTone } from "@/components/Tags";
+import EditButton from "@/components/EditButton";
+import AddButton from "@/components/Addbutton";
+import ImportButton from "@/components/ImportButton";
 
 /* ---------------------------------------------------------------- */
 /*  Shared helpers (used by every tab)                              */
@@ -313,56 +315,77 @@ const PanelButton = ({
   </button>
 );
 
-const SplitButton = ({ text }: { text: string }) => (
-  <div className="flex">
-    <button
-      type="button"
-      className="flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-l-lg bg-primary text-sm font-medium text-white transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-    >
-      <Video className="h-4 w-4" />
-      {text}
-    </button>
-    <button
-      type="button"
-      aria-label="More options"
-      className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-r-lg border-l border-white/30 bg-primary text-white transition-colors hover:bg-primary-hover"
-    >
-      <ChevronDown className="h-4 w-4" />
-    </button>
-  </div>
-);
-
 const PanelActions = ({ variant }: { variant: PanelVariant }) => {
   switch (variant) {
     case "appointment":
       return (
         <>
-          <SplitButton text="Join Consultation" />
-          <PanelButton tone="outline" icon={Calendar}>Reschedule</PanelButton>
-          <PanelButton tone="danger" icon={Trash2}>Cancel Appointment</PanelButton>
+          <AddButton
+            text="Join Consultation"
+            icon={<Video className="h-4 w-4" />}
+            className="w-full"
+          />
+          <ImportButton
+            text="Reschedule"
+            icon={<Calendar className="h-4 w-4" />}
+            className="w-full !border-primary/30 !bg-primary/5 !text-primary hover:!border-primary/40 hover:!bg-primary/10 hover:!text-primary"
+          />
+          <ImportButton
+            text="Cancel Appointment"
+            icon={<Trash2 className="h-4 w-4" />}
+            className="w-full !border-danger/40 !bg-danger/5 !text-danger hover:!border-danger/50 hover:!bg-danger/10 hover:!text-danger"
+          />
         </>
       );
     case "request":
       return (
         <>
           <PanelButton tone="success" icon={Check}>Approve Request</PanelButton>
-          <PanelButton tone="danger" icon={X}>Decline Request</PanelButton>
-          <PanelButton tone="outline" icon={Calendar}>Suggest Alternative Time</PanelButton>
+          <ImportButton
+            text="Decline Request"
+            icon={<X className="h-4 w-4" />}
+            className="w-full !border-danger/40 !bg-danger/5 !text-danger hover:!border-danger/50 hover:!bg-danger/10 hover:!text-danger"
+          />
+          <ImportButton
+            text="Suggest Alternative Time"
+            icon={<Calendar className="h-4 w-4" />}
+            className="w-full !border-primary/30 !bg-primary/5 !text-primary hover:!border-primary/40 hover:!bg-primary/10 hover:!text-primary"
+          />
         </>
       );
     case "waiting":
       return (
         <>
-          <SplitButton text="Start Consultation" />
-          <PanelButton tone="outline" icon={MessageSquare}>Send Message</PanelButton>
-          <PanelButton tone="danger" icon={UserX}>Mark as No Show</PanelButton>
+          <AddButton
+            text="Start Consultation"
+            icon={<Video className="h-4 w-4" />}
+            className="w-full"
+          />
+          <ImportButton
+            text="Send Message"
+            icon={<MessageSquare className="h-4 w-4" />}
+            className="w-full"
+          />
+          <ImportButton
+            text="Mark as No Show"
+            icon={<UserX className="h-4 w-4" />}
+            className="w-full !border-danger/40 !bg-danger/5 !text-danger hover:!border-danger/50 hover:!bg-danger/10 hover:!text-danger"
+          />
         </>
       );
     case "history":
       return (
         <>
-          <PanelButton tone="outline" icon={FileText}>View Patient Record</PanelButton>
-          <PanelButton tone="outline" icon={Calendar}>Book New Appointment</PanelButton>
+          <ImportButton
+            text="View Patient Record"
+            icon={<FileText className="h-4 w-4" />}
+            className="w-full"
+          />
+          <AddButton
+            text="Book New Appointment"
+            icon={<Calendar className="h-4 w-4" />}
+            className="w-full"
+          />
         </>
       );
   }
@@ -467,13 +490,7 @@ const RightSection = ({
         <h3 className="text-sm font-semibold text-heading sm:text-base">{c.title}</h3>
         <div className="flex items-center gap-1">
           {c.edit && (
-            <button
-              type="button"
-              className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-primary/30 px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Edit
-            </button>
+            <EditButton section="appointment" />
           )}
           {c.menu && (
             <button type="button" aria-label="More options" className={iconBtn}>

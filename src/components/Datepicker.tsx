@@ -11,6 +11,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { CalendarDays, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import Calendar, { SHORT_WEEKDAYS } from "@/components/Calendar";
 import { FieldError } from "./SignupField";
 
 /* ---------------------------------------------------------------- */
@@ -47,7 +48,6 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 const MONTHS_SHORT = MONTHS.map((m) => m.slice(0, 3));
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const YEARS_PER_PAGE = 12;
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -117,8 +117,11 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
     const [viewYear, setViewYear] = useState(() => new Date().getFullYear());
     const [viewMonth, setViewMonth] = useState(() => new Date().getMonth());
     const [yearPageStart, setYearPageStart] = useState(0);
-    const [placement, setPlacement] = useState<"down" | "up">("down");
-    const [horizontalAlign, setHorizontalAlign] = useState<"left" | "right">("left");
+    const [desktopPosition, setDesktopPosition] = useState<{
+      left: number;
+      top: number | null;
+      bottom: number | null;
+    } | null>(null);
 
     const wrapRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -172,25 +175,32 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       const rect = el.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-      setPlacement(
-        spaceBelow < minSpaceBelow && spaceAbove > spaceBelow ? "up" : "down",
+      const opensUp = spaceBelow < minSpaceBelow && spaceAbove > spaceBelow;
+      const popoverWidth = Math.min(320, window.innerWidth - 32);
+      const shouldAlignRight =
+        align === "right" ||
+        (align === "auto" && rect.left + popoverWidth > window.innerWidth - 16);
+      const preferredLeft = shouldAlignRight
+        ? rect.right - popoverWidth
+        : rect.left;
+      const left = Math.max(
+        16,
+        Math.min(preferredLeft, window.innerWidth - popoverWidth - 16),
       );
 
-      if (align === "left" || align === "right") {
-        setHorizontalAlign(align);
-      } else {
-        // Popover width is ~320px. Check distance to right edge of viewport
-        const spaceRight = window.innerWidth - rect.left;
-        if (spaceRight < 340) {
-          setHorizontalAlign("right");
-        } else {
-          setHorizontalAlign("left");
-        }
-      }
+      setDesktopPosition({
+        left,
+        top: opensUp ? null : rect.bottom + 6,
+        bottom: opensUp ? window.innerHeight - rect.top + 6 : null,
+      });
     }, [minSpaceBelow, align]);
 
     useLayoutEffect(() => {
-      if (open && !isMobile) computePlacement();
+      if (!open || isMobile) {
+        setDesktopPosition(null);
+        return;
+      }
+      computePlacement();
     }, [open, isMobile, computePlacement]);
 
     useEffect(() => {
@@ -287,15 +297,6 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       closePicker();
     };
 
-    /* ---- Days grid ---- */
-    const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
-    const totalDays = daysInMonth(viewYear, viewMonth);
-    const cells: (number | null)[] = [
-      ...Array.from({ length: firstWeekday }, () => null),
-      ...Array.from({ length: totalDays }, (_, i) => i + 1),
-    ];
-    while (cells.length % 7 !== 0) cells.push(null);
-
     const headerLabel =
       view === "days"
         ? `${MONTHS[viewMonth]} ${viewYear}`
@@ -351,45 +352,44 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
 
         {/* Days view */}
         {view === "days" && (
-          <>
-            <div className="mb-1 grid grid-cols-7 text-center">
-              {WEEKDAYS.map((w) => (
-                <span
-                  key={w}
-                  className="py-1.5 text-xs font-medium text-body"
+          <Calendar
+            month={new Date(viewYear, viewMonth, 1)}
+            selectedDate={
+              selected
+                ? new Date(selected.y, selected.m, selected.d)
+                : undefined
+            }
+            today={new Date()}
+            weekdays={SHORT_WEEKDAYS}
+            onSelectDate={(date) => selectDate(date.getDate())}
+            weekdayContainerClassName="mb-1"
+            weekdayClassName="py-1.5 text-body"
+            dayGridClassName="gap-y-1"
+            renderDay={(date, state) => {
+              if (state.isOutsideMonth) return <span />;
+              const iso = toISO(viewYear, viewMonth, date.getDate());
+              const isSelected = value === iso;
+              const isToday = iso === today;
+              const isOff = isDisabledDate(iso);
+              return (
+                <button
+                  type="button"
+                  disabled={isOff}
+                  onClick={() => selectDate(date.getDate())}
+                  aria-pressed={isSelected}
+                  className={`mx-auto flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-sm transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-30 ${
+                    isSelected
+                      ? "bg-primary font-semibold text-white"
+                      : isToday
+                        ? "border border-primary font-medium text-primary hover:bg-primary/10"
+                        : "text-heading hover:bg-primary/10"
+                  }`}
                 >
-                  {w}
-                </span>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-y-1">
-              {cells.map((d, i) => {
-                if (d === null) return <span key={`e-${i}`} />;
-                const iso = toISO(viewYear, viewMonth, d);
-                const isSelected = value === iso;
-                const isToday = iso === today;
-                const isOff = isDisabledDate(iso);
-                return (
-                  <button
-                    key={iso}
-                    type="button"
-                    disabled={isOff}
-                    onClick={() => selectDate(d)}
-                    aria-pressed={isSelected}
-                    className={`mx-auto flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-sm transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-30 ${
-                      isSelected
-                        ? "bg-primary font-semibold text-white"
-                        : isToday
-                          ? "border border-primary font-medium text-primary hover:bg-primary/10"
-                          : "text-heading hover:bg-primary/10"
-                    }`}
-                  >
-                    {d}
-                  </button>
-                );
-              })}
-            </div>
-          </>
+                  {date.getDate()}
+                </button>
+              );
+            }}
+          />
         )}
 
         {/* Months view */}
@@ -533,17 +533,24 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
           {name && <input type="hidden" name={`${name}-value`} value={value ?? ""} readOnly />}
 
           {/* Desktop popover */}
-          {open && !disabled && !isMobile && (
-            <div
-              className={`absolute z-[100] w-[310px] sm:w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60 animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both] ${
-                horizontalAlign === "right" ? "right-0" : "left-0"
-              } ${
-                placement === "down" ? "top-full mt-1.5" : "bottom-full mb-1.5"
-              }`}
-            >
-              {panel}
-            </div>
-          )}
+          {open &&
+            !disabled &&
+            !isMobile &&
+            desktopPosition &&
+            typeof document !== "undefined" &&
+            createPortal(
+              <div
+                className="fixed z-[200] w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60"
+                style={{
+                  left: desktopPosition.left,
+                  top: desktopPosition.top ?? undefined,
+                  bottom: desktopPosition.bottom ?? undefined,
+                }}
+              >
+                {panel}
+              </div>,
+              document.body,
+            )}
         </div>
 
         {/* Mobile: centered modal with bluish blurred backdrop */}

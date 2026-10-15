@@ -15,7 +15,7 @@ interface MainHeaderProps {
 
 const MainHeader = ({ onSearch }: MainHeaderProps) => {
   return (
-    <header className="flex h-14 min-w-0 shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-4 sm:px-6 lg:h-16 lg:px-6">
+    <header className="flex h-14 min-w-0 shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-4 sm:px-5 xl:h-16 xl:px-6">
       {/* ---------- LEFT ---------- */}
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {/* Hamburger — mobile / tablet only */}
@@ -40,13 +40,13 @@ const MainHeader = ({ onSearch }: MainHeaderProps) => {
       {/* ---------- RIGHT ---------- */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
         {/* HIPAA card — large screens only */}
-        <div className="hidden items-center gap-2.5 rounded-lg border border-primary/15 bg-primary/5 px-3 py-1.5 lg:flex">
+        {/* <div className="hidden items-center gap-2.5 rounded-lg border border-primary/15 bg-primary/5 px-3 py-1.5 lg:flex">
           <ShieldCheck className="h-6 w-6 shrink-0 text-primary" />
           <div className="leading-tight">
             <p className="text-xs font-semibold text-heading">HIPAA Compliant</p>
             <p className="text-[10px] text-body">Secure. Private. Protected.</p>
           </div>
-        </div>
+        </div> */}
 
         {/* Divider — large screens only */}
         <span

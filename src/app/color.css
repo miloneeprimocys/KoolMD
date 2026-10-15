@@ -2,7 +2,7 @@
   color-scheme: light;
 
   /* Brand */
-  --primary: #2d7ff9;
+  --primary: #0964FF;
   --primary-hover: #1c6cec;
   --link: #1f6fff;
   --brand-navy: #0c1a5a;
@@ -97,7 +97,7 @@
   --on-primary: #ffffff;
 
   /* Surfaces */
-  --page: #073c6e;
+ --page: linear-gradient(to right, #021B43 0%, #034487 100%);
   --card: #001d49;
   --surface-start: #0c1740;
   --surface-end: #081030;

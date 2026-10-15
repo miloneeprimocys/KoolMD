@@ -16,6 +16,8 @@ type Props = {
   variant?: Variant;
   /** Optional extra classes. */
   className?: string;
+  /** Optional: hide the icon. */
+  hideIcon?: boolean;
 };
 
 const VARIANTS: Record<
@@ -44,6 +46,7 @@ const EditButton = ({
   label,
   variant = "edit",
   className = "",
+  hideIcon = false,
 }: Props) => {
   const { defaultLabel, icon: Icon, iconPosition, classes } = VARIANTS[variant];
   const text = label ?? defaultLabel;
@@ -55,9 +58,9 @@ const EditButton = ({
       aria-label={`${text} ${section}`}
       className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 transition-colors focus-visible:outline-none ${classes} ${className}`}
     >
-      {iconPosition === "start" && <Icon className="h-3.5 w-3.5" />}
+      {iconPosition === "start" && !hideIcon && <Icon className="h-3.5 w-3.5" />}
       {text}
-      {iconPosition === "end" && <Icon className="h-4 w-4" />}
+      {iconPosition === "end" && !hideIcon && <Icon className="h-4 w-4" />}
     </button>
   );
 };

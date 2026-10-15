@@ -470,7 +470,7 @@ const handleToggleMini = () => {
         ))}
 
          {/* HIPAA compliance card (bottom) */}
-      {!isMini && (
+      {/* {!isMini && (
         <div className="shrink-0   pt-2">
           <div className="flex items-start gap-3 rounded-xl bg-primary/5 p-3.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center  text-primary">
@@ -486,7 +486,7 @@ const handleToggleMini = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       </nav>
 

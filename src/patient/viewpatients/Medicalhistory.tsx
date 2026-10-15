@@ -37,7 +37,7 @@ import EditButton from "@/components/EditButton";
 export const TONES = {
 red:    "bg-danger/40 text-danger",
   violet: "bg-violet/40 text-violet",
-  blue:   "bg-primary/40 text-primary",
+  blue:   "bg-primary/20 dark:bg-primary/30 text-primary",
   green:  "bg-success/40 text-success",
   orange: "bg-warning/40 text-warning",
   pink:   "bg-pink/40 text-pink",
@@ -305,7 +305,10 @@ const MedicalHistory = () => {
           </ScrollArea>
         </SectionCard>
       </div>
-
+{/* updated the files to enable navigatioon to the view patient page when clicking on the patient name 
+patient.tsx updated the actions component to handle the "view" action and navigate to view action and navigate to view patient page
+with patients id as query parameter
+routes.tsx updated the routes */}
       {/* Right column */}
       <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
         <SectionCard

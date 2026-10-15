@@ -16,6 +16,7 @@ import RightSection, {
   checkboxCls,
   type ChipItem,
 } from "./Rightsection";
+import { TableSelectAllCheckbox, useTableSelection } from "@/components/TableSelection";
 
 /* ---------- Static data ---------- */
 const FILTERS = [
@@ -84,7 +85,7 @@ const COLUMNS: TableColumn[] = [
     key: "select",
     label: "",
     className: "w-10",
-    header: <input type="checkbox" aria-label="Select all" className={checkboxCls} />,
+    header: null,
   },
   { key: "patient", label: "Patient" },
   { key: "requested", label: "Requested Appointment" },
@@ -107,56 +108,85 @@ const Requests = () => {
   const [chip, setChip] = useState("All");
   const [page, setPage] = useState(1);
   const [showPanel, setShowPanel] = useState(false);
+  const rowKeys = ROWS.map((row) => `${row.pid}-${row.submittedDate}-${row.submittedTime}`);
+  const { selectedKeys, allSelected, someSelected, toggleRow, toggleAll } =
+    useTableSelection(rowKeys);
+  const columns = COLUMNS.map((column) =>
+    column.key === "select"
+      ? {
+          ...column,
+          header: (
+            <TableSelectAllCheckbox
+              checked={allSelected}
+              indeterminate={someSelected}
+              onChange={toggleAll}
+              className={checkboxCls}
+            />
+          ),
+        }
+      : column,
+  );
 
-  const rows = ROWS.map((x) => ({
-    select: <input type="checkbox" aria-label={`Select ${x.name}`} className={checkboxCls} />,
-    patient: (
-      <button type="button" onClick={() => setShowPanel(true)} className="w-full min-w-0 cursor-pointer text-left">
-        <Name name={x.name} sub={`${x.pid} • ${x.age}Y`} truncate />
-      </button>
-    ),
-    requested: (
-      <div className="min-w-0 space-y-1">
-        <Content title={x.type} description={x.dept} truncate />
-        <div className="min-w-0 space-y-0.5 text-xs">
-          <p className="flex min-w-0 items-center gap-1.5 font-medium text-heading">
-            <Calendar className="h-3.5 w-3.5 shrink-0 text-body" />
-            <span className="truncate">{x.date}</span>
-          </p>
-          <p className="flex min-w-0 items-center gap-1.5 text-body">
-            <Clock className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{x.time}</span>
-          </p>
-        </div>
-      </div>
-    ),
-    provider: <Name name={x.provider} sub={x.dept} truncate />,
-    submitted: <Content title={x.submittedDate} description={x.submittedTime} truncate />,
-    status: <Tags text={x.status} tone={REQUEST_TONE[x.status] ?? "neutral"} />,
-    actions: (
-      <div className="flex w-full items-center justify-center gap-1">
-        <button
-          type="button"
-          aria-label="Toggle request details"
-          title={showPanel ? "Hide request details" : "View request"}
-          onClick={() => setShowPanel((open) => !open)}
-          className={`${iconBtn} text-body hover:bg-heading/5 hover:text-heading`}
-        >
-          <Eye className="h-4 w-4" />
+  const rows = ROWS.map((x, index) => {
+    const rowKey = rowKeys[index];
+    return {
+      select: (
+        <input
+          type="checkbox"
+          checked={selectedKeys.has(rowKey)}
+          onChange={() => toggleRow(rowKey)}
+          aria-label={`Select ${x.name}`}
+          className={checkboxCls}
+        />
+      ),
+      patient: (
+        <button type="button" onClick={() => setShowPanel(true)} className="w-full min-w-0 cursor-pointer text-left">
+          <Name name={x.name} sub={`${x.pid} • ${x.age}Y`} truncate />
         </button>
-        {x.status === "Pending" ? (
-          <>
-            <button type="button" aria-label="Approve request" className={`${iconBtn} text-primary hover:bg-primary/10`}>
-              <Check className="h-4 w-4" />
-            </button>
-            <button type="button" aria-label="Decline request" className={`${iconBtn} text-danger hover:bg-danger/10`}>
-              <X className="h-4 w-4" />
-            </button>
-          </>
-        ) : null}
-      </div>
-    ),
-  }));
+      ),
+      requested: (
+        <div className="min-w-0 space-y-1">
+          <Content title={x.type} description={x.dept} truncate />
+          <div className="min-w-0 space-y-0.5 text-xs">
+            <p className="flex min-w-0 items-center gap-1.5 font-medium text-heading">
+              <Calendar className="h-3.5 w-3.5 shrink-0 text-body" />
+              <span className="truncate">{x.date}</span>
+            </p>
+            <p className="flex min-w-0 items-center gap-1.5 text-body">
+              <Clock className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{x.time}</span>
+            </p>
+          </div>
+        </div>
+      ),
+      provider: <Name name={x.provider} sub={x.dept} truncate />,
+      submitted: <Content title={x.submittedDate} description={x.submittedTime} truncate />,
+      status: <Tags text={x.status} tone={REQUEST_TONE[x.status] ?? "neutral"} />,
+      actions: (
+        <div className="flex w-full items-center justify-center gap-1">
+          <button
+            type="button"
+            aria-label="Toggle request details"
+            title={showPanel ? "Hide request details" : "View request"}
+            onClick={() => setShowPanel((open) => !open)}
+            className={`${iconBtn} text-body hover:bg-heading/5 hover:text-heading`}
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          {x.status === "Pending" ? (
+            <>
+              <button type="button" aria-label="Approve request" className={`${iconBtn} text-primary hover:bg-primary/10`}>
+                <Check className="h-4 w-4" />
+              </button>
+              <button type="button" aria-label="Decline request" className={`${iconBtn} text-danger hover:bg-danger/10`}>
+                <X className="h-4 w-4" />
+              </button>
+            </>
+          ) : null}
+        </div>
+      ),
+    };
+  });
 
   return (
     <div className="space-y-4">
@@ -174,7 +204,7 @@ const Requests = () => {
 
           <div className="space-y-3">
             <div className="overflow-hidden rounded-[14px] border border-border bg-card">
-              <Table columns={COLUMNS} rows={rows} bordered={false} />
+              <Table columns={columns} rows={rows} bordered={false} />
             </div>
             <Pagination
               page={page}

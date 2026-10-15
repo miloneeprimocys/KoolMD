@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { Building2, ChevronLeft, ChevronRight, MapPin, Search, Video } from "lucide-react";
+import { Building2, MapPin, Search, Video } from "lucide-react";
 
+import Calendar, { dayKey, sameDay } from "@/components/Calendar";
 import { checkboxCls, initials } from "../Rightsection";
 
 /* ---------------------------------------------------------------- */
@@ -20,35 +21,6 @@ export const LOCATIONS = [
   { name: "Downtown Clinic", full: "Downtown Clinic – New York, NY", filter: "Downtown Clinic", icon: Building2 },
   { name: "Virtual / Telemedicine", full: "Virtual / Telemedicine", filter: "Virtual / Telemedicine", icon: Video },
 ];
-
-export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-/* ---------------------------------------------------------------- */
-/*  Date helpers                                                    */
-/* ---------------------------------------------------------------- */
-export const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-export const addDays = (d: Date, n: number) =>
-  new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-export const daysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
-export const addMonths = (d: Date, n: number) => {
-  const first = new Date(d.getFullYear(), d.getMonth() + n, 1);
-  const y = first.getFullYear();
-  const m = first.getMonth();
-  return new Date(y, m, Math.min(d.getDate(), daysInMonth(y, m)));
-};
-export const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-export const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-export const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleDateString("en-US", o);
-
-/** All dates shown in a month grid (full weeks, Sunday first). */
-export const buildMonth = (date: Date) => {
-  const y = date.getFullYear();
-  const m = date.getMonth();
-  const lead = new Date(y, m, 1).getDay();
-  const total = Math.ceil((lead + daysInMonth(y, m)) / 7) * 7;
-  return Array.from({ length: total }, (_, i) => new Date(y, m, 1 - lead + i));
-};
 
 export const toggleIn = (set: Set<number>, i: number) => {
   const next = new Set(set);
@@ -98,65 +70,19 @@ const LeftSection = ({
   locOn,
   setLocOn,
 }: LeftSectionProps) => {
-  const miniCells = buildMonth(miniMonth);
-
   return (
     <div className="grid w-full gap-5 rounded-[14px] border border-border bg-card p-4 md:grid-cols-3 2xl:flex 2xl:w-[280px] 2xl:shrink-0 2xl:flex-col 2xl:self-stretch">
       {/* Mini calendar (any month) */}
       <div>
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-semibold text-heading">
-            {fmt(miniMonth, { month: "long", year: "numeric" })}
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              aria-label="Previous month"
-              onClick={() => setMiniMonth(new Date(miniMonth.getFullYear(), miniMonth.getMonth() - 1, 1))}
-              className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-body hover:text-primary"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="Next month"
-              onClick={() => setMiniMonth(new Date(miniMonth.getFullYear(), miniMonth.getMonth() + 1, 1))}
-              className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-body hover:text-primary"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-7 text-center">
-          {WEEKDAYS.map((w) => (
-            <span key={w} className="py-1 text-[11px] font-medium text-body">
-              {w}
-            </span>
-          ))}
-          {miniCells.map((d) => {
-            const out = d.getMonth() !== miniMonth.getMonth();
-            const isSel = sameDay(d, selected);
-            const isToday = !!today && sameDay(d, today);
-            return (
-              <button
-                key={dayKey(d)}
-                type="button"
-                onClick={() => go(d)}
-                className={`mx-auto flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-xs transition-colors ${
-                  isSel
-                    ? "bg-primary font-semibold text-white"
-                    : isToday
-                      ? "border border-primary font-medium text-primary hover:bg-primary/10"
-                      : out
-                        ? "text-body/50 hover:bg-primary/10"
-                        : "text-heading hover:bg-primary/10"
-                }`}
-              >
-                {d.getDate()}
-              </button>
-            );
-          })}
-        </div>
+        <Calendar
+          month={miniMonth}
+          selectedDate={selected}
+          today={today}
+          onSelectDate={go}
+          onMonthChange={setMiniMonth}
+          showMonthNavigation
+          compact
+        />
       </div>
 
       {/* Providers */}

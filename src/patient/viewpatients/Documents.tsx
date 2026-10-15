@@ -118,6 +118,7 @@ const Documents = ({
         title="your document here"
         file={uploadFile}
         onChange={setUploadFile}
+        selectedFileClassName="mx-auto max-w-2xl"
       />
 
       <div className="overflow-hidden rounded-xl border border-border bg-card">

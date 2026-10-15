@@ -10,6 +10,7 @@ import {
   Download,
   FileText,
   Maximize2,
+  Minimize2,
   Minus,
   Plus,
   ShieldCheck,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 
 import Tags, { type TagTone } from "@/components/Tags";
+import ImportButton from "@/components/ImportButton";
 
 /* ---------- Types ---------- */
 export type PatientDocumentDetails = {
@@ -74,9 +76,6 @@ const ZOOM_STEP = 25;
 const ctrlBtn =
   "flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-card text-heading transition-colors duration-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border disabled:hover:bg-card disabled:hover:text-heading";
 
-const footBtn =
-  "inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2";
-
 /* ---------- Document preview (all sizes in em so it scales with zoom) ---------- */
 const CardField = ({ label, value }: { label: string; value: string }) => (
   <div className="min-w-0">
@@ -87,10 +86,19 @@ const CardField = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-const DocumentPreview = ({ zoom }: { zoom: number }) => (
+const DocumentPreview = ({
+  zoom,
+  expanded,
+}: {
+  zoom: number;
+  expanded: boolean;
+}) => (
   <div
     className="mx-auto rounded-2xl border border-primary/20 bg-gradient-to-br from-shape-sky/30 via-card to-shape-sky/40 p-[1.5em] shadow-sm dark:from-slate-800 dark:via-slate-900 dark:to-blue-950"
-    style={{ width: `${zoom}%`, fontSize: `${(13 * zoom) / 100}px` }}
+    style={{
+      width: expanded ? "100%" : `${zoom}%`,
+      fontSize: `${(13 * zoom) / 100}px`,
+    }}
   >
     {/* Insurer header */}
     <div className="flex items-center gap-[0.75em]">
@@ -133,16 +141,41 @@ const DocumentPreview = ({ zoom }: { zoom: number }) => (
 );
 
 /* Preview + pager / zoom controls */
-const DocumentViewer = () => {
+const DocumentViewer = ({
+  expanded,
+  onToggleExpanded,
+}: {
+  expanded: boolean;
+  onToggleExpanded: () => void;
+}) => {
   const [zoom, setZoom] = useState(100);
 
   return (
-    <div className="space-y-3">
-      <div className="overflow-auto rounded-2xl">
-        <DocumentPreview zoom={zoom} />
+    <div
+      className={
+        expanded
+          ? "fixed inset-0 z-[200] flex flex-col items-center justify-center gap-5 bg-black/70 p-5 sm:p-8"
+          : "space-y-3"
+      }
+      onClick={expanded ? onToggleExpanded : undefined}
+    >
+      <div
+        className={
+          expanded
+            ? "w-full max-w-5xl"
+            : "overflow-auto rounded-2xl"
+        }
+        onClick={expanded ? (event) => event.stopPropagation() : undefined}
+      >
+        <DocumentPreview zoom={zoom} expanded={expanded} />
       </div>
 
-      <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-2.5 py-2">
+      <div
+        className={`flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-2.5 py-2 ${
+          expanded ? "w-full max-w-5xl" : ""
+        }`}
+        onClick={expanded ? (event) => event.stopPropagation() : undefined}
+      >
         <button type="button" aria-label="Previous page" className={ctrlBtn}>
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -175,8 +208,19 @@ const DocumentViewer = () => {
           </button>
         </div>
 
-        <button type="button" aria-label="Full screen" className={ctrlBtn}>
-          <Maximize2 className="h-4 w-4" />
+        <button
+          type="button"
+          aria-label={expanded ? "Exit full screen" : "Full screen"}
+          title={expanded ? "Exit full screen" : "Full screen"}
+          aria-pressed={expanded}
+          onClick={onToggleExpanded}
+          className={ctrlBtn}
+        >
+          {expanded ? (
+            <Minimize2 className="h-4 w-4" />
+          ) : (
+            <Maximize2 className="h-4 w-4" />
+          )}
         </button>
       </div>
     </div>
@@ -202,9 +246,11 @@ const PatientRightSection = ({ selection, onClose, onCloseStart }: Props) => {
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
 
   const closePanel = useCallback(() => {
     if (!selection || closeTimer.current) return;
+    setIsPreviewExpanded(false);
     setIsClosing(true);
     onCloseStart();
     const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 300;
@@ -228,6 +274,7 @@ const PatientRightSection = ({ selection, onClose, onCloseStart }: Props) => {
       }
       setIsOpen(false);
       setIsClosing(false);
+      setIsPreviewExpanded(false);
       return;
     }
 
@@ -243,11 +290,16 @@ const PatientRightSection = ({ selection, onClose, onCloseStart }: Props) => {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closePanel();
+      if (event.key !== "Escape") return;
+      if (isPreviewExpanded) {
+        setIsPreviewExpanded(false);
+        return;
+      }
+      closePanel();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [closePanel]);
+  }, [closePanel, isPreviewExpanded]);
 
   if (!selection) return null;
 
@@ -309,46 +361,31 @@ const PatientRightSection = ({ selection, onClose, onCloseStart }: Props) => {
           {/* ---------- Document ---------- */}
           {doc && (
             <>
-              <DocumentViewer />
+              <DocumentViewer
+                expanded={isPreviewExpanded}
+                onToggleExpanded={() =>
+                  setIsPreviewExpanded((expanded) => !expanded)
+                }
+              />
 
-              <section>
-                <h3 className="mb-3 text-sm font-semibold text-heading">
-                  Document Details
-                </h3>
-                <dl className="space-y-3">
-                  <DetailRow label="Category">
-                    <Tags text={doc.category} tone="info" />
-                  </DetailRow>
-                  <DetailRow label="File Type">{doc.format}</DetailRow>
-                  <DetailRow label="File Size">{doc.size}</DetailRow>
-                  <DetailRow label="Date Uploaded">{doc.date}</DetailRow>
-                  <DetailRow label="Uploaded By">{doc.uploadedBy}</DetailRow>
-                  <DetailRow label="Status">
-                    <Tags text={doc.status} tone={doc.statusTone} />
-                  </DetailRow>
-                  <DetailRow label="Notes">{doc.notes || "—"}</DetailRow>
-                </dl>
-              </section>
+             
 
               <div className="grid grid-cols-3 gap-2 border-t border-divider pt-4">
-                <button
-                  type="button"
-                  className={`${footBtn} border-primary/30 text-primary hover:bg-primary/5 focus-visible:ring-primary/30`}
-                >
-                  <Download className="h-3.5 w-3.5" /> Download
-                </button>
-                <button
-                  type="button"
-                  className={`${footBtn} border-border text-heading hover:bg-heading/5 focus-visible:ring-primary/30`}
-                >
-                  Replace
-                </button>
-                <button
-                  type="button"
-                  className={`${footBtn} border-danger/30 text-danger hover:bg-danger/5 focus-visible:ring-danger/30`}
-                >
-                  Delete
-                </button>
+                <ImportButton
+                  text="Download"
+                  icon={<Download className="h-3.5 w-3.5" />}
+                  className="!h-9 !min-w-0 !w-full !gap-1.5 !rounded-lg !px-2 !text-xs !border-primary/30 !text-primary hover:!border-primary/40 hover:!bg-primary/5 hover:!text-primary"
+                />
+                <ImportButton
+                  text="Replace"
+                  icon={null}
+                  className="!h-9 !min-w-0 !w-full !gap-1.5 !rounded-lg !px-2 !text-xs !border-border !text-heading hover:!border-primary/30 hover:!bg-primary/5 hover:!text-primary"
+                />
+                <ImportButton
+                  text="Delete"
+                  icon={null}
+                  className="!h-9 !min-w-0 !w-full !gap-1.5 !rounded-lg !px-2 !text-xs !border-danger/30 !text-danger hover:!border-danger/40 hover:!bg-danger/5 hover:!text-danger focus-visible:!ring-danger/30"
+                />
               </div>
             </>
           )}

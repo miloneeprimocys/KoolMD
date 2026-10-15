@@ -3,6 +3,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
+import {
+  addDays,
+  addMonths,
+  dayKey,
+  fmt,
+  sameDay,
+  startOfDay,
+} from "@/components/Calendar";
 import SearchAndFilter from "@/components/Searchandfilter";
 import RightSection, {
   BASE_FILTERS,
@@ -11,12 +19,6 @@ import RightSection, {
 import LeftSection, {
   LOCATIONS,
   PROVIDERS,
-  addDays,
-  addMonths,
-  dayKey,
-  fmt,
-  sameDay,
-  startOfDay,
 } from "./LeftSection";
 import MiddleSection, { Appt, ColorKey, View } from "./MiddleSection";
 

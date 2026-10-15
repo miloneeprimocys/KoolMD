@@ -160,8 +160,7 @@ const SearchAndFilter = ({
                   { value: "all", label: "All" },
                   ...f.options.map(toDropdownOption),
                 ]}
-                compact
-                className="[&>*:last-child]:hidden [&_button]:!h-12 [&_button]:!rounded-xl"
+                className="[&>*:last-child]:hidden"
               />
             </div>
           ))}

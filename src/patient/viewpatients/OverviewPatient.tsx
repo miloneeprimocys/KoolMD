@@ -259,7 +259,7 @@ const OverviewPatient = ({ onEdit }: Props) => (
     </div>
 
     {/* ---- Row 2: full-width HIPAA banner ---- */}
-    <div className="flex items-start gap-3 rounded-[8px] border border-primary/20 bg-primary/5 dark:bg-primary/20 p-4 sm:p-5">
+    {/* <div className="flex items-start gap-3 rounded-[8px] border border-primary/20 bg-primary/5 dark:bg-primary/20 p-4 sm:p-5">
       <IconBadge icon={ShieldCheck} size="lg" />
       <div className="min-w-0">
         <p className="text-sm font-semibold text-heading">HIPAA Privacy Reminder</p>
@@ -268,7 +268,7 @@ const OverviewPatient = ({ onEdit }: Props) => (
           communications comply with privacy policies.
         </p>
       </div>
-    </div>
+    </div> */}
   </div>
 );
 

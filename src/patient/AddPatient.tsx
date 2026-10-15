@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useRef, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ImagePlus, User, Camera, Trash2, RefreshCw } from "lucide-react";
 import { parsePhoneNumberFromString, CountryCode } from "libphonenumber-js";
 
@@ -152,6 +152,8 @@ type FormErrors = Partial<Record<keyof FormValues, string>>;
 /* ---------- Page ---------- */
 const AddPatient = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  const isEditMode = pathname === "/edit-patient";
   const dispatch = useAppDispatch();
   const createPatientRequest = useAppSelector(selectCreatePatientRequest);
   const isSaving = createPatientRequest.status === "pending";
@@ -452,7 +454,7 @@ const AddPatient = () => {
       <Breadcrumb
         items={[
           { label: "Patients", href: "/patients" },
-          { label: "Add Patient" },
+          { label: isEditMode ? "Edit Patient" : "Add Patient" },
         ]}
       />
 
@@ -460,7 +462,7 @@ const AddPatient = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-heading sm:text-xl 2xl:text-2xl">
-            Add Patient
+            {isEditMode ? "Edit Patient" : "Add Patient"}
           </h2>
           <p className="mt-0.5 text-sm text-body">
             Create a new patient record in the system.

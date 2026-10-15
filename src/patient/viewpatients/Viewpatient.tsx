@@ -106,7 +106,13 @@ const ViewPatient = () => {
           <AddButton
             text="Edit Patient"
             icon={<Pencil className="h-4 w-4" />}
-            onClick={() => {}}
+            onClick={() =>
+              router.push(
+                patientId
+                  ? `/edit-patient?id=${encodeURIComponent(patientId)}`
+                  : "/edit-patient",
+              )
+            }
             className="w-fit whitespace-nowrap"
           />
         </div>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 export type TableColumn = {
   key: string;
@@ -9,21 +9,60 @@ export type TableColumn = {
   header?: React.ReactNode;
 };
 
-const TableHeader = ({ columns }: { columns: TableColumn[] }) => (
+type SelectAllState = {
+  checked: boolean;
+  indeterminate: boolean;
+  onChange: (checked: boolean) => void;
+};
+
+export const SelectAllCheckbox = ({
+  checked,
+  indeterminate,
+  onChange,
+}: SelectAllState) => {
+  const checkboxRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (checkboxRef.current) checkboxRef.current.indeterminate = indeterminate;
+  }, [indeterminate]);
+
+  return (
+    <input
+      ref={checkboxRef}
+      type="checkbox"
+      aria-label="Select all"
+      checked={checked}
+      onChange={(event) => onChange(event.target.checked)}
+      className="h-4 w-4 cursor-pointer rounded border-border accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+    />
+  );
+};
+
+const TableHeader = ({
+  columns,
+  selectAll,
+}: {
+  columns: TableColumn[];
+  selectAll?: SelectAllState;
+}) => (
   <thead>
-    <tr>
+    <tr className="bg-[#f1f6fc] dark:bg-[#002148]">
       {columns.map((c) => (
         <th
           key={c.key}
           scope="col"
-          className={`sticky top-0 z-10 whitespace-nowrap bg-[#f1f6fc]  h-[58px] px-4 text-[13px] font-semibold text-label shadow-[inset_0_-1px_0_var(--border)] dark:bg-[#002148] sm:px-5 sm:text-sm ${
+          className={`sticky top-0 z-10 whitespace-nowrap bg-[#f1f6fc] h-[58px] px-4 text-[13px] font-semibold text-label dark:bg-[#002148] sm:px-5 sm:text-sm ${
             c.className ?? ""
           }`}
         >
           <div className="flex min-w-0 items-center">
             {/* Renders the custom header node (e.g., a checkbox) when provided.
                 Wrapping in a flex row + items-center keeps it aligned with text. */}
-            {c.header ?? <span className="leading-none">{c.label}</span>}
+            {c.key === "select" && selectAll ? (
+              <SelectAllCheckbox {...selectAll} />
+            ) : (
+              c.header ?? <span className="leading-none">{c.label}</span>
+            )}
           </div>
 
         </th>

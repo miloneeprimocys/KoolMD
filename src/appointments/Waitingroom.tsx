@@ -21,6 +21,7 @@ import Name from "@/components/Name";
 import Content from "@/components/Content";
 import Tags, { type TagTone } from "@/components/Tags";
 import Actions from "@/components/Actions";
+import { TableSelectAllCheckbox, useTableSelection } from "@/components/TableSelection";
 import RightSection, { BASE_FILTERS, checkboxCls } from "./Rightsection";
 
 /* ---------- Static data ---------- */
@@ -64,7 +65,7 @@ const COLUMNS: TableColumn[] = [
     key: "select",
     label: "",
     className: "w-10",
-    header: <input type="checkbox" aria-label="Select all" className={checkboxCls} />,
+    header: null,
   },
   { key: "patient", label: "Patient" },
   { key: "details", label: "Appointment Details" },
@@ -120,39 +121,68 @@ const WaitingRoom = () => {
         ? checkInMinutes(b.checkIn) - checkInMinutes(a.checkIn)
         : checkInMinutes(a.checkIn) - checkInMinutes(b.checkIn),
   );
+  const rowKeys = sortedRows.map((row) => `${row.meta}-${row.checkIn}`);
+  const { selectedKeys, allSelected, someSelected, toggleRow, toggleAll } =
+    useTableSelection(rowKeys);
+  const columns = COLUMNS.map((column) =>
+    column.key === "select"
+      ? {
+          ...column,
+          header: (
+            <TableSelectAllCheckbox
+              checked={allSelected}
+              indeterminate={someSelected}
+              onChange={toggleAll}
+              className={checkboxCls}
+            />
+          ),
+        }
+      : column,
+  );
 
-  const rows = sortedRows.map((x) => ({
-    select: <input type="checkbox" aria-label={`Select ${x.name}`} className={checkboxCls} />,
-    patient: (
-      <button type="button" onClick={() => setShowPanel(true)} className="w-full min-w-0 cursor-pointer text-left">
-        <Name name={x.name} sub={x.meta} truncate />
-      </button>
-    ),
-    details: <Content title={x.type} description={x.time} truncate />,
-    provider: <Name name={x.provider} sub={x.specialty} truncate />,
-    checkin: <Content title={x.checkIn} />,
-    wait: <Tags text={x.wait} tone={x.waitTone} />,
-    status: <Tags text="Waiting" tone="info" />,
-    actions: (
-      <div className="flex w-full items-center justify-center gap-1">
-        <button type="button" aria-label="Start video consultation" className={iconBtn}>
-          <Video className="h-4 w-4" />
-        </button>
-        <button type="button" aria-label="Send message" className={iconBtn}>
-          <MessageCircle className="h-4 w-4" />
-        </button>
-        <Actions
-          onAction={(action) => {
-            if (action === "view") {
-              setShowPanel((open) => !open);
-            } else {
-              setShowPanel(true);
-            }
-          }}
+  const rows = sortedRows.map((x, index) => {
+    const rowKey = rowKeys[index];
+    return {
+      select: (
+        <input
+          type="checkbox"
+          checked={selectedKeys.has(rowKey)}
+          onChange={() => toggleRow(rowKey)}
+          aria-label={`Select ${x.name}`}
+          className={checkboxCls}
         />
-      </div>
-    ),
-  }));
+      ),
+      patient: (
+        <button type="button" onClick={() => setShowPanel(true)} className="w-full min-w-0 cursor-pointer text-left">
+          <Name name={x.name} sub={x.meta} truncate />
+        </button>
+      ),
+      details: <Content title={x.type} description={x.time} truncate />,
+      provider: <Name name={x.provider} sub={x.specialty} truncate />,
+      checkin: <Content title={x.checkIn} />,
+      wait: <Tags text={x.wait} tone={x.waitTone} />,
+      status: <Tags text="Waiting" tone="info" />,
+      actions: (
+        <div className="flex w-full items-center justify-center gap-1">
+          <button type="button" aria-label="Start video consultation" className={iconBtn}>
+            <Video className="h-4 w-4" />
+          </button>
+          <button type="button" aria-label="Send message" className={iconBtn}>
+            <MessageCircle className="h-4 w-4" />
+          </button>
+          <Actions
+            onAction={(action) => {
+              if (action === "view") {
+                setShowPanel((open) => !open);
+              } else {
+                setShowPanel(true);
+              }
+            }}
+          />
+        </div>
+      ),
+    };
+  });
 
   const toggleCls = (on: boolean) =>
     `flex h-9 w-9 cursor-pointer items-center justify-center rounded-md transition-colors ${
@@ -237,7 +267,7 @@ const WaitingRoom = () => {
             </div>
 
             {layout === "list" ? (
-              <Table columns={COLUMNS} rows={rows} />
+              <Table columns={columns} rows={rows} />
             ) : (
               <div className="grid grid-cols-1 gap-4 border-t border-divider p-4 md:grid-cols-2 2xl:min-h-0 2xl:flex-1 2xl:overflow-y-auto">
                 {sortedRows.map((patient) => (

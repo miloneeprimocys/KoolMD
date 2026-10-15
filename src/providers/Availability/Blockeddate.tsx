@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { CalendarX, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 
+import Calendar, { SHORT_WEEKDAYS } from "@/components/Calendar";
 import SignupDropdown from "@/components/SignupDropdown";
 import DatePicker from "@/components/Datepicker";
 import AddButton from "@/components/Addbutton";
@@ -28,8 +29,6 @@ const REASONS = toOptions([
   "Holiday",
   "Other",
 ]);
-
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 /* ---------------------------------------------------------------- */
 /*  Date helpers                                                    */
@@ -103,14 +102,6 @@ const BlockedDatesTab = ({ blocked, onChange }: BlockedDatesTabProps) => {
     setViewY(d.getFullYear());
     setViewM(d.getMonth());
   };
-
-  const firstWeekday = new Date(viewY, viewM, 1).getDay();
-  const total = new Date(viewY, viewM + 1, 0).getDate();
-  const cells: (number | null)[] = [
-    ...Array.from({ length: firstWeekday }, () => null),
-    ...Array.from({ length: total }, (_, i) => i + 1),
-  ];
-  while (cells.length % 7 !== 0) cells.push(null);
 
   const pickDay = (iso: string) => {
     setFormErr("");
@@ -192,17 +183,17 @@ const BlockedDatesTab = ({ blocked, onChange }: BlockedDatesTabProps) => {
           </button>
         </div>
 
-        <div className="mb-1 grid grid-cols-7 text-center">
-          {WEEKDAYS.map((w) => (
-            <span key={w} className="py-1.5 text-xs font-medium text-body">
-              {w}
-            </span>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-y-1">
-          {cells.map((d, i) => {
-            if (d === null) return <span key={`e-${i}`} />;
-            const iso = `${viewY}-${pad(viewM + 1)}-${pad(d)}`;
+        <Calendar
+          month={new Date(viewY, viewM, 1)}
+          today={fromISO(today)}
+          weekdays={SHORT_WEEKDAYS}
+          onSelectDate={(date) => pickDay(toISO(date))}
+          weekdayContainerClassName="mb-1"
+          weekdayClassName="py-1.5 text-body"
+          dayGridClassName="gap-y-1"
+          renderDay={(date, state) => {
+            if (state.isOutsideMonth) return <span />;
+            const iso = toISO(date);
             const picked =
               iso === start ||
               iso === end ||
@@ -210,7 +201,6 @@ const BlockedDatesTab = ({ blocked, onChange }: BlockedDatesTabProps) => {
             const isBlocked = blockedSet.has(iso);
             return (
               <button
-                key={iso}
                 type="button"
                 onClick={() => pickDay(iso)}
                 className={`mx-auto flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-sm transition-colors duration-150 ${
@@ -223,11 +213,11 @@ const BlockedDatesTab = ({ blocked, onChange }: BlockedDatesTabProps) => {
                         : "text-heading hover:bg-primary/10"
                 }`}
               >
-                {d}
+                {date.getDate()}
               </button>
             );
-          })}
-        </div>
+          }}
+        />
       </div>
 
       {/* Form + list */}

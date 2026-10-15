@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { Lock, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
+import {  Settings, ShieldCheck, type LucideIcon } from "lucide-react";
 
 const Logo = () => (
   <Image
@@ -22,14 +22,14 @@ interface Feature {
 }
 
 const FEATURES: Feature[] = [
-  {
-    icon: Lock,
-    color: "var(--primary, #2563EB)",
-    badgeClass: "bg-primary/10",
-    iconClass: "text-primary",
-    title: "HIPAA Compliant",
-    desc: "Your data is secure and private.",
-  },
+  // {
+  //   icon: Lock,
+  //   color: "var(--primary, #2563EB)",
+  //   badgeClass: "bg-primary/10",
+  //   iconClass: "text-primary",
+  //   title: "HIPAA Compliant",
+  //   desc: "Your data is secure and private.",
+  // },
   {
     icon: ShieldCheck,
     color: "var(--brand-green, #22C55E)",

@@ -14,6 +14,7 @@ import Actions from "@/components/Actions";
 import Pagination from "@/components/Pagination";
 import ImportButton from "@/components/ImportButton";
 import DateTime from "@/components/Datetime";
+import { TableSelectAllCheckbox, useTableSelection } from "@/components/TableSelection";
 import RightSection, { BASE_FILTERS, STATUS_TONE, checkboxCls } from "./Rightsection";
 
 /* ---------- Static data ---------- */
@@ -81,7 +82,7 @@ const COLUMNS: TableColumn[] = [
     key: "select",
     label: "",
     className: "w-10",
-    header: <input type="checkbox" aria-label="Select all" className={checkboxCls} />,
+    header: null,
   },
   { key: "patient", label: "Patient" },
   { key: "details", label: "Appointment Details" },
@@ -101,11 +102,38 @@ const AppointmentHistory = () => {
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState("newest");
   const [showPanel, setShowPanel] = useState(false);
+  const rowKeys = ROWS.map((row, index) => `${row.name}-${row.date}-${row.time}-${index}`);
+  const { selectedKeys, allSelected, someSelected, toggleRow, toggleAll } =
+    useTableSelection(rowKeys);
+  const columns = COLUMNS.map((column) =>
+    column.key === "select"
+      ? {
+          ...column,
+          header: (
+            <TableSelectAllCheckbox
+              checked={allSelected}
+              indeterminate={someSelected}
+              onChange={toggleAll}
+              className={checkboxCls}
+            />
+          ),
+        }
+      : column,
+  );
 
-  const rows = ROWS.map((x) => {
+  const rows = ROWS.map((x, index) => {
+    const rowKey = rowKeys[index];
     const Icon = x.place === "Virtual Visit" ? Video : MapPin;
     return {
-      select: <input type="checkbox" aria-label={`Select ${x.name}`} className={checkboxCls} />,
+      select: (
+        <input
+          type="checkbox"
+          checked={selectedKeys.has(rowKey)}
+          onChange={() => toggleRow(rowKey)}
+          aria-label={`Select ${x.name}`}
+          className={checkboxCls}
+        />
+      ),
       patient: (
         <button type="button" onClick={() => setShowPanel(true)} className="w-full min-w-0 cursor-pointer text-left">
           <Name name={x.name} sub={x.meta} truncate />
@@ -174,7 +202,7 @@ const AppointmentHistory = () => {
           {/* Table */}
           <div className="min-w-0 space-y-3">
             <div className="w-full min-w-0 overflow-hidden rounded-[14px] border border-border bg-card">
-              <Table columns={COLUMNS} rows={rows} bordered={false} />
+              <Table columns={columns} rows={rows} bordered={false} />
             </div>
             <Pagination
               page={page}

@@ -3,15 +3,16 @@
 import React from "react";
 import { CalendarDays, MousePointerClick } from "lucide-react";
 
-import { initials } from "../Rightsection";
-import {
-  buildMonth,
+import Calendar, {
   dayKey,
   fmt,
   sameDay,
+  type CalendarDayState,
+} from "@/components/Calendar";
+import { initials } from "../Rightsection";
+import {
   PROVIDERS,
   LOCATIONS,
-  WEEKDAYS,
 } from "./LeftSection";
 
 /* ---------------------------------------------------------------- */
@@ -128,8 +129,6 @@ const MiddleSection = ({
   setSelected,
   setPicked,
 }: MiddleSectionProps) => {
-  const monthCells = buildMonth(selected);
-
   const nowMin = now ? now.getHours() * 60 + now.getMinutes() : 0;
   const showNow =
     !!today && sameDay(today, selected) && nowMin >= START_HOUR * 60 && nowMin <= END_HOUR * 60;
@@ -317,74 +316,71 @@ const MiddleSection = ({
       {/* ---------- MONTH ---------- */}
       {view === "Month" && (
         <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
-          <div className="border-t border-border">
-            <div className="grid grid-cols-7">
-              {WEEKDAYS.map((w) => (
-                <span key={w} className="py-2 text-center text-[11px] font-medium text-body">
-                  {w}
-                </span>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 border-r border-border">
-              {monthCells.map((d) => {
-                const out = d.getMonth() !== selected.getMonth();
-                const items = forDay(d);
-                const isSel = sameDay(d, selected);
-                const isToday = !!today && sameDay(d, today);
-                return (
-                  <div
-                    key={dayKey(d)}
-                    className={`min-h-[64px] min-w-0 border-b border-l border-border p-1 sm:min-h-[104px] sm:p-1.5 ${
-                      out ? "bg-heading/[0.02]" : ""
+          <Calendar
+            month={selected}
+            selectedDate={selected}
+            today={today}
+            onSelectDate={openDay}
+            className="border-t border-border"
+            weekdayClassName="py-2 text-[11px] text-body"
+            dayGridClassName="border-r border-border"
+            renderDay={(d, state: CalendarDayState) => {
+              const { isOutsideMonth: out, isSelected: isSel, isToday } = state;
+              const items = forDay(d);
+              return (
+                <div
+                  className={`min-h-[64px] min-w-0 border-b border-l border-border p-1 sm:min-h-[104px] sm:p-1.5 ${
+                    out ? "bg-heading/[0.02]" : ""
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => openDay(d)}
+                    className={`mb-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-xs font-medium ${
+                      isSel
+                        ? "bg-primary text-white"
+                        : isToday
+                          ? "border border-primary text-primary"
+                          : out
+                            ? "text-body/50"
+                            : "text-heading hover:bg-primary/10"
                     }`}
                   >
-                    <button
-                      type="button"
-                      onClick={() => openDay(d)}
-                      className={`mb-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-xs font-medium ${
-                        isSel
-                          ? "bg-primary text-white"
-                          : isToday
-                            ? "border border-primary text-primary"
-                            : out
-                              ? "text-body/50"
-                              : "text-heading hover:bg-primary/10"
-                      }`}
-                    >
-                      {d.getDate()}
-                    </button>
+                    {d.getDate()}
+                  </button>
 
-                    {/* chips on ≥sm, count on phones */}
-                    <div className="hidden space-y-1 sm:block">
-                      {items.slice(0, 2).map((a) => (
-                        <ApptChip
-                          key={a.id}
-                          a={a}
-                          active={panelAppt?.id === a.id}
-                          onPick={(x) => {
-                            setSelected(x.date);
-                            setPicked(x);
-                          }}
-                        />
-                      ))}
-                      {items.length > 2 && (
-                        <button
-                          type="button"
-                          onClick={() => openDay(d)}
-                          className="cursor-pointer text-[10px] font-medium text-primary hover:underline"
-                        >
-                          +{items.length - 2} more
-                        </button>
-                      )}
-                    </div>
-                    {items.length > 0 && (
-                      <span className="block text-[10px] font-semibold text-primary sm:hidden">{items.length}</span>
+                  {/* chips on ≥sm, count on phones */}
+                  <div className="hidden space-y-1 sm:block">
+                    {items.slice(0, 2).map((a) => (
+                      <ApptChip
+                        key={a.id}
+                        a={a}
+                        active={panelAppt?.id === a.id}
+                        onPick={(x) => {
+                          setSelected(x.date);
+                          setPicked(x);
+                        }}
+                      />
+                    ))}
+                    {items.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => openDay(d)}
+                        className="cursor-pointer text-[10px] font-medium text-primary hover:underline"
+                      >
+                        +{items.length - 2} more
+                      </button>
                     )}
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                  {items.length > 0 && (
+                    <span className="block text-[10px] font-semibold text-primary sm:hidden">
+                      {items.length}
+                    </span>
+                  )}
+                </div>
+              );
+            }}
+          />
         </div>
       )}
     </div>

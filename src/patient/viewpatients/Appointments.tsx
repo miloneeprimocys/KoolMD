@@ -5,8 +5,6 @@ import {
   Building2,
   CalendarDays,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   ClipboardList,
   Clock,
   MoreVertical,
@@ -16,6 +14,7 @@ import {
 } from "lucide-react";
 
 import StatCards, { type StatItem } from "@/components/Statcards";
+import Calendar, { dayKey, startOfDay } from "@/components/Calendar";
 import Table from "@/components/Table";
 import { type TableColumn } from "@/components/Tableheader";
 import Content from "@/components/Content";
@@ -31,7 +30,6 @@ import {
   SectionCard,
 } from "./Medicalhistory";
 import type { PatientAppointmentDetails } from "./Rightsection";
-import { addMonths, buildMonth, dayKey, fmt, sameDay, startOfDay, WEEKDAYS } from "@/appointments/calenderview/LeftSection";
 
 /* ---------- Stats ---------- */
 const STATS: StatItem[] = [
@@ -180,7 +178,6 @@ const Appointments = ({
   const [statusFilter, setStatusFilter] = useState("all");
   const [startDate, setStartDate] = useState("2026-10-06");
   const [endDate, setEndDate] = useState("2026-10-06");
-  const calendarDays = useMemo(() => buildMonth(calendarMonth), [calendarMonth]);
   const today = startOfDay(new Date());
   const calendarEvents = useMemo(() => {
     const events = new Map<string, Dot[]>();
@@ -195,7 +192,19 @@ const Appointments = ({
         appointment.status === "Cancelled" ? "cancelled" : "completed",
       ),
     );
-    return events;
+    return new Map(
+      [...events].map(([key, dots]) => [
+        key,
+        <span key={key} className="absolute bottom-1 flex gap-0.5">
+          {dots.slice(0, 3).map((dot, index) => (
+            <span
+              key={`${dot}-${index}`}
+              className={`h-1 w-1 rounded-full ${DOT_CLS[dot]}`}
+            />
+          ))}
+        </span>,
+      ]),
+    );
   }, []);
   const selectCalendarDate = (date: Date) => {
     const selectedDate = startOfDay(date);
@@ -245,7 +254,7 @@ const Appointments = ({
       {/* Stat cards */}
       <StatCards stats={STATS} />
 
-      <div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+      <div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-[minmax(0,375px)_minmax(0,1fr)]">
         {/* ================= LEFT: calendar + filters ================= */}
         <div className="space-y-4 sm:space-y-5">
           <SectionCard
@@ -254,76 +263,15 @@ const Appointments = ({
             tone="blue"
             title="Appointments Calendar"
           >
-            {/* Month switcher */}
-            <div className="mb-3 flex items-center justify-center gap-4">
-              <button
-                type="button"
-                aria-label="Previous month"
-                onClick={() => setCalendarMonth((month) => addMonths(month, -1))}
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-body transition-colors hover:bg-primary/10 hover:text-primary"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <span className="text-sm font-semibold text-heading">
-                {fmt(calendarMonth, { month: "long", year: "numeric" })}
-              </span>
-              <button
-                type="button"
-                aria-label="Next month"
-                onClick={() => setCalendarMonth((month) => addMonths(month, 1))}
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-body transition-colors hover:bg-primary/10 hover:text-primary"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Weekday header */}
-            <div className="grid grid-cols-7 text-center">
-              {WEEKDAYS.map((w) => (
-                <span key={w} className="py-1.5 text-xs font-medium text-label">
-                  {w}
-                </span>
-              ))}
-            </div>
-
-            {/* Days */}
-            <div className="grid grid-cols-7 gap-y-1 text-center">
-              {calendarDays.map((date) => {
-                const out = date.getMonth() !== calendarMonth.getMonth();
-                const isSelected = sameDay(date, selectedCalendarDate);
-                const isToday = sameDay(date, today);
-                const dots = calendarEvents.get(dayKey(date)) ?? [];
-                return (
-                  <button
-                    key={dayKey(date)}
-                    type="button"
-                    aria-pressed={isSelected}
-                    aria-label={fmt(date, { dateStyle: "full" })}
-                    onClick={() => {
-                      selectCalendarDate(date);
-                    }}
-                    className={`relative mx-auto flex h-9 w-9 cursor-pointer flex-col items-center justify-center rounded-full text-xs transition-colors duration-200 ${
-                      isSelected
-                        ? "bg-primary/10 font-semibold text-primary ring-1 ring-primary/30"
-                        : isToday
-                          ? "border border-primary font-medium text-primary"
-                          : out
-                            ? "text-placeholder hover:bg-primary/10"
-                            : "text-heading hover:bg-primary/5"
-                    }`}
-                  >
-                    {date.getDate()}
-                    {dots.length > 0 && (
-                      <span className="absolute bottom-1 flex gap-0.5">
-                        {dots.slice(0, 3).map((dot, index) => (
-                          <span key={`${dot}-${index}`} className={`h-1 w-1 rounded-full ${DOT_CLS[dot]}`} />
-                        ))}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <Calendar
+              month={calendarMonth}
+              selectedDate={selectedCalendarDate}
+              today={today}
+              onSelectDate={selectCalendarDate}
+              onMonthChange={setCalendarMonth}
+              showMonthNavigation
+              events={calendarEvents}
+            />
 
             {/* Legend */}
             <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5">
@@ -391,6 +339,7 @@ const Appointments = ({
                   }
                 }}
                 align="auto"
+                minSpaceBelow={480}
               />
               <DatePicker
                 name="appointmentEndDate"
@@ -406,6 +355,7 @@ const Appointments = ({
                 }}
                 minDate={startDate}
                 align="auto"
+                minSpaceBelow={480}
               />
             </div>
           </SectionCard>
@@ -421,63 +371,64 @@ const Appointments = ({
             title={`Upcoming Appointments (${UPCOMING.length})`}
             action={<AddButton text="Schedule Appointment" onClick={() => {}} />}
           >
-            <div className="space-y-3">
-             {UPCOMING.map((u) => (
-  <div
-    key={`${u.month}-${u.day}`}
-    className="@container relative flex items-start gap-3 rounded-xl border border-border bg-card px-3 py-3 transition-colors duration-200 hover:border-primary/25 hover:bg-primary/[0.04] sm:gap-4 @3xl:items-center"
-  >
-    {/* 3 dots — top-right when narrow, vertically centered when wide */}
-    <button
-      type="button"
-      aria-label={`More actions for ${u.type}`}
-      className="absolute right-2 top-2 flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-label transition-colors hover:bg-primary/10 hover:text-primary @3xl:top-1/2 @3xl:-translate-y-1/2"
-    >
-      <MoreVertical className="h-3.5 w-3.5" />
-    </button>
+                         <div className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+              {UPCOMING.map((u) => (
+                <div
+                  key={`${u.month}-${u.day}`}
+                  className="relative flex flex-col gap-3 px-4 py-3 transition-colors duration-200 hover:bg-primary/[0.04] 2xl:grid 2xl:grid-cols-[72px_170px_minmax(0,1fr)_minmax(0,1.2fr)_auto] 2xl:items-stretch 2xl:gap-0 2xl:pr-14"
+                >
+                  {/* 3 dots: top-right when narrow, vertically centered on 2xl */}
+                  <button
+                    type="button"
+                    aria-label={`More actions for ${u.type}`}
+                    className="absolute right-2 top-2 flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-label transition-colors hover:bg-primary/10 hover:text-primary 2xl:right-3 2xl:top-1/2 2xl:-translate-y-1/2"
+                  >
+                    <MoreVertical className="h-3.5 w-3.5" />
+                  </button>
 
-    {/* Date badge */}
-    <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg border border-border bg-primary/5">
-      <span className="text-[10px] font-semibold uppercase text-danger">
-        {u.month}
-      </span>
-      <span className="text-lg font-semibold leading-none text-heading">
-        {u.day}
-      </span>
-      <span className="text-[10px] text-body">{u.weekday}</span>
-    </div>
+                  {/* Row 1 (mobile): date badge + time + tag. On 2xl these become grid columns. */}
+                  <div className="flex items-center gap-3 pr-8 2xl:contents">
+                    {/* Date badge */}
+                    <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg border border-border bg-primary/5 2xl:self-center">
+                      <span className="text-[10px] font-semibold uppercase text-danger">{u.month}</span>
+                      <span className="text-lg font-semibold leading-none text-heading">{u.day}</span>
+                      <span className="text-[10px] text-body">{u.weekday}</span>
+                    </div>
 
-    {/* Details */}
-    <div className="flex min-w-0 flex-1 flex-wrap items-start gap-x-4 gap-y-3 pr-8 @3xl:flex-nowrap @3xl:items-center @3xl:pr-10">
-      {/* Time (+ tag underneath only when narrow) */}
-      <div className="flex w-32 shrink-0 flex-col items-start gap-2">
-        <p className="whitespace-nowrap pt-0.5 text-xs text-heading @3xl:pt-0">
-          {u.time}
-        </p>
-        <span className="@3xl:hidden">
-          <Tags text="Scheduled" tone="success" />
-        </span>
-      </div>
+                    {/* Time (+ tag underneath, hidden on 2xl) */}
+                    <div className="flex min-w-0 flex-1 flex-col items-start gap-2 2xl:flex-none 2xl:justify-center 2xl:px-4">
+                      <p className="whitespace-nowrap text-xs text-heading">{u.time}</p>
+                      <span className="2xl:hidden">
+                        <Tags text="Scheduled" tone="success" />
+                      </span>
+                    </div>
+                  </div>
 
-      <div className="min-w-[140px] flex-1 space-y-1">
-        <p className="truncate text-sm font-medium text-heading">{u.type}</p>
-        <ModeLabel mode={u.mode} />
-      </div>
+                  {/* Row 2 (mobile): type + provider, 2 columns. On 2xl these become grid columns. */}
+                  <div className="grid grid-cols-2 items-center gap-x-3 2xl:contents">
+                    {/* Type + mode (divider on its left on 2xl) */}
+                    <div className="min-w-0 2xl:flex 2xl:items-center 2xl:justify-start 2xl:border-l 2xl:border-border 2xl:px-4">
+                      <div className="min-w-0 space-y-1">
+                        <p className="truncate text-sm font-medium text-heading">{u.type}</p>
+                        <ModeLabel mode={u.mode} />
+                      </div>
+                    </div>
 
-      <div className="flex min-w-[180px] flex-1 items-center gap-3">
-        <Avatar name={u.provider} />
-        <div className="min-w-0">
-          <Content title={u.provider} description={u.dept} truncate />
-        </div>
-      </div>
+                    {/* Provider (divider on its left on 2xl) */}
+                    <div className="flex min-w-0 items-center gap-2 border-l border-border pl-3 sm:gap-3 2xl:justify-start 2xl:px-4">
+                      <Avatar name={u.provider} size="h-8 w-8 sm:h-10 sm:w-10" />
+                      <div className="min-w-0">
+                        <Content title={u.provider} description={u.dept} truncate />
+                      </div>
+                    </div>
+                  </div>
 
-      {/* Tag at the right — only when wide */}
-      <span className="hidden shrink-0 @3xl:block">
-        <Tags text="Scheduled" tone="success" />
-      </span>
-    </div>
-  </div>
-))}
+                  {/* Tag at the right, only on 2xl */}
+                  <span className="hidden 2xl:flex 2xl:items-center 2xl:justify-start 2xl:pl-4">
+                    <Tags text="Scheduled" tone="success" />
+                  </span>
+                </div>
+              ))}
             </div>
           </SectionCard>
 

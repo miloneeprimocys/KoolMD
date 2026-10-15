@@ -10,6 +10,9 @@ import Providers from "@/providers/Providers";
 import AddProvider from "@/providers/AddProvider";
 import ViewProvider from "@/providers/viewproviders/Viewprovider";
 import AppointmentScheduling from "@/appointments/Appointmentscheduling";
+import Encounters from "@/encounters/Encounters";
+import NewEncounter from "@/encounters/newencounters/Newencounter";
+import ViewEncounters from "@/encounters/viewencounters/Viewencounters";
 import { PERMISSIONS, type PermissionCode } from "@/auth/permissions";
 
 /**
@@ -56,6 +59,12 @@ export const ROUTES: Record<string, RouteConfig> = {
     access: "protected",
     requiredPermission: PERMISSIONS.PATIENT_CREATE,
   },
+  "edit-patient": {
+    component: AddPatient,
+    title: "Edit Patient",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PATIENT_READ,
+  },
   "view-patient": {
     component: ViewPatient,
     title: "View Patient",
@@ -85,5 +94,23 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "Appointments",
     access: "protected",
     requiredPermission: PERMISSIONS.APPOINTMENT_READ,
+  },
+  encounters: {
+    component: Encounters,
+    title: "Encounters",
+    access: "protected",
+    requiredPermission: PERMISSIONS.ENCOUNTER_READ,
+  },
+  "new-encounter": {
+    component: NewEncounter,
+    title: "New Encounter",
+    access: "protected",
+    requiredPermission: PERMISSIONS.ENCOUNTER_READ,
+  },
+  "view-encounter": {
+    component: ViewEncounters,
+    title: "View Encounter",
+    access: "protected",
+    requiredPermission: PERMISSIONS.ENCOUNTER_READ,
   },
 };

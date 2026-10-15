@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 
 import TableHeader, { type TableColumn } from "./Tableheader";
 
@@ -7,9 +7,42 @@ type TableProps = {
   rows: Record<string, React.ReactNode>[];
   fillHeight?: boolean;
   bordered?: boolean;
+  selectable?: boolean;
 };
 
-const Table = ({ columns, rows, fillHeight = false, bordered = true }: TableProps) => {
+const Table = ({
+  columns,
+  rows,
+  fillHeight = false,
+  bordered = true,
+  selectable = false,
+}: TableProps) => {
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Set<string>>(new Set());
+  const rowKeys = useMemo(
+    () =>
+      rows.map((row, index) => {
+        const checkbox = row.select;
+        if (React.isValidElement<{ "aria-label"?: string }>(checkbox)) {
+          const label = checkbox.props["aria-label"];
+          if (label) return label;
+        }
+        return `row-${index}`;
+      }),
+    [rows],
+  );
+  const allRowsSelected =
+    selectable && rowKeys.length > 0 && rowKeys.every((key) => selectedRowKeys.has(key));
+  const someRowsSelected =
+    selectable && rowKeys.some((key) => selectedRowKeys.has(key)) && !allRowsSelected;
+
+  const setAllRowsSelected = (checked: boolean) => {
+    setSelectedRowKeys((current) => {
+      const next = new Set(current);
+      rowKeys.forEach((key) => (checked ? next.add(key) : next.delete(key)));
+      return next;
+    });
+  };
+
   const getFixedWidth = (column: TableColumn) =>
     column.width ?? (column.className?.split(/\s+/).includes("w-10") ? 40 : undefined);
 
@@ -37,23 +70,53 @@ const Table = ({ columns, rows, fillHeight = false, bordered = true }: TableProp
               return <col key={column.key} style={width ? { width } : undefined} />;
             })}
           </colgroup>
-          <TableHeader columns={columns} />
+          <TableHeader
+            columns={columns}
+            selectAll={
+              selectable
+                ? {
+                    checked: allRowsSelected,
+                    indeterminate: someRowsSelected,
+                    onChange: setAllRowsSelected,
+                  }
+                : undefined
+            }
+          />
           <tbody>
             {rows.map((row, i) => (
               <tr
                 key={i}
-                className={`transition-colors duration-200 hover:bg-primary/5 ${
-                  i === 0 ? "border-b border-border" : "border-b border-divider"
-                } last:border-b-0`}
+                className="border-b border-divider transition-colors duration-200 last:border-b-0 hover:bg-primary/5"
               >
-                {columns.map((c) => (
-                  <td
-                    key={c.key}
-                    className={`px-4 py-4 align-middle sm:px-5 sm:py-5 ${c.className ?? ""}`}
-                  >
-                    {row[c.key]}
-                  </td>
-                ))}
+                {columns.map((c) => {
+                  const cell = row[c.key];
+                  const rowKey = rowKeys[i];
+                  const selectionCell =
+                    selectable &&
+                    c.key === "select" &&
+                    React.isValidElement<React.InputHTMLAttributes<HTMLInputElement>>(cell) &&
+                    cell.type === "input"
+                      ? React.cloneElement(cell, {
+                          checked: selectedRowKeys.has(rowKey),
+                          onChange: () =>
+                            setSelectedRowKeys((current) => {
+                              const next = new Set(current);
+                              if (next.has(rowKey)) next.delete(rowKey);
+                              else next.add(rowKey);
+                              return next;
+                            }),
+                        })
+                      : cell;
+
+                  return (
+                    <td
+                      key={c.key}
+                      className={`px-4 py-4 align-middle sm:px-5 sm:py-5 ${c.className ?? ""}`}
+                    >
+                      {selectionCell}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

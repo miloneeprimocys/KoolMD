@@ -13,6 +13,7 @@ interface FileDropzoneProps {
   onChange: (file: File | null) => void;
   error?: string;
   className?: string;
+  selectedFileClassName?: string;
   compact?: boolean;
   maxSizeMB?: number;
 }
@@ -31,6 +32,7 @@ const FileDropzone = ({
   onChange,
   error,
   className = "",
+  selectedFileClassName = "",
   compact = false,
   maxSizeMB = 5,
 }: FileDropzoneProps) => {
@@ -116,7 +118,7 @@ const FileDropzone = ({
 
         {file ? (
           /* ---------- Selected: responsive card ---------- */
-          <div className={`flex w-full min-w-0 items-center gap-3 text-left ${compact ? "" : "flex-col items-stretch rounded-lg border border-border bg-card p-3 sm:flex-row sm:items-center sm:p-2"}`}>
+          <div className={`flex w-full min-w-0 items-center gap-3 text-left ${compact ? "" : "flex-col items-stretch rounded-lg border border-border bg-card p-3 sm:flex-row sm:items-center sm:p-2"} ${selectedFileClassName}`}>
             {/* Thumbnail wrapper — relative so mobile ✕ can sit at its top-right */}
             <div className={`relative shrink-0 ${compact ? "" : "mx-auto sm:mx-0"}`}>
               <span className={`flex items-center justify-center overflow-hidden rounded-md border border-border bg-primary/5 ${compact ? "h-12 w-12" : "h-20 w-20 sm:h-14 sm:w-14"}`}>

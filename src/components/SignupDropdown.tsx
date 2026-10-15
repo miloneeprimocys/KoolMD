@@ -9,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
 import { FieldError } from "./SignupField";
 
@@ -20,6 +21,8 @@ export interface DropdownOption {
   label: string;
   icon?: ReactNode;
   keywords?: string[];
+  subLabel?: string;
+  image?: string;
 }
 
 export interface SignupDropdownProps {
@@ -42,6 +45,14 @@ export interface SignupDropdownProps {
   searchable?: boolean;
   /** Compact padding for narrow dropdowns (e.g. phone country code). Default: false */
   compact?: boolean;
+  /** Render the trigger border. Default: true */
+  bordered?: boolean;
+  /** Additional classes for the visible dropdown trigger. */
+  triggerClassName?: string;
+  /** Render the options in a viewport layer to escape clipped containers. */
+  portalMenu?: boolean;
+  renderSelected?: (option: DropdownOption) => ReactNode;
+  renderOption?: (option: DropdownOption) => ReactNode;
 }
 
 /* ---------------------------------------------------------------- */
@@ -67,6 +78,11 @@ const SignupDropdown = forwardRef<HTMLInputElement, SignupDropdownProps>(
       minSpaceBelow = 260,
       searchable = true,
       compact = false,
+      bordered = true,
+      triggerClassName = "",
+      portalMenu = false,
+      renderSelected,
+      renderOption,
     },
     ref,
   ) => {
@@ -75,6 +91,11 @@ const SignupDropdown = forwardRef<HTMLInputElement, SignupDropdownProps>(
     const [placement, setPlacement] = useState<"down" | "up">("down");
     const [query, setQuery] = useState("");
     const [highlightedIndex, setHighlightedIndex] = useState(0);
+    const [portalPosition, setPortalPosition] = useState<{
+      left: number;
+      top: number;
+      width: number;
+    } | null>(null);
 
     const wrapRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -150,29 +171,48 @@ const chevronRight = compact ? "right-2" : "right-3.5";
       const rect = el.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-      if (spaceBelow < minSpaceBelow && spaceAbove > spaceBelow) {
-        setPlacement("up");
-      } else {
-        setPlacement("down");
+      const nextPlacement =
+        spaceBelow < minSpaceBelow && spaceAbove > spaceBelow ? "up" : "down";
+      setPlacement(nextPlacement);
+      if (portalMenu) {
+        const menuHeight = Math.min(256, filtered.length * 44 + 8);
+        setPortalPosition({
+          left: rect.left,
+          top:
+            nextPlacement === "up"
+              ? Math.max(8, rect.top - menuHeight - 6)
+              : rect.bottom + 6,
+          width: rect.width,
+        });
       }
     };
 
     useLayoutEffect(() => {
       if (open) computePlacement();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open]);
+    }, [open, filtered.length, portalMenu]);
 
     useEffect(() => {
       if (!open) return;
-      const onScrollOrResize = () => computePlacement();
-      window.addEventListener("scroll", onScrollOrResize, true);
-      window.addEventListener("resize", onScrollOrResize);
+      const onScroll = () => {
+        if (portalMenu) {
+          setOpen(false);
+          setFocused(false);
+          setQuery("");
+          onBlur?.();
+          return;
+        }
+        computePlacement();
+      };
+      const onResize = () => computePlacement();
+      window.addEventListener("scroll", onScroll, true);
+      window.addEventListener("resize", onResize);
       return () => {
-        window.removeEventListener("scroll", onScrollOrResize, true);
-        window.removeEventListener("resize", onScrollOrResize);
+        window.removeEventListener("scroll", onScroll, true);
+        window.removeEventListener("resize", onResize);
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open]);
+    }, [open, portalMenu, onBlur]);
 
     useEffect(() => {
       onOpenChange?.(open);
@@ -181,7 +221,11 @@ const chevronRight = compact ? "right-2" : "right-3.5";
     /* Close on outside click */
     useEffect(() => {
       const onDoc = (e: MouseEvent) => {
-        if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        if (
+          wrapRef.current &&
+          !wrapRef.current.contains(e.target as Node) &&
+          !listRef.current?.contains(e.target as Node)
+        ) {
           setOpen(false);
           setFocused(false);
           setQuery("");
@@ -293,11 +337,13 @@ const chevronRight = compact ? "right-2" : "right-3.5";
             /* ===== Searchable input ===== */
             <div
               className={`
-                relative flex h-12 w-full min-w-0 items-center
-                rounded-xl border bg-card
+                relative flex w-full min-w-0 items-center
+                ${compact ? "h-8" : "h-12"}
+                rounded-xl ${bordered ? "border bg-card" : "border-0 bg-transparent"}
                 ${leftPad} ${rightPad}
                 transition-colors duration-200
-                ${borderClass}
+                ${bordered ? borderClass : ""}
+                ${triggerClassName}
               `}
             >
               {hasTriggerIcon && (
@@ -378,6 +424,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
               ref={triggerRef}
               id={inputId}
               name={name}
+              aria-label={label ?? placeholder}
               type="button"
               disabled={disabled}
               aria-haspopup="listbox"
@@ -389,31 +436,37 @@ const chevronRight = compact ? "right-2" : "right-3.5";
               }}
               onKeyDown={handleKeyDown}
               className={`
-                relative flex h-12 w-full min-w-0 items-center
-                rounded-xl border bg-card
+                relative flex w-full min-w-0 items-center
+                ${compact ? "h-8" : "h-12"}
+                rounded-xl ${bordered ? "border bg-card" : "border-0 bg-transparent"}
                 ${leftPad} ${rightPad}
-                text-sm text-left
+                text-left ${compact ? "text-xs" : "text-sm"}
                 outline-none transition-colors duration-200
                 cursor-pointer
                 disabled:cursor-not-allowed disabled:opacity-60
-                ${borderClass}
+                ${bordered ? borderClass : ""}
+                ${triggerClassName}
               `}
             >
-              {hasTriggerIcon && (
+              {!renderSelected && hasTriggerIcon && (
                 <span
                   className={`pointer-events-none absolute top-1/2 -translate-y-1/2 transition-colors duration-200 ${iconColor} ${iconLeft}`}
                 >
                   {triggerIcon}
                 </span>
               )}
-              <span
-                title={selected?.label ?? placeholder}
-                className={`min-w-0 flex-1 truncate ${
-                  selected ? "text-heading" : "text-placeholder"
-                }`}
-              >
-                {selected?.label ?? placeholder}
-              </span>
+              {renderSelected && selected ? (
+                <span className="min-w-0 flex-1 pr-8">{renderSelected(selected)}</span>
+              ) : (
+                <span
+                  title={selected?.label ?? placeholder}
+                  className={`min-w-0 flex-1 truncate ${
+                    selected ? "text-heading" : "text-placeholder"
+                  }`}
+                >
+                  {selected?.label ?? placeholder}
+                </span>
+              )}
 
               <ChevronDown
                 className={`
@@ -427,21 +480,32 @@ const chevronRight = compact ? "right-2" : "right-3.5";
           )}
 
           {/* ---------- Options panel ---------- */}
-          {open && !disabled && (
+          {open && !disabled && (() => {
+            const menu = (
             <ul
               ref={listRef}
               id={inputId ? `${inputId}-listbox` : undefined}
               role="listbox"
+              style={
+                portalMenu
+                  ? {
+                      position: "fixed",
+                      left: portalPosition?.left ?? 0,
+                      top: portalPosition?.top ?? 0,
+                      width: portalPosition?.width ?? wrapRef.current?.offsetWidth,
+                    }
+                  : undefined
+              }
               className={`
-                absolute left-0 right-0 z-[100]
-                max-h-64 overflow-y-auto overflow-x-hidden
+                ${portalMenu ? "z-[500]" : "absolute left-0 right-0 z-[100]"}
+                ${portalMenu ? "overflow-visible" : "max-h-64 overflow-y-auto overflow-x-hidden"}
                 rounded-xl border border-border
                 bg-card
                 shadow-2xl shadow-black/20 dark:shadow-black/60
                 ring-1 ring-border/60
                 py-1
                 animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both]
-                ${placement === "down" ? "top-full mt-1.5" : "bottom-full mb-1.5"}
+                ${!portalMenu && (placement === "down" ? "top-full mt-1.5" : "bottom-full mb-1.5")}
               `}
             >
               {filtered.length === 0 ? (
@@ -477,12 +541,16 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                         }
                       `}
                     >
-                      <span className="flex items-center gap-2 truncate">
-                        {opt.icon && (
-                          <span className="flex-shrink-0">{opt.icon}</span>
-                        )}
-                        <span className="truncate">{opt.label}</span>
-                      </span>
+                      {renderOption ? (
+                        <span className="min-w-0 flex-1">{renderOption(opt)}</span>
+                      ) : (
+                        <span className="flex items-center gap-2 truncate">
+                          {opt.icon && (
+                            <span className="flex-shrink-0">{opt.icon}</span>
+                          )}
+                          <span className="truncate">{opt.label}</span>
+                        </span>
+                      )}
                       {isSelected && (
                         <Check className="h-4 w-4 shrink-0 text-primary" />
                       )}
@@ -491,7 +559,11 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                 })
               )}
             </ul>
-          )}
+            );
+            return portalMenu && typeof document !== "undefined"
+              ? createPortal(menu, document.body)
+              : menu;
+          })()}
         </div>
 
         {/* ---------- Error / hint ---------- */}

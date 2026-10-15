@@ -196,13 +196,13 @@ const LoginForm = () => {
       </p>
 
       {/* ---------- HIPAA notice ---------- */}
-      <div className="mt-6 flex items-center justify-center gap-2 border-t border-divider pt-5">
+      {/* <div className="mt-6 flex items-center justify-center gap-2 border-t border-divider pt-5">
         <ShieldCheck className="h-4 w-4 shrink-0 text-primary animate-[hipaaPulse_3s_ease-in-out_infinite]" />
         <p className="text-[11px] leading-snug text-body sm:text-xs">
           Your information is protected and{" "}
           <span className="font-semibold text-heading">HIPAA compliant</span>.
         </p>
-      </div>
+      </div> */}
     </AuthCard>
   );
 };

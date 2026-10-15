@@ -138,10 +138,10 @@ const Licenses = ({ values: v, errors, onChange }: StepProps<LicenseValues>) => 
         <h2 className="text-lg font-semibold text-heading sm:text-xl">
           Licenses and Certificates
         </h2>
-        <p className="mt-0.5 text-sm text-body">
+        {/* <p className="mt-0.5 text-sm text-body">
           Upload your professional licenses, certifications and other required
           documents. All documents are securely stored and HIPAA compliant.
-        </p>
+        </p> */}
       </div>
 
       {/* Medical license */}

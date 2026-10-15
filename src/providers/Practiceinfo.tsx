@@ -315,7 +315,7 @@ const PracticeInfo = ({
       </SectionCard>
 
       {/* HIPAA card (sits below the left-side content) */}
-      <section className="flex items-start gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
+      {/* <section className="flex items-start gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
           <ShieldCheck className="h-6 w-6" />
         </span>
@@ -326,7 +326,7 @@ const PracticeInfo = ({
             compliance with HIPAA regulations.
           </p>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 };

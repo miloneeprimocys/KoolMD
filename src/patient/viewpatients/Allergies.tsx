@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   AlertCircle,
   Bug,
@@ -18,6 +18,7 @@ import { type TableColumn } from "@/components/Tableheader";
 import Content from "@/components/Content";
 import Tags, { type TagTone } from "@/components/Tags";
 import AddButton from "@/components/Addbutton";
+import ImportButton from "@/components/ImportButton";
 import EditButton from "@/components/EditButton";
 import {
   ACTIONS_COL,
@@ -56,10 +57,10 @@ const SEVERITY_TONE: Record<Severity, TagTone> = {
   Mild: "info",
 };
 
-const NOTES_TEXT = [
+const DEFAULT_NOTES = [
   "Patient has a history of severe allergic reactions to penicillin and peanuts.",
   "Carries an epinephrine auto-injector. Recommend monitoring for cross-reactivity with related medications and food products.",
-];
+].join("\n");
 
 const col = (key: string, label: string): TableColumn => ({ key, label, className: DENSE });
 
@@ -77,6 +78,20 @@ const COLUMNS: TableColumn[] = [
 /* ---------- Component ---------- */
 const Allergies = () => {
   const highRisk = ALLERGIES.filter((a) => a.severity === "High");
+
+  const [notes, setNotes] = useState(DEFAULT_NOTES);
+  const [draft, setDraft] = useState(DEFAULT_NOTES);
+  const [editingNotes, setEditingNotes] = useState(false);
+
+  const startEditNotes = () => {
+    setDraft(notes);
+    setEditingNotes(true);
+  };
+  const saveNotes = () => {
+    setNotes(draft.trim());
+    setEditingNotes(false);
+  };
+  const cancelEditNotes = () => setEditingNotes(false);
 
   const rows = ALLERGIES.map((a) => ({
     allergen: (
@@ -110,41 +125,43 @@ const Allergies = () => {
         <Table columns={COLUMNS} rows={rows} />
       </SectionCard>
 
-      <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
-        {/* Allergy alert */}
-        <SectionCard
-          className="!h-auto"
-          icon={ShieldAlert}
-          tone="red"
-          title="Allergy Alert"
-          subtitle="These allergies will be shown as an alert in appointments and encounters."
-        >
-          <div className="flex items-center gap-3 rounded-xl border border-danger/25 bg-danger/10 p-4 dark:border-danger/40 dark:bg-danger/15">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-danger text-white">
-              <AlertCircle className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-danger">
-                {highRisk.length} High Risk Allergies
-              </p>
-              <p className="text-xs text-danger/80">{highRisk.map((a) => a.allergen).join(", ")}</p>
-            </div>
-          </div>
-        </SectionCard>
-
+      <div className="grid grid-cols-1 ">
+    
         {/* Allergy notes */}
         <SectionCard
           className="!h-auto"
           icon={FileText}
           tone="blue"
           title="Allergy Notes"
-          action={<EditButton section="Allergy Notes" onEdit={() => {}} />}
+          action={
+            editingNotes ? undefined : <EditButton section="Allergy Notes" onEdit={startEditNotes} />
+          }
         >
-          <div className="space-y-1 rounded-xl border border-border bg-primary/5 p-4 text-sm leading-relaxed text-heading">
-            {NOTES_TEXT.map((t) => (
-              <p key={t}>{t}</p>
-            ))}
-          </div>
+          {editingNotes ? (
+            <div className="space-y-3">
+              <textarea
+                autoFocus
+                rows={5}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") cancelEditNotes();
+                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) saveNotes();
+                }}
+                placeholder="Type allergy notes here..."
+                aria-label="Allergy notes"
+                className="w-full resize-y rounded-xl border border-border bg-card p-4 text-sm leading-relaxed text-heading outline-none transition-colors duration-200 placeholder:text-placeholder hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+              <div className="flex justify-end gap-3">
+                <ImportButton text="Cancel" icon={null} onClick={cancelEditNotes} />
+                <AddButton text="Save Notes" icon={null} onClick={saveNotes} />
+              </div>
+            </div>
+          ) : (
+            <div className="whitespace-pre-wrap rounded-xl border border-border bg-primary/5 p-4 text-sm leading-relaxed text-heading">
+              {notes || <span className="text-body">No notes added yet. Click Edit to add some.</span>}
+            </div>
+          )}
         </SectionCard>
       </div>
     </div>

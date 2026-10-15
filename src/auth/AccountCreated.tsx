@@ -95,13 +95,13 @@ const AccountCreated = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <ShieldCheck className="h-7 w-7 shrink-0 text-primary" />
           <div className="hidden leading-tight sm:block">
             <p className="text-xs font-semibold text-heading">HIPAA Compliant</p>
             <p className="text-[10px] text-body">Secure. Private. Protected.</p>
           </div>
-        </div>
+        </div> */}
       </header>
 
       {/* ===== CONTENT ===== */}
