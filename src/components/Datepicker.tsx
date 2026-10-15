@@ -124,6 +124,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
     } | null>(null);
 
     const wrapRef = useRef<HTMLDivElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement | null>(null);
 
     const hasError = Boolean(error);
@@ -217,7 +218,11 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
     useEffect(() => {
       if (!open || isMobile) return;
       const onDoc = (e: MouseEvent) => {
-        if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        const target = e.target as Node;
+        if (
+          !wrapRef.current?.contains(target) &&
+          !popoverRef.current?.contains(target)
+        ) {
           closePicker();
         }
       };
@@ -540,6 +545,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
             typeof document !== "undefined" &&
             createPortal(
               <div
+                ref={popoverRef}
                 className="fixed z-[200] w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60"
                 style={{
                   left: desktopPosition.left,
