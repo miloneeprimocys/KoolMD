@@ -1,5 +1,6 @@
 import React from "react";
 import { Eye, SquarePen, Trash2, Download } from "lucide-react";
+import DeleteButton from "@/components/DeleteButton";
 
 export type ActionType = "view" | "edit" | "delete" | "download";
 
@@ -55,6 +56,18 @@ const Actions = ({
     <div className={`inline-flex items-center gap-1 ${className}`}>
       {actions.map((a) => {
         const { Icon, label, hover } = CONFIG[a];
+        if (a === "delete") {
+          return (
+            <DeleteButton
+              key={a}
+              text={label}
+              icon={<Icon className={icon} />}
+              iconOnly
+              iconOnlySize={size}
+              onClick={() => onAction?.(a)}
+            />
+          );
+        }
         return (
           <button
             key={a}

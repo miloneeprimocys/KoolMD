@@ -16,7 +16,7 @@ import {
   TONES,
   kebab,
   type Tone,
-} from "./Medicalhistory";
+} from "./medicalhistory/Medicalhistory";
 
 /* ---------- Static data ---------- */
 type Current = {

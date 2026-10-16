@@ -30,7 +30,7 @@ export interface SignupDropdownProps {
   value?: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  label?: string;
+  label?: ReactNode;
   icon?: ReactNode;
   error?: string;
   hint?: string;
@@ -424,7 +424,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
               ref={triggerRef}
               id={inputId}
               name={name}
-              aria-label={label ?? placeholder}
+              aria-label={typeof label === "string" ? label : placeholder}
               type="button"
               disabled={disabled}
               aria-haspopup="listbox"

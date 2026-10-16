@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Provider } from "react-redux";
+import DialogsContainer from "@/components/Dialogscontainer";
 import { store } from "./store";
 import { restoreSession } from "./thunks/authThunks";
 
@@ -18,6 +19,7 @@ export default function ReduxProvider({ children }: { children: React.ReactNode 
     <Provider store={store}>
       <SessionBootstrap />
       {children}
+      <DialogsContainer />
     </Provider>
   );
 }

@@ -46,12 +46,12 @@ const TableHeader = ({
   selectAll?: SelectAllState;
 }) => (
   <thead>
-    <tr className="bg-[#f1f6fc] dark:bg-[#002148]">
+    <tr className="bg-[#f1f6fc] dark:bg-[#0b2f5e]">
       {columns.map((c) => (
         <th
           key={c.key}
           scope="col"
-          className={`sticky top-0 z-10 whitespace-nowrap bg-[#f1f6fc] h-[58px] px-4 text-[13px] font-semibold text-label dark:bg-[#002148] sm:px-5 sm:text-sm ${
+          className={`sticky top-0 z-10 whitespace-nowrap bg-[#f1f6fc] h-[58px] px-4 text-[13px] font-semibold text-label dark:bg-[#0b2f5e] dark:text-white sm:px-5 sm:text-sm ${
             c.className ?? ""
           }`}
         >

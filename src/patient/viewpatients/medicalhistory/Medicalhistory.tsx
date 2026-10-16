@@ -30,12 +30,14 @@ import Tags from "@/components/Tags";
 import Actions from "@/components/Actions";
 import ImportButton from "@/components/ImportButton";
 import EditButton from "@/components/EditButton";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal, type ModalKey } from "@/redux/slices/dialogslice";
 
 /* ---------------------------------------------------------------- */
 /*  Shared helpers (also imported by Medications.tsx / Allergies.tsx) */
 /* ---------------------------------------------------------------- */
 export const TONES = {
-red:    "bg-danger/40 text-danger",
+  red:    "bg-danger/40 text-danger",
   violet: "bg-violet/40 text-violet",
   blue:   "bg-primary/20 dark:bg-primary/30 text-primary",
   green:  "bg-success/40 text-success",
@@ -61,7 +63,7 @@ export const kebab = (
 );
 
 /**
- * Fixed-height card (bigger now: 420px).
+ * Fixed-height card.
  * Body is `flex-1 min-h-0` so the inner scroll region can shrink and scroll.
  */
 export const SectionCard = ({
@@ -123,9 +125,23 @@ export const ScrollArea = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-const AddAction = ({ text }: { text: string }) => (
-  <ImportButton className="text-primary" text={text} icon={<Plus className="h-4 w-4" />} onClick={() => {}} />
-);
+/**
+ * "+ Add …" button. Pass `modal` to open a modal registered in dialogSlice
+ * (rendered globally by DialogsContainer).
+ */
+const AddAction = ({ text, modal }: { text: string; modal?: ModalKey }) => {
+  const dispatch = useAppDispatch();
+  return (
+    <ImportButton
+      className="text-primary"
+      text={text}
+      icon={<Plus className="h-4 w-4" />}
+      onClick={() => {
+        if (modal) dispatch(showModal(modal));
+      }}
+    />
+  );
+};
 
 /* ---------------------------------------------------------------- */
 /*  Static data                                                     */
@@ -141,6 +157,7 @@ const CONDITIONS = [
 const SURGERIES = [
   { name: "Tonsillectomy", date: "Jun 12, 2010", reason: "Recurrent infection", notes: "No complications" },
   { name: "Appendectomy", date: "Aug 5, 2022", reason: "Appendicitis", notes: "Recovered well" },
+  { name: "Knee Arthroscopy", date: "Sep 20,2023", reason: "Meniscus tear", notes: "Physical therapy recommended"},
 ];
 
 const FAMILY = [
@@ -178,7 +195,6 @@ const LIFESTYLE_RIGHT: { icon: LucideIcon; label: string; value: string; info?: 
   { icon: Droplet, label: "Blood Type", value: "B+" },
   { icon: Globe, label: "Preferred Language", value: "Not provided" },
 ];
-
 /* ---------------------------------------------------------------- */
 /*  Small pieces                                                    */
 /* ---------------------------------------------------------------- */
@@ -255,7 +271,7 @@ const MedicalHistory = () => {
           icon={HeartPulse}
           tone="red"
           title="Medical Conditions"
-          action={<AddAction text="Add Condition" />}
+          action={<AddAction text="Add Condition" modal="AddMedicalCondition" />}
         >
           <ScrollArea>
             <Table
@@ -275,7 +291,7 @@ const MedicalHistory = () => {
           icon={Users}
           tone="blue"
           title="Family History"
-          action={<AddAction text="Add Family History" />}
+          action={<AddAction text="Add Family History" modal="AddFamilyHistory" />}
         >
           <ScrollArea>
             <Table
@@ -289,7 +305,7 @@ const MedicalHistory = () => {
           icon={Syringe}
           tone="violet"
           title="Immunization History"
-          action={<AddAction text="Add Immunization" />}
+          action={<AddAction text="Add Immunization" modal="AddImmunization" />}
         >
           <ScrollArea>
             <Table
@@ -305,17 +321,14 @@ const MedicalHistory = () => {
           </ScrollArea>
         </SectionCard>
       </div>
-{/* updated the files to enable navigatioon to the view patient page when clicking on the patient name 
-patient.tsx updated the actions component to handle the "view" action and navigate to view action and navigate to view patient page
-with patients id as query parameter
-routes.tsx updated the routes */}
+      
       {/* Right column */}
       <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
         <SectionCard
           icon={Scissors}
           tone="violet"
           title="Surgical History"
-          action={<AddAction text="Add Surgery" />}
+          action={<AddAction text="Add Surgery" modal="AddSurgery" />}
         >
           <ScrollArea>
             <Table
@@ -331,34 +344,34 @@ routes.tsx updated the routes */}
           </ScrollArea>
         </SectionCard>
 
-    <SectionCard
-  icon={FileText}
-  tone="blue"
-  title="Lifestyle & Social History"
-  action={
-    [...LIFESTYLE_LEFT, ...LIFESTYLE_RIGHT].some(
-      (item) => item.value.trim() && item.value !== "Not provided",
-    ) ? (
-      <EditButton section="Lifestyle & Social History" onEdit={() => {}} />
-    ) : undefined
-  }
->
-  {/* own wrapper instead of <ScrollArea>: scrolls on small screens, fills the card on sm+ */}
-  <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto">
-    <div className="grid min-h-full grid-cols-1 gap-x-8 sm:grid-cols-2">
-      <div className="grid gap-3.5 sm:grid-rows-6 sm:items-center">
-        {LIFESTYLE_LEFT.map((r) => (
-          <LifestyleRow key={r.label} {...r} />
-        ))}
-      </div>
-      <div className="grid gap-3.5 sm:grid-rows-6 sm:items-center">
-        {LIFESTYLE_RIGHT.map((r) => (
-          <LifestyleRow key={r.label} {...r} />
-        ))}
-      </div>
-    </div>
-  </div>
-</SectionCard>
+        <SectionCard
+          icon={FileText}
+          tone="blue"
+          title="Lifestyle & Social History"
+          action={
+            [...LIFESTYLE_LEFT, ...LIFESTYLE_RIGHT].some(
+              (item) => item.value.trim() && item.value !== "Not provided",
+            ) ? (
+              <EditButton section="Lifestyle & Social History" onEdit={() => {}} />
+            ) : undefined
+          }
+        >
+          {/* own wrapper instead of <ScrollArea>: scrolls on small screens, fills the card on sm+ */}
+          <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto">
+            <div className="grid min-h-full grid-cols-1 gap-x-8 sm:grid-cols-2">
+              <div className="grid gap-3.5 sm:grid-rows-6 sm:items-center">
+                {LIFESTYLE_LEFT.map((r) => (
+                  <LifestyleRow key={r.label} {...r} />
+                ))}
+              </div>
+              <div className="grid gap-3.5 sm:grid-rows-6 sm:items-center">
+                {LIFESTYLE_RIGHT.map((r) => (
+                  <LifestyleRow key={r.label} {...r} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </SectionCard>
 
         <SectionCard
           icon={FileText}
@@ -374,7 +387,9 @@ routes.tsx updated the routes */}
           </ScrollArea>
         </SectionCard>
       </div>
+    
     </div>
+    
   );
 };
 

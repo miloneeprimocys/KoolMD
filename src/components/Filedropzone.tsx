@@ -7,7 +7,8 @@ import { FieldError } from "./SignupField";
 const ALLOWED = ["application/pdf", "image/jpeg", "image/png"];
 
 interface FileDropzoneProps {
-  /** Text after "Drag and drop", e.g. "your medical license here" */
+  /** Text after "Drag and drop", e.g. "your medical license here".
+   *  In the "attachment" variant this is shown as-is. */
   title: string;
   file: File | null;
   onChange: (file: File | null) => void;
@@ -16,6 +17,9 @@ interface FileDropzoneProps {
   selectedFileClassName?: string;
   compact?: boolean;
   maxSizeMB?: number;
+  /** "default" keeps the original look. "attachment" = light dashed box with
+   *  cloud-upload icon, used inside modals. */
+  variant?: "default" | "attachment";
 }
 
 const formatSize = (bytes: number) =>
@@ -35,11 +39,13 @@ const FileDropzone = ({
   selectedFileClassName = "",
   compact = false,
   maxSizeMB = 5,
+  variant = "default",
 }: FileDropzoneProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [localError, setLocalError] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const attachment = variant === "attachment";
 
   /* ---------- Build & clean object URL for image previews ---------- */
   useEffect(() => {
@@ -102,7 +108,9 @@ const FileDropzone = ({
               ? "border-primary bg-primary/10"
               : compact
                 ? "border-primary/20 bg-primary/[0.04] hover:border-primary/50"
-                : "border-primary/70 bg-primary/5 dark:bg-primary/20 hover:border-primary/90"
+                : attachment
+                  ? "border-primary/40 bg-primary/[0.03] hover:border-primary/70"
+                  : "border-primary/70 bg-primary/5 dark:bg-primary/20 hover:border-primary/90"
         }`}
       >
         <input
@@ -178,35 +186,43 @@ const FileDropzone = ({
               </button>
             </div>
           </div>
+        ) : attachment ? (
+          /* ---------- Empty state: attachment variant (modals) ---------- */
+          <>
+            <CloudUpload className="h-6 w-6 text-heading" strokeWidth={1.5} />
+            <p className="mt-2 text-sm text-heading">{title}</p>
+            <p className="mt-1 text-[11px] text-body">
+              JPG, PNG, PDF (Max {maxSizeMB}MB)
+            </p>
+          </>
+        ) : compact ? (
+          /* ---------- Empty state: compact ---------- */
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+            <CloudUpload className="h-7 w-7 shrink-0 text-primary" strokeWidth={2} />
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-heading">Upload Documents</span>
+              <span className="block text-xs text-body">
+                Drag and drop {title}, or <span className="font-medium text-primary">click to browse</span>
+              </span>
+              <span className="block text-[10px] text-body">Supports PDF, JPG, PNG (Max {maxSizeMB} MB per file)</span>
+            </span>
+            <span className="ml-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-medium text-on-primary shadow-sm sm:px-4 sm:text-sm">
+              <Plus className="h-4 w-4" />
+              Upload Document
+            </span>
+          </div>
         ) : (
-          /* ---------- Empty state ---------- */
-          compact ? (
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-              <CloudUpload className="h-7 w-7 shrink-0 text-primary" strokeWidth={2} />
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold text-heading">Upload Documents</span>
-                <span className="block text-xs text-body">
-                  Drag and drop {title}, or <span className="font-medium text-primary">click to browse</span>
-                </span>
-                <span className="block text-[10px] text-body">Supports PDF, JPG, PNG (Max {maxSizeMB} MB per file)</span>
-              </span>
-              <span className="ml-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-medium text-on-primary shadow-sm sm:px-4 sm:text-sm">
-                <Plus className="h-4 w-4" />
-                Upload Document
-              </span>
-            </div>
-          ) : (
-            <>
-              <FileText className="h-6 w-6 text-label" strokeWidth={1.5} />
-              <p className="mt-2 text-sm font-semibold text-heading">
-                Drag and drop {title}
-              </p>
-              <p className="text-xs text-body">or click to browse</p>
-              <p className="mt-1 text-[11px] text-body">
-                PDF, JPG or PNG (Max {maxSizeMB}MB)
-              </p>
-            </>
-          )
+          /* ---------- Empty state: default ---------- */
+          <>
+            <FileText className="h-6 w-6 text-label" strokeWidth={1.5} />
+            <p className="mt-2 text-sm font-semibold text-heading">
+              Drag and drop {title}
+            </p>
+            <p className="text-xs text-body">or click to browse</p>
+            <p className="mt-1 text-[11px] text-body">
+              PDF, JPG or PNG (Max {maxSizeMB}MB)
+            </p>
+          </>
         )}
       </div>
       <FieldError message={message} />

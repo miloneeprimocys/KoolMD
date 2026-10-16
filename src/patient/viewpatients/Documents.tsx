@@ -20,7 +20,7 @@ import { type TableColumn } from "@/components/Tableheader";
 import Content from "@/components/Content";
 import Tags from "@/components/Tags";
 import FileDropzone from "@/components/Filedropzone";
-import { DENSE, TONES, type Tone } from "./Medicalhistory";
+import { DENSE, TONES, type Tone } from "./medicalhistory/Medicalhistory";
 import type { PatientDocumentDetails } from "./Rightsection";
 
 type DocumentRow = PatientDocumentDetails & {

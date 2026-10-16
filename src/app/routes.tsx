@@ -13,6 +13,9 @@ import AppointmentScheduling from "@/appointments/Appointmentscheduling";
 import Encounters from "@/encounters/Encounters";
 import NewEncounter from "@/encounters/newencounters/Newencounter";
 import ViewEncounters from "@/encounters/viewencounters/Viewencounters";
+import Prescriptions from "@/prescriptions/Prescriptions";
+import Addprescription from "@/prescriptions/addprescription/Addprescription";
+import ViewPrescriptions from "@/prescriptions/viewprescription/Viewprescriptions";
 import { PERMISSIONS, type PermissionCode } from "@/auth/permissions";
 
 /**
@@ -112,5 +115,29 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "View Encounter",
     access: "protected",
     requiredPermission: PERMISSIONS.ENCOUNTER_READ,
+  },
+  prescriptions: {
+    component: Prescriptions,
+    title: "Prescriptions",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRESCRIPTION_READ,
+  },
+  "add-prescription": {
+    component: Addprescription,
+    title: "Add Prescription",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRESCRIPTION_READ,
+  },
+  "edit-prescription": {
+    component: Addprescription,
+    title: "Edit Prescription",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRESCRIPTION_READ,
+  },
+  "view-prescription": {
+    component: ViewPrescriptions,
+    title: "View Prescription",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRESCRIPTION_READ,
   },
 };

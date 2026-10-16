@@ -3,6 +3,7 @@ import authReducer, { sessionExpired } from "./slices/authSlice";
 import patientsReducer from "./slices/patientsSlice";
 import practitionersReducer from "./slices/practitionersSlice";
 import providerDetailReducer from "./slices/providerDetailSlice";
+import dialogReducer from "./slices/dialogslice";
 import { registerSessionExpiredHandler } from "./services/apiClient";
 
 export const store = configureStore({
@@ -11,6 +12,7 @@ export const store = configureStore({
     patients: patientsReducer,
     practitioners: practitionersReducer,
     providerDetail: providerDetailReducer,
+    dialog: dialogReducer,
   },
 });
 

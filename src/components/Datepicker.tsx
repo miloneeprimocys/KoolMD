@@ -38,6 +38,8 @@ export interface DatePickerProps {
   minSpaceBelow?: number;
   /** Horizontal alignment: 'left', 'right', or 'auto' (detects screen/container edge) */
   align?: "left" | "right" | "auto";
+  /** Stacking order for the portaled calendar, useful when rendered inside dialogs. */
+  portalZIndex?: number;
 }
 
 /* ---------------------------------------------------------------- */
@@ -108,6 +110,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       onBlur,
       minSpaceBelow = 400,
       align = "auto",
+      portalZIndex = 200,
     },
     ref,
   ) => {
@@ -234,7 +237,10 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
     useEffect(() => {
       if (!open) return;
       const onKey = (e: KeyboardEvent) => {
-        if (e.key === "Escape") closePicker();
+        if (e.key === "Escape") {
+          e.stopPropagation();
+          closePicker();
+        }
       };
       document.addEventListener("keydown", onKey);
       return () => document.removeEventListener("keydown", onKey);
@@ -551,6 +557,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
                   left: desktopPosition.left,
                   top: desktopPosition.top ?? undefined,
                   bottom: desktopPosition.bottom ?? undefined,
+                  zIndex: portalZIndex,
                 }}
               >
                 {panel}
@@ -565,7 +572,10 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
           isMobile &&
           typeof document !== "undefined" &&
           createPortal(
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <div
+              className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+              style={{ zIndex: portalZIndex }}
+            >
               <div
                 aria-hidden="true"
                 onClick={closePicker}

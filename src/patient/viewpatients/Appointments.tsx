@@ -28,7 +28,7 @@ import {
   ACTIONS_COL,
   DENSE,
   SectionCard,
-} from "./Medicalhistory";
+} from "./medicalhistory/Medicalhistory";
 import type { PatientAppointmentDetails } from "./Rightsection";
 
 /* ---------- Stats ---------- */

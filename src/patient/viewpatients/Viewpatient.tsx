@@ -10,7 +10,7 @@ import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 
 import Overview from "./OverviewPatient";
-import MedicalHistory from "./Medicalhistory";
+import MedicalHistory from "./medicalhistory/Medicalhistory";
 import Medications from "./Medications";
 import Allergies from "./Allergies";
 import Documents from "./Documents";
