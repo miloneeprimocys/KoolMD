@@ -97,6 +97,7 @@ const SECTIONS: NavSection[] = [
         Icon: Receipt,
         requiredPermission: PERMISSIONS.PRESCRIPTION_READ,
       },
+      { label: "Questionnaires", href: "/questionnaires", Icon: ListChecks },
       { label: "Referrals", href: "/referrals", Icon: Send },
     ],
   },
