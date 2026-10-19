@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
@@ -112,29 +113,77 @@ interface ModalRadioGroupProps {
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
   error?: string;
+  disabled?: boolean;
+  className?: string;
 }
 
 export const ModalRadioGroup = ({
-  name, label, value, onChange, options, error,
+  name, label, value, onChange, options, error, disabled = false, className = "",
 }: ModalRadioGroupProps) => (
   <div className="w-full">
     <p className="mb-2 text-sm font-medium text-label">{label}</p>
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-2" role="radiogroup">
+    <div className={`flex flex-wrap items-center gap-x-6 gap-y-2 ${className}`} role="radiogroup">
       {options.map((o) => (
-        <label key={o.value} className="flex cursor-pointer items-center gap-2 text-sm text-heading">
-          <input
+        <label key={o.value} className={`flex items-center gap-2 text-sm text-heading ${disabled ? "cursor-default" : "cursor-pointer"}`}>
+          <RadioCheckButtonh
             type="radio"
             name={name}
             value={o.value}
             checked={value === o.value}
             onChange={() => onChange(o.value)}
-            className="h-4 w-4 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            disabled={disabled}
+            className="h-4 w-4 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-default"
           />
           {o.label}
         </label>
       ))}
     </div>
     <FieldError message={error} />
+  </div>
+);
+
+interface ModalCheckboxGroupProps {
+  label: ReactNode;
+  value: string[];
+  onChange: (value: string[]) => void;
+  options: { value: string; label: string }[];
+  disabled?: boolean;
+  className?: string;
+}
+
+export const ModalCheckboxGroup = ({
+  label,
+  value,
+  onChange,
+  options,
+  disabled = false,
+  className = "",
+}: ModalCheckboxGroupProps) => (
+  <div className="w-full">
+    <p className="mb-2 text-sm font-medium text-label">{label}</p>
+    <div className={className} role="group">
+      {options.map((option) => (
+        <label
+          key={option.value}
+          className={`flex items-center gap-2 text-sm text-heading ${disabled ? "cursor-default" : "cursor-pointer"}`}
+        >
+          <RadioCheckButtonh
+            type="checkbox"
+            checked={value.includes(option.value)}
+            disabled={disabled}
+            onChange={() =>
+              onChange(
+                value.includes(option.value)
+                  ? value.filter((selected) => selected !== option.value)
+                  : [...value, option.value],
+              )
+            }
+            className="h-4 w-4 rounded accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-default"
+          />
+          {option.label}
+        </label>
+      ))}
+    </div>
   </div>
 );
 
@@ -232,7 +281,7 @@ const ModalShell = ({
 
   return createPortal(
     <div
-      className={`fixed inset-0 ${zIndexClass} overflow-y-auto bg-[#18365f]/35 backdrop-blur-[2px]`}
+      className={`fixed inset-0 ${zIndexClass} overflow-y-auto bg-primary/10 dark:bg-label/10 backdrop-blur-[2px]`}
       onPointerDown={(e) => {
         if (e.target instanceof Node && !modalRef.current?.contains(e.target)) {
           onClose();
@@ -246,7 +295,7 @@ const ModalShell = ({
           aria-modal="true"
           aria-labelledby={titleId}
           style={{ maxWidth: width }}
-          className="flex max-h-[calc(90dvh-2rem)] w-full flex-col overflow-hidden rounded-2xl bg-card px-5 pb-5 pt-5 shadow-2xl dark:bg-[#082858] dark:ring-1 dark:ring-primary/30 sm:px-6 sm:pb-6"
+          className="flex max-h-[calc(90dvh-2rem)] w-full flex-col overflow-hidden rounded-2xl bg-card px-5 pb-5 pt-5 shadow-2xl dark:bg-card dark:ring-1 dark:ring-primary/30 sm:px-6 sm:pb-6"
         >
           {/* Header */}
           <div className="-mx-5 mb-5 flex items-start justify-between gap-4 border-b border-border/70 px-5 pb-4 sm:-mx-6 sm:mb-6 sm:px-6">

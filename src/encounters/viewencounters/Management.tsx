@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
 import {
   ArrowDown,
@@ -112,7 +113,7 @@ const Management = () => {
   const [page, setPage] = useState(1);
 
   const rows = ROWS.map((r) => ({
-    select: <input type="checkbox" aria-label={`Select ${r.id}`} className={checkboxCls} />,
+    select: <RadioCheckButtonh type="checkbox" aria-label={`Select ${r.id}`} className={checkboxCls} />,
     id: <Content title={r.id} />,
     date: <Content title={r.date} description={r.time} />,
     type: <Content title={r.type} />,

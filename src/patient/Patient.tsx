@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Ban, UserCheck, UserPlus, Users } from "lucide-react";
@@ -163,7 +164,7 @@ const Patient = () => {
       label: "",
       className: "w-10",
       header: (
-        <input
+        <RadioCheckButtonh
           type="checkbox"
           checked={allSelected}
           ref={(checkboxElement) => {
@@ -193,7 +194,7 @@ const Patient = () => {
     const genderLabel = humanizeEnum(patient.administrativeGender);
     return {
       select: (
-        <input
+        <RadioCheckButtonh
           type="checkbox"
           checked={selectedPatientIds.has(patient.id)}
           onChange={() => togglePatientSelection(patient.id)}

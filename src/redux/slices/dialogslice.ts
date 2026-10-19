@@ -1,4 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type {
+  QuestionTypeKey,
+  TemplateQuestion,
+} from "@/Questionnaires/template/Addtemplateques";
 
 export interface PrescriptionToDelete {
   id: string;
@@ -10,7 +14,7 @@ export interface PrescriptionToDelete {
   prescribedBy: string;
 }
 
-/** Modal visibility and transient prescription deletion state. */
+/** Modal visibility and transient modal state. */
 interface ModalState {
   AddMedicalCondition: boolean;
   AddFamilyHistory: boolean;
@@ -19,6 +23,15 @@ interface ModalState {
   DeletePrescription: boolean;
   deletePrescriptionTarget: PrescriptionToDelete | null;
   deletedPrescriptionIds: string[];
+  AssignQuestionnaire: boolean;
+  /** Questionnaire preselected when the assign modal opens (null = default / first one). */
+  assignQuestionnaireId: string | null;
+  AddTemplateQuestion: boolean;
+  templateQuestionModal: {
+    question: TemplateQuestion | null;
+    initialType: QuestionTypeKey;
+  } | null;
+  templateQuestionResult: TemplateQuestion | null;
 }
 
 const initialState: ModalState = {
@@ -29,6 +42,11 @@ const initialState: ModalState = {
   DeletePrescription: false,
   deletePrescriptionTarget: null,
   deletedPrescriptionIds: [],
+  AssignQuestionnaire: false,
+  assignQuestionnaireId: null,
+  AddTemplateQuestion: false,
+  templateQuestionModal: null,
+  templateQuestionResult: null,
 };
 
 // Only boolean keys can be toggled with showModal / hideModal
@@ -50,10 +68,46 @@ const dialogSlice = createSlice({
       if (action.payload === "DeletePrescription") {
         state.deletePrescriptionTarget = null;
       }
+      if (action.payload === "AssignQuestionnaire") {
+        state.assignQuestionnaireId = null;
+      }
+      if (action.payload === "AddTemplateQuestion") {
+        state.templateQuestionModal = null;
+      }
     },
     showDeletePrescription: (state, action: PayloadAction<PrescriptionToDelete>) => {
       state.deletePrescriptionTarget = action.payload;
       state.DeletePrescription = true;
+    },
+    /** Open the assign modal, optionally preselecting a questionnaire id. */
+    showAssignQuestionnaire: {
+      reducer: (state, action: PayloadAction<string | null>) => {
+        state.assignQuestionnaireId = action.payload;
+        state.AssignQuestionnaire = true;
+      },
+      prepare: (questionnaireId?: string) => ({ payload: questionnaireId ?? null }),
+    },
+    showAddTemplateQuestion: (
+      state,
+      action: PayloadAction<{
+        question?: TemplateQuestion | null;
+        initialType?: QuestionTypeKey;
+      }>,
+    ) => {
+      state.templateQuestionModal = {
+        question: action.payload.question ?? null,
+        initialType: action.payload.initialType ?? "short",
+      };
+      state.templateQuestionResult = null;
+      state.AddTemplateQuestion = true;
+    },
+    templateQuestionSaved: (state, action: PayloadAction<TemplateQuestion>) => {
+      state.templateQuestionResult = action.payload;
+      state.AddTemplateQuestion = false;
+      state.templateQuestionModal = null;
+    },
+    clearTemplateQuestionResult: (state) => {
+      state.templateQuestionResult = null;
     },
     prescriptionDeleted: (state, action: PayloadAction<string>) => {
       if (!state.deletedPrescriptionIds.includes(action.payload)) {
@@ -67,6 +121,11 @@ const dialogSlice = createSlice({
       state.AddSurgery = false;
       state.DeletePrescription = false;
       state.deletePrescriptionTarget = null;
+      state.AssignQuestionnaire = false;
+      state.assignQuestionnaireId = null;
+      state.AddTemplateQuestion = false;
+      state.templateQuestionModal = null;
+      state.templateQuestionResult = null;
     },
   },
 });
@@ -76,6 +135,10 @@ export const {
   hideModal,
   hideAllModals,
   showDeletePrescription,
+  showAssignQuestionnaire,
+  showAddTemplateQuestion,
+  templateQuestionSaved,
+  clearTemplateQuestionResult,
   prescriptionDeleted,
 } = dialogSlice.actions;
 export default dialogSlice.reducer;

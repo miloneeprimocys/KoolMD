@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
 import {
   ClipboardList,
@@ -144,7 +145,7 @@ const WaitingRoom = () => {
     const rowKey = rowKeys[index];
     return {
       select: (
-        <input
+        <RadioCheckButtonh
           type="checkbox"
           checked={selectedKeys.has(rowKey)}
           onChange={() => toggleRow(rowKey)}
@@ -201,7 +202,7 @@ const WaitingRoom = () => {
       />
 
       <label className="flex w-fit cursor-pointer items-center gap-2 text-xs text-body sm:ml-auto sm:text-sm">
-        <input type="checkbox" className={checkboxCls} />
+        <RadioCheckButtonh type="checkbox" className={checkboxCls} />
         Auto refresh (30s)
       </label>
 

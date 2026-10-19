@@ -661,39 +661,6 @@ export const AddressFields = ({
 };
 
 /* ---------------------------------------------------------------- */
-/*  Switch                                                          */
-/* ---------------------------------------------------------------- */
-export const Switch = ({
-  checked,
-  onChange,
-  label,
-  disabled,
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  label: string;
-  disabled?: boolean;
-}) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    aria-label={label}
-    disabled={disabled}
-    onClick={() => onChange(!checked)}
-    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-60 ${
-      checked ? "bg-primary" : "bg-divider"
-    }`}
-  >
-    <span
-      className={`pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-card shadow transition-transform duration-200 ${
-        checked ? "translate-x-5" : ""
-      }`}
-    />
-  </button>
-);
-
-/* ---------------------------------------------------------------- */
 /*  ChipSelect                                                      */
 /* ---------------------------------------------------------------- */
 export const ChipSelect = ({

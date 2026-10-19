@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React from "react";
 import {
   BriefcaseMedical,
@@ -13,6 +14,7 @@ import {
 
 import SignupField from "@/components/SignupField";
 import SignupDropdown from "@/components/SignupDropdown";
+import TogglableSwitch from "@/components/Togglableswitch";
 import {
   ChipSelect,
   Errors,
@@ -21,7 +23,6 @@ import {
   Req,
   SectionCard,
   StepProps,
-  Switch,
   TextArea,
   US_STATE_OPTIONS,
   uid,
@@ -192,7 +193,7 @@ const PracticeInfo = ({
                 key={opt.value}
                 className="flex cursor-pointer items-center gap-2 text-sm text-heading"
               >
-                <input
+                <RadioCheckButtonh
                   type="radio"
                   name="practiceType"
                   checked={v.practiceType === opt.value}
@@ -279,10 +280,11 @@ const PracticeInfo = ({
             <p className="mb-2 text-sm font-medium text-label">
               Offer Telemedicine Consultations
             </p>
-            <Switch
+            <TogglableSwitch
               checked={v.telemedicine}
               onChange={(c) => onChange({ telemedicine: c })}
-              label="Offer telemedicine consultations"
+              ariaLabel="Offer telemedicine consultations"
+              className="inline-flex"
             />
           </div>
           {v.telemedicine && (

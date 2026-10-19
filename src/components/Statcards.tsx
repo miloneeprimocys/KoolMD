@@ -125,34 +125,31 @@ const StatCards = ({ stats = DEFAULT_STATS }: { stats?: StatItem[] }) => {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-label">{label}</p>
 
-                {/* Value + change / tag, side by side */}
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <p className="text-3xl font-bold leading-none tracking-tight text-heading">
+                <div className="mt-1.5 flex min-w-0 items-center gap-2">
+                  <p className="shrink-0 text-3xl font-bold leading-none tracking-tight text-heading">
                     {value}
                   </p>
 
-                  {/* arrow + percentage */}
                   {change && (
-                    <div className="leading-tight">
-                      <p
-                        className={`flex items-center gap-0.5 text-lg font-semibold ${
+                    <div className="flex min-w-0 items-center gap-1 text-xs text-body xl:text-[13px]">
+                      <span
+                        className={`flex shrink-0 items-center gap-0.5 text-sm font-semibold ${
                           positive ? "text-success" : "text-danger"
                         }`}
                       >
                         {positive ? (
-                          <ArrowUp className="h-[18px] w-[18px]" />
+                          <ArrowUp className="h-4 w-4" />
                         ) : (
-                          <ArrowDown className="h-[18px] w-[18px]" />
+                          <ArrowDown className="h-4 w-4" />
                         )}
                         {change}
-                      </p>
-                      <p className="text-xs text-body xl:text-[13px]">from last month</p>
+                      </span>
+                      <span className="truncate">from last month</span>
                     </div>
                   )}
 
-                  {/* plain coloured text (not a chip) */}
                   {tag && (
-                    <span className={`text-lg font-semibold ${TAG_TEXT[tag.tone]}`}>
+                    <span className={`min-w-0 truncate text-base font-semibold ${TAG_TEXT[tag.tone]}`}>
                       {tag.text}
                     </span>
                   )}

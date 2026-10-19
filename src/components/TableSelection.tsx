@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import { useState } from "react";
 
 export const useTableSelection = (rowKeys: readonly string[]) => {
@@ -40,7 +41,7 @@ export const TableSelectAllCheckbox = ({
   onChange: () => void;
   className: string;
 }) => (
-  <input
+  <RadioCheckButtonh
     type="checkbox"
     checked={checked}
     ref={(element) => {

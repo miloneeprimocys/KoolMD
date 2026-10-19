@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
 import { FileText, Plus } from "lucide-react";
 
@@ -116,7 +117,7 @@ const ClinicalNotes = () => {
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 xl:grid-cols-4">
               {ROS.map((r) => (
                 <label key={r} className="flex cursor-pointer items-center gap-2.5 text-sm text-heading">
-                  <input
+                  <RadioCheckButtonh
                     type="checkbox"
                     checked={ros.includes(r)}
                     onChange={() => toggleRos(r)}

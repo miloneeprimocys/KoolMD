@@ -7,8 +7,14 @@ import AddFamilyHistoryModal from "@/patient/viewpatients/medicalhistory/Addfami
 import AddImmunizationModal from "@/patient/viewpatients/medicalhistory/Addimmunizationmodal";
 import AddSurgeryModal from "@/patient/viewpatients/medicalhistory/Addsurgerymodal";
 import DeletePrescription from "@/prescriptions/Deleteprescription";
+import AssignQuestionnaireModal from "@/Questionnaires/Assignquestionnaire";
+import AddTemplateQuestionModal from "@/Questionnaires/template/Addtemplateques";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
-import { hideModal, prescriptionDeleted } from "@/redux/slices/dialogslice";
+import {
+  hideModal,
+  prescriptionDeleted,
+  templateQuestionSaved,
+} from "@/redux/slices/dialogslice";
 
 /**
  * Global dialogs container.
@@ -26,6 +32,8 @@ const DialogsContainer = () => {
   const dispatch = useAppDispatch();
   const deletePrescriptionOpen = useAppSelector((state) => state.dialog.DeletePrescription);
   const deletePrescriptionTarget = useAppSelector((state) => state.dialog.deletePrescriptionTarget);
+  const addTemplateQuestionOpen = useAppSelector((state) => state.dialog.AddTemplateQuestion);
+  const templateQuestionModal = useAppSelector((state) => state.dialog.templateQuestionModal);
 
   return (
     <>
@@ -33,6 +41,15 @@ const DialogsContainer = () => {
       <AddFamilyHistoryModal />
       <AddImmunizationModal />
       <AddSurgeryModal />
+      <AssignQuestionnaireModal />
+      <AddTemplateQuestionModal
+        open={addTemplateQuestionOpen}
+        question={templateQuestionModal?.question}
+        initialType={templateQuestionModal?.initialType}
+        newId={() => `q${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`}
+        onClose={() => dispatch(hideModal("AddTemplateQuestion"))}
+        onSave={(question) => dispatch(templateQuestionSaved(question))}
+      />
       <DeletePrescription
         open={deletePrescriptionOpen}
         prescription={deletePrescriptionTarget ?? undefined}

@@ -13,6 +13,7 @@ export const PERMISSIONS = {
   APPOINTMENT_READ: "appointment:read",
   ENCOUNTER_READ: "encounter:read",
   PRESCRIPTION_READ: "prescription:read",
+  QUESTIONNAIRE_READ: "questionnaire:read",
   STAFF_READ: "staff:read",
 } as const;
 

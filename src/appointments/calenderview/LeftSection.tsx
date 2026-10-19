@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React from "react";
 import { Building2, MapPin, Search, Video } from "lucide-react";
 
@@ -99,7 +100,7 @@ const LeftSection = ({
           />
         </div>
         <label className="mb-2.5 flex cursor-pointer items-center gap-2.5 text-sm font-medium text-heading 2xl:mb-4">
-          <input
+          <RadioCheckButtonh
             type="checkbox"
             checked={provOn.size === PROVIDERS.length}
             onChange={() =>
@@ -114,7 +115,7 @@ const LeftSection = ({
             .filter((p) => p.name.toLowerCase().includes(provQuery.trim().toLowerCase()))
             .map((p) => (
               <label key={p.name} className="flex cursor-pointer items-center gap-2.5">
-                <input
+                <RadioCheckButtonh
                   type="checkbox"
                   checked={provOn.has(p.i)}
                   onChange={() => setProvOn(toggleIn(provOn, p.i))}
@@ -134,7 +135,7 @@ const LeftSection = ({
       <div>
         <p className="mb-3 text-sm font-semibold text-heading">Locations</p>
         <label className="mb-2.5 flex cursor-pointer items-center gap-2.5 text-sm font-medium text-heading 2xl:mb-4">
-          <input
+          <RadioCheckButtonh
             type="checkbox"
             checked={locOn.size === LOCATIONS.length}
             onChange={() =>
@@ -147,7 +148,7 @@ const LeftSection = ({
         <div className="space-y-2.5 2xl:space-y-4">
           {LOCATIONS.map((l, i) => (
             <label key={l.name} className="flex cursor-pointer items-center gap-2.5">
-              <input
+              <RadioCheckButtonh
                 type="checkbox"
                 checked={locOn.has(i)}
                 onChange={() => setLocOn(toggleIn(locOn, i))}

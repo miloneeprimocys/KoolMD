@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
 import { Calendar, Check, Clock, Eye, X } from "lucide-react";
 
@@ -131,7 +132,7 @@ const Requests = () => {
     const rowKey = rowKeys[index];
     return {
       select: (
-        <input
+        <RadioCheckButtonh
           type="checkbox"
           checked={selectedKeys.has(rowKey)}
           onChange={() => toggleRow(rowKey)}

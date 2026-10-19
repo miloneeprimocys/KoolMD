@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React from "react";
 
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
@@ -86,7 +87,7 @@ const TelemedicineTab = ({
         },
       ].map((o) => (
         <label key={o.title} className="flex cursor-pointer items-start gap-3">
-          <input
+          <RadioCheckButtonh
             type="radio"
             name="teleSame"
             checked={v.teleSameAsInPerson === o.same}

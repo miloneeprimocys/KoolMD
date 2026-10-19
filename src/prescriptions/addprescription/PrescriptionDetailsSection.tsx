@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useRef } from "react";
 import { ClipboardList, Trash2 } from "lucide-react";
 
@@ -354,7 +355,7 @@ const PrescriptionDetailsSection = ({
         <div className="flex flex-col gap-4 border-t border-border pt-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-heading">
             <label className="flex cursor-pointer items-center gap-2">
-              <input
+              <RadioCheckButtonh
                 type="checkbox"
                 checked={sendEnabled}
                 onChange={(ev) => setSendEnabled(ev.target.checked)}
@@ -373,7 +374,7 @@ const PrescriptionDetailsSection = ({
                 key={key}
                 className={`flex items-center gap-2 ${sendEnabled ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
               >
-                <input
+                <RadioCheckButtonh
                   type="checkbox"
                   disabled={!sendEnabled}
                   checked={channels[key]}

@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { Copy, Plus, X } from "lucide-react";
 
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
-import { Errors, Switch, pad, uid } from "../Shared";
+import TogglableSwitch from "@/components/Togglableswitch";
+import { Errors, pad, uid } from "../Shared";
 /* ---------------------------------------------------------------- */
 /*  Types + defaults (shared with Telemedicine.tsx)                 */
 /* ---------------------------------------------------------------- */
@@ -167,10 +168,11 @@ const DayRow = ({
           >
             {label}
           </span>
-          <Switch
+          <TogglableSwitch
             checked={day.enabled}
             onChange={(c) => onChange({ enabled: c })}
-            label={`${label} availability`}
+            ariaLabel={`${label} availability`}
+            className="inline-flex"
           />
         </div>
 

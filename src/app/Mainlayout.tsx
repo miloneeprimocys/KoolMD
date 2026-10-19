@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState, useEffect } from "react";
 import MainSidebar from "../components/Mainsidebar";
 import MainHeader from "../components/Mainheader";
@@ -59,7 +60,7 @@ const MainLayout = ({ children, title }: MainLayoutProps) => {
 
   return (
     <div className="relative flex h-screen w-full overflow-hidden bg-page text-heading">
-      <input id="sidebar-toggle" type="checkbox" className="peer sr-only" />
+      <RadioCheckButtonh id="sidebar-toggle" type="checkbox" className="peer sr-only" />
 
       <label
         htmlFor="sidebar-toggle"

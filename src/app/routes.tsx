@@ -16,6 +16,10 @@ import ViewEncounters from "@/encounters/viewencounters/Viewencounters";
 import Prescriptions from "@/prescriptions/Prescriptions";
 import Addprescription from "@/prescriptions/addprescription/Addprescription";
 import ViewPrescriptions from "@/prescriptions/viewprescription/Viewprescriptions";
+import QuestionnairesPage from "@/Questionnaires/Questionnairespage";
+import EditQuestionnaire from "@/Questionnaires/Editquestionnaire";
+import ViewResponse from "@/Questionnaires/response/Viewresponse";
+import AddTemplate from "@/Questionnaires/template/Addtemplate";
 import { PERMISSIONS, type PermissionCode } from "@/auth/permissions";
 
 /**
@@ -139,5 +143,30 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "View Prescription",
     access: "protected",
     requiredPermission: PERMISSIONS.PRESCRIPTION_READ,
+  },
+  questionnaires: {
+    component: QuestionnairesPage,
+    title: "Questionnaires",
+    access: "protected",
+  },
+  "edit-questionnaire": {
+    component: EditQuestionnaire,
+    title: "Edit Questionnaire",
+    access: "protected",
+  },
+  "view-response": {
+    component: ViewResponse,
+    title: "View Response",
+    access: "protected",
+  },
+  "edit-response": {
+    component: ViewResponse,
+    title: "Edit Response",
+    access: "protected",
+  },
+  "add-template": {
+    component: AddTemplate,
+    title: "Add Template",
+    access: "protected",
   },
 };

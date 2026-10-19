@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useMemo, useState } from "react";
 import {
   Download,
@@ -136,7 +137,7 @@ const Documents = ({
         label: "",
         className: "w-10",
         header: (
-          <input
+          <RadioCheckButtonh
             type="checkbox"
             checked={allSelected}
             ref={(el) => {
@@ -168,7 +169,7 @@ const Documents = ({
     () =>
       paginatedItems.map((d) => ({
         select: (
-          <input
+          <RadioCheckButtonh
             type="checkbox"
             checked={selected.has(d.id)}
             onChange={() => toggleOne(d.id)}

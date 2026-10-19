@@ -1,8 +1,9 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ImagePlus, User, Camera, Trash2, RefreshCw } from "lucide-react";
+import { ImagePlus, User, Camera, RefreshCw } from "lucide-react";
 import { parsePhoneNumberFromString, CountryCode } from "libphonenumber-js";
 
 import SignupField, { FieldError } from "@/components/SignupField";
@@ -14,6 +15,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import DatePicker from "@/components/Datepicker";
 import SuccessToast from "@/components/SuccessToast";
 import ErrorToast from "@/components/ErrorToast";
+import TogglableSwitch from "@/components/Togglableswitch";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import { selectCreatePatientRequest } from "@/redux/selectors/patientSelectors";
 import { createPatient } from "@/redux/thunks/patientThunks";
@@ -809,7 +811,7 @@ const AddPatient = () => {
                   htmlFor={`role-${r.id}`}
                   className="flex cursor-pointer items-start gap-3"
                 >
-                  <input
+                  <RadioCheckButtonh
                     id={`role-${r.id}`}
                     type="checkbox"
                     defaultChecked={r.checked}
@@ -831,29 +833,22 @@ const AddPatient = () => {
           {/* Status */}
           <section className={cardCls}>
             <h3 className="text-sm font-semibold text-heading">Status</h3>
-            <label
-              htmlFor="status"
-              className="mt-4 flex cursor-pointer items-start gap-3"
-            >
-              <span className="relative mt-0.5 inline-flex shrink-0">
-                <input
-                  id="status"
-                  type="checkbox"
-                  defaultChecked
-                  className="peer sr-only"
-                />
-                <span className="h-6 w-11 rounded-full bg-divider transition-colors duration-200 peer-checked:bg-primary peer-focus-visible:ring-4 peer-focus-visible:ring-primary/25" />
-                <span className="pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-card shadow transition-transform duration-200 peer-checked:translate-x-5" />
-              </span>
-              <span>
-                <span className="block text-sm font-medium text-heading">
-                  Active
+            <TogglableSwitch
+              id="status"
+              defaultChecked
+              ariaLabel="Active patient status"
+              className="mt-4 items-start"
+              label={
+                <span>
+                  <span className="block text-sm font-medium text-heading">
+                    Active
+                  </span>
+                  <span className="mt-0.5 block text-xs text-body">
+                    Inactive users will not be able to access the platform.
+                  </span>
                 </span>
-                <span className="mt-0.5 block text-xs text-body">
-                  Inactive users will not be able to access the platform.
-                </span>
-              </span>
-            </label>
+              }
+            />
           </section>
         </aside>
       </div>

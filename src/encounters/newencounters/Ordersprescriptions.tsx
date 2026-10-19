@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
 
 import AddInternalButton from "@/components/AddInternalButton";
@@ -118,7 +119,7 @@ const OrderBox = ({
 const OrdersPrescriptions = () => {
   const orderRows = (list: typeof LABS, prefix: string) =>
     list.map((o, i) => ({
-      select: <input type="checkbox" aria-label={`Select ${o.name}`} className={checkboxCls} />,
+      select: <RadioCheckButtonh type="checkbox" aria-label={`Select ${o.name}`} className={checkboxCls} />,
       test: <Content title={o.name} />,
       note: <Content title={o.note} />,
       priority: <PriorityCell id={`${prefix}-${i}`} initial={o.priority} />,
@@ -127,7 +128,7 @@ const OrdersPrescriptions = () => {
     }));
 
   const medRows = MEDS.map((m) => ({
-    select: <input type="checkbox" aria-label={`Select ${m.name}`} className={checkboxCls} />,
+    select: <RadioCheckButtonh type="checkbox" aria-label={`Select ${m.name}`} className={checkboxCls} />,
     med: <Content title={m.name} description={m.form} />,
     dose: <Content title={m.dose} />,
     duration: <Content title={m.duration} />,

@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
 import { Download, MapPin, Video } from "lucide-react";
 
@@ -141,7 +142,7 @@ const AppointmentList = () => {
     const Icon = x.place === "Virtual Visit" ? Video : MapPin;
     return {
       select: (
-        <input
+        <RadioCheckButtonh
           type="checkbox"
           checked={selectedKeys.has(rowKey)}
           onChange={() => toggleRow(rowKey)}

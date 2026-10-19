@@ -552,6 +552,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
             createPortal(
               <div
                 ref={popoverRef}
+                onPointerDown={(e) => e.stopPropagation()}
                 className="fixed z-[200] w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60"
                 style={{
                   left: desktopPosition.left,
@@ -573,6 +574,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
           typeof document !== "undefined" &&
           createPortal(
             <div
+              onPointerDown={(e) => e.stopPropagation()}
               className="fixed inset-0 z-[200] flex items-center justify-center p-4"
               style={{ zIndex: portalZIndex }}
             >

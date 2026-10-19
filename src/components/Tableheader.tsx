@@ -1,3 +1,4 @@
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useEffect, useRef } from "react";
 
 export type TableColumn = {
@@ -27,7 +28,7 @@ export const SelectAllCheckbox = ({
   }, [indeterminate]);
 
   return (
-    <input
+    <RadioCheckButtonh
       ref={checkboxRef}
       type="checkbox"
       aria-label="Select all"

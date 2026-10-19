@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
 import { Download, Eye, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
 
@@ -118,7 +119,7 @@ const Attachments = () => {
   };
 
   const rows = visible.map((f) => ({
-    select: <input type="checkbox" aria-label={`Select ${f.name}`} className={checkboxCls} />,
+    select: <RadioCheckButtonh type="checkbox" aria-label={`Select ${f.name}`} className={checkboxCls} />,
     name: (
       <div className="flex min-w-0 items-center gap-3">
         <FileTile name={f.name} />

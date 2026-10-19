@@ -32,6 +32,7 @@ export interface SearchAndFilterProps {
   onDateRangeChange?: (range: DateRange) => void;
   onMoreFilters?: () => void;
   className?: string;
+  filterLayout?: "flex" | "grid";
 }
 
 const searchCls =
@@ -63,6 +64,7 @@ const SearchAndFilter = ({
   onDateRangeChange,
   onMoreFilters,
   className = "",
+  filterLayout = "flex",
 }: SearchAndFilterProps) => {
   const [searchTerm, setSearchTerm] = useState(value);
   const [uncontrolledFilterValues, setFilterValues] = useState<Record<string, string>>({});
@@ -86,9 +88,15 @@ const SearchAndFilter = ({
   // Click outside to close date popover
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
+      const target = e.target;
+      const clickedDatePicker =
+        target instanceof Element &&
+        target.closest('[role="dialog"][aria-label="Choose date"]');
+
       if (
         datePopoverRef.current &&
-        !datePopoverRef.current.contains(e.target as Node)
+        !datePopoverRef.current.contains(target as Node) &&
+        !clickedDatePicker
       ) {
         setDatePopoverOpen(false);
       }
@@ -148,9 +156,20 @@ const SearchAndFilter = ({
 
       {/* Dropdown Filters + Date Range + More Filters */}
       {(filters.length > 0 || showDateRange) && (
-        <div className="flex flex-wrap gap-2 items-center xl:flex-wrap 2xl:shrink-0 2xl:flex-nowrap 2xl:items-center">
+        <div
+          className={
+            filterLayout === "grid"
+              ? "grid grid-cols-2 items-center gap-2 xl:flex xl:flex-wrap 2xl:shrink-0 2xl:flex-nowrap"
+              : "flex flex-wrap items-center gap-2 xl:flex-wrap 2xl:shrink-0 2xl:flex-nowrap 2xl:items-center"
+          }
+        >
           {filters.map((f) => (
-            <div key={f.label} className="min-w-[8rem] flex-1 xl:w-40 xl:flex-none 2xl:w-40 2xl:flex-none">
+            <div
+              key={f.label}
+              className={`${
+                filterLayout === "grid" ? "min-w-0" : "min-w-[8rem] flex-1"
+              } xl:w-40 xl:flex-none 2xl:w-40 2xl:flex-none`}
+            >
               <SignupDropdown
                 id={f.label}
                 placeholder={f.label}
@@ -168,7 +187,7 @@ const SearchAndFilter = ({
           {/* Interactive Date Range Button with DatePicker popover */}
           {showDateRange && (
             <div
-              className="relative min-w-0 flex-1 xl:w-40 xl:flex-none 2xl:w-44"
+              className="relative min-w-[8rem] flex-1 xl:w-40 xl:flex-none 2xl:w-44"
               ref={datePopoverRef}
             >
               <button

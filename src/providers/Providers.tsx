@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Clock, UserCheck, UserX, Users } from "lucide-react";
@@ -191,7 +192,7 @@ const Providers = () => {
       label: "",
       className: "w-10",
       header: (
-        <input
+        <RadioCheckButtonh
           type="checkbox"
           checked={allSelected}
           ref={(checkboxElement) => {
@@ -221,7 +222,7 @@ const Providers = () => {
     const [primaryLocation, ...otherLocations] = practitioner.locations;
     return {
       select: (
-        <input
+        <RadioCheckButtonh
           type="checkbox"
           checked={selectedPractitionerIds.has(practitioner.id)}
           onChange={() => togglePractitionerSelection(practitioner.id)}

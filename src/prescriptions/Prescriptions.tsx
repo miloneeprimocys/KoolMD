@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Clock, FileText, XCircle } from "lucide-react";
@@ -199,7 +200,7 @@ const Prescriptions = () => {
       label: "",
       className: "w-10",
       header: (
-        <input
+        <RadioCheckButtonh
           type="checkbox"
           checked={allSelected}
           ref={(el) => {
@@ -226,7 +227,7 @@ const Prescriptions = () => {
 
   const rows = visible.map((p) => ({
     select: (
-      <input
+      <RadioCheckButtonh
         type="checkbox"
         checked={selected.has(p.id)}
         onChange={() => toggleOne(p.id)}

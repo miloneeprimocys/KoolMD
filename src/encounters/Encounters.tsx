@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDown, Download, Plus } from "lucide-react";
@@ -120,7 +121,7 @@ const Encounters = () => {
   const openPatient = (id: string) => router.push(`/view-encounter?id=${id}`);
 
   const rows = ROWS.map((x) => ({
-    select: <input type="checkbox" aria-label={`Select ${x.name}`} className={checkboxCls} />,
+    select: <RadioCheckButtonh type="checkbox" aria-label={`Select ${x.name}`} className={checkboxCls} />,
     patient: (
       <button type="button" onClick={() => openPatient(x.id)} className="cursor-pointer text-left">
         <Name name={x.name} sub={x.phone} />

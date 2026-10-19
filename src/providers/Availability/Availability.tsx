@@ -6,7 +6,8 @@ import { getTimeZones } from "@vvo/tzdb";
 
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
 import { FieldError } from "@/components/SignupField";
-import { Errors, StepProps, Switch, cardCls } from "../Shared";
+import TogglableSwitch from "@/components/Togglableswitch";
+import { Errors, StepProps, cardCls } from "../Shared";
 
 import LocationTab, {
   LocationItem,
@@ -216,7 +217,7 @@ const Availability = ({
                 </span>
                 <span className="block text-xs text-body">{t.desc}</span>
               </span>
-              <Switch checked={t.checked} onChange={t.set} label={t.title} />
+              <TogglableSwitch checked={t.checked} onChange={t.set} ariaLabel={t.title} className="inline-flex" />
             </div>
           ))}
         </div>

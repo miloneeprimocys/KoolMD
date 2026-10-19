@@ -1,5 +1,6 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
 
 import SignupField from "@/components/SignupField";
@@ -159,7 +160,7 @@ const VisitInformation = () => {
           <div className="space-y-3">
             {PARTICIPANTS.map((p) => (
               <label key={p} className="flex cursor-pointer items-center gap-3 text-sm text-heading">
-                <input
+                <RadioCheckButtonh
                   type="checkbox"
                   checked={participants.includes(p)}
                   onChange={() => toggleParticipant(p)}

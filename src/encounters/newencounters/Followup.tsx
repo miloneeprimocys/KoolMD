@@ -1,11 +1,12 @@
 "use client";
 
+import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
 
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
 import InputActions from "@/components/InputActions";
 import DatePicker from "@/components/Datepicker";
-import { Switch } from "@/providers/Shared";
+import TogglableSwitch from "@/components/Togglableswitch";
 import {
   Req,
   StepHeader,
@@ -64,7 +65,12 @@ const FollowUp = () => {
           <div>
             <p className={labelCls}>Follow-up Needed</p>
             <div className="flex h-12 items-center gap-3">
-              <Switch checked={needed} onChange={setNeeded} label="Follow-up needed" />
+              <TogglableSwitch
+                checked={needed}
+                onChange={setNeeded}
+                ariaLabel="Follow-up needed"
+                className="inline-flex"
+              />
               <span className="text-sm text-heading">{needed ? "Yes" : "No"}</span>
             </div>
           </div>
@@ -133,7 +139,7 @@ const FollowUp = () => {
           <div className="grid min-w-0 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
             {ACTIONS.map((a) => (
               <label key={a.id} className="flex cursor-pointer items-center gap-3 text-sm text-heading">
-                <input
+                <RadioCheckButtonh
                   type="checkbox"
                   checked={checked.includes(a.id)}
                   onChange={() => toggle(a.id)}
