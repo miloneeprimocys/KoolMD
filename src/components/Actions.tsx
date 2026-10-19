@@ -1,8 +1,8 @@
 import React from "react";
-import { Eye, SquarePen, Trash2, Download } from "lucide-react";
+import { Eye, SquarePen, Trash2, Download, Unlock, MoreVertical } from "lucide-react";
 import DeleteButton from "@/components/DeleteButton";
 
-export type ActionType = "view" | "edit" | "delete" | "download";
+export type ActionType = "view" | "edit" | "delete" | "download" | "unlock" | "more";
 
 const CONFIG = {
   view: {
@@ -23,6 +23,16 @@ const CONFIG = {
   download: {
     Icon: Download,
     label: "Download",
+    hover: "hover:bg-primary/10 hover:text-primary",
+  },
+  unlock: {
+    Icon: Unlock,
+    label: "Unlock",
+    hover: "hover:bg-warning/10 hover:text-warning",
+  },
+  more: {
+    Icon: MoreVertical,
+    label: "More actions",
     hover: "hover:bg-primary/10 hover:text-primary",
   },
 } as const;

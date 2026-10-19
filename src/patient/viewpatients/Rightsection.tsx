@@ -15,11 +15,11 @@ import {
   Plus,
   ShieldCheck,
   Video,
-  X,
 } from "lucide-react";
 
 import Tags, { type TagTone } from "@/components/Tags";
 import ImportButton from "@/components/ImportButton";
+import CommonRightSection from "@/components/CommonRightSection";
 
 /* ---------- Types ---------- */
 export type PatientDocumentDetails = {
@@ -308,26 +308,13 @@ const PatientRightSection = ({ selection, onClose, onCloseStart }: Props) => {
   const title = doc?.name ?? "Appointment Details";
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-x-0 bottom-0 top-14 z-[140] bg-black/40 backdrop-blur-xs transition-opacity duration-300 ease-out xl:top-16 2xl:hidden ${
-          isOpen && !isClosing ? "opacity-100" : "opacity-0"
-        }`}
-        onClick={closePanel}
-        aria-hidden="true"
-      />
-
-      <aside
-        aria-label={title}
-        aria-modal="true"
-        role="dialog"
-        className={`fixed right-0 top-14 z-[150] flex h-[calc(100dvh-3.5rem)] w-full max-w-[420px] flex-col border-y border-l border-border bg-card shadow-2xl transition-transform duration-300 ease-out xl:top-16 xl:h-[calc(100dvh-4rem)] ${
-          isOpen && !isClosing ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        {/* Header */}
-        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3.5 sm:px-5">
+    <CommonRightSection
+      label={title}
+      ariaModal
+      open={isOpen}
+      closing={isClosing}
+      onClose={closePanel}
+      header={
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-danger/10 text-danger">
               {doc ? <FileText className="h-5 w-5" /> : <CalendarDays className="h-5 w-5" />}
@@ -346,15 +333,8 @@ const PatientRightSection = ({ selection, onClose, onCloseStart }: Props) => {
               )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={closePanel}
-            aria-label="Close details"
-            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-body transition-colors hover:bg-heading/5 hover:text-heading focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </header>
+      }
+    >
 
         {/* Body */}
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:p-5">
@@ -468,8 +448,7 @@ const PatientRightSection = ({ selection, onClose, onCloseStart }: Props) => {
             </>
           )}
         </div>
-      </aside>
-    </>
+    </CommonRightSection>
   );
 };
 

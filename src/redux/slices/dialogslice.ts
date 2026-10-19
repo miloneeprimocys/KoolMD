@@ -27,6 +27,8 @@ interface ModalState {
   /** Questionnaire preselected when the assign modal opens (null = default / first one). */
   assignQuestionnaireId: string | null;
   AddTemplateQuestion: boolean;
+  UnlockPopup: boolean;
+  unlockPopupConfirmed: boolean;
   templateQuestionModal: {
     question: TemplateQuestion | null;
     initialType: QuestionTypeKey;
@@ -45,6 +47,8 @@ const initialState: ModalState = {
   AssignQuestionnaire: false,
   assignQuestionnaireId: null,
   AddTemplateQuestion: false,
+  UnlockPopup: false,
+  unlockPopupConfirmed: false,
   templateQuestionModal: null,
   templateQuestionResult: null,
 };
@@ -54,7 +58,7 @@ type OnlyBooleanKeys<T> = {
   [K in keyof T]: T[K] extends boolean ? K : never;
 }[keyof T];
 
-export type ModalKey = OnlyBooleanKeys<ModalState>;
+export type ModalKey = Exclude<OnlyBooleanKeys<ModalState>, "unlockPopupConfirmed">;
 
 const dialogSlice = createSlice({
   name: "modals",
@@ -62,9 +66,15 @@ const dialogSlice = createSlice({
   reducers: {
     showModal: (state, action: PayloadAction<ModalKey>) => {
       state[action.payload] = true;
+      if (action.payload === "UnlockPopup") {
+        state.unlockPopupConfirmed = false;
+      }
     },
     hideModal: (state, action: PayloadAction<ModalKey>) => {
       state[action.payload] = false;
+      if (action.payload === "UnlockPopup") {
+        state.unlockPopupConfirmed = false;
+      }
       if (action.payload === "DeletePrescription") {
         state.deletePrescriptionTarget = null;
       }
@@ -101,6 +111,13 @@ const dialogSlice = createSlice({
       state.templateQuestionResult = null;
       state.AddTemplateQuestion = true;
     },
+    confirmUnlockPopup: (state) => {
+      state.UnlockPopup = false;
+      state.unlockPopupConfirmed = true;
+    },
+    clearUnlockPopupConfirmation: (state) => {
+      state.unlockPopupConfirmed = false;
+    },
     templateQuestionSaved: (state, action: PayloadAction<TemplateQuestion>) => {
       state.templateQuestionResult = action.payload;
       state.AddTemplateQuestion = false;
@@ -124,6 +141,8 @@ const dialogSlice = createSlice({
       state.AssignQuestionnaire = false;
       state.assignQuestionnaireId = null;
       state.AddTemplateQuestion = false;
+      state.UnlockPopup = false;
+      state.unlockPopupConfirmed = false;
       state.templateQuestionModal = null;
       state.templateQuestionResult = null;
     },
@@ -137,6 +156,8 @@ export const {
   showDeletePrescription,
   showAssignQuestionnaire,
   showAddTemplateQuestion,
+  confirmUnlockPopup,
+  clearUnlockPopupConfirmation,
   templateQuestionSaved,
   clearTemplateQuestionResult,
   prescriptionDeleted,

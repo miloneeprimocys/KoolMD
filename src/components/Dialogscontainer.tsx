@@ -9,9 +9,11 @@ import AddSurgeryModal from "@/patient/viewpatients/medicalhistory/Addsurgerymod
 import DeletePrescription from "@/prescriptions/Deleteprescription";
 import AssignQuestionnaireModal from "@/Questionnaires/Assignquestionnaire";
 import AddTemplateQuestionModal from "@/Questionnaires/template/Addtemplateques";
+import UnlockPopup from "@/administration/Unlockpopup";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
   hideModal,
+  confirmUnlockPopup,
   prescriptionDeleted,
   templateQuestionSaved,
 } from "@/redux/slices/dialogslice";
@@ -34,6 +36,7 @@ const DialogsContainer = () => {
   const deletePrescriptionTarget = useAppSelector((state) => state.dialog.deletePrescriptionTarget);
   const addTemplateQuestionOpen = useAppSelector((state) => state.dialog.AddTemplateQuestion);
   const templateQuestionModal = useAppSelector((state) => state.dialog.templateQuestionModal);
+  const unlockPopupOpen = useAppSelector((state) => state.dialog.UnlockPopup);
 
   return (
     <>
@@ -42,6 +45,11 @@ const DialogsContainer = () => {
       <AddImmunizationModal />
       <AddSurgeryModal />
       <AssignQuestionnaireModal />
+      <UnlockPopup
+        open={unlockPopupOpen}
+        onClose={() => dispatch(hideModal("UnlockPopup"))}
+        onConfirm={() => dispatch(confirmUnlockPopup())}
+      />
       <AddTemplateQuestionModal
         open={addTemplateQuestionOpen}
         question={templateQuestionModal?.question}

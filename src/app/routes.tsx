@@ -17,6 +17,7 @@ import Prescriptions from "@/prescriptions/Prescriptions";
 import Addprescription from "@/prescriptions/addprescription/Addprescription";
 import ViewPrescriptions from "@/prescriptions/viewprescription/Viewprescriptions";
 import QuestionnairesPage from "@/Questionnaires/Questionnairespage";
+import Administration from "@/administration/Administration";
 import EditQuestionnaire from "@/Questionnaires/Editquestionnaire";
 import ViewResponse from "@/Questionnaires/response/Viewresponse";
 import AddTemplate from "@/Questionnaires/template/Addtemplate";
@@ -147,6 +148,11 @@ export const ROUTES: Record<string, RouteConfig> = {
   questionnaires: {
     component: QuestionnairesPage,
     title: "Questionnaires",
+    access: "protected",
+  },
+  "administration/chatunlock": {
+    component: Administration,
+    title: "Administration",
     access: "protected",
   },
   "edit-questionnaire": {

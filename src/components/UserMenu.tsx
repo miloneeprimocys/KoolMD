@@ -80,7 +80,7 @@ const UserMenu = () => {
       {isMenuOpen && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-card shadow-xl shadow-shape-sky/20"
+          className="absolute right-0 top-full z-[200] mt-2 w-56 overflow-hidden rounded-xl border border-border bg-card shadow-xl shadow-shape-sky/20"
         >
           <div className="border-b border-divider px-4 py-3">
             <p className="truncate text-sm font-semibold text-heading">{fullName}</p>

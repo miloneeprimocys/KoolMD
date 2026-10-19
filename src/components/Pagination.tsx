@@ -67,7 +67,7 @@ const Pagination: React.FC<PaginationProps> = ({
       : undefined;
 
   const navBtn =
-    "flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-body transition-colors duration-200 hover:bg-primary/5 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-body sm:h-9 sm:w-9";
+    "flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-body transition-colors duration-200 hover:bg-primary/15 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-body sm:h-9 sm:w-9";
 
   const pageBtn =
     "flex h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg px-1.5 text-sm font-medium transition-colors duration-200 sm:h-9 sm:min-w-9 sm:px-2";

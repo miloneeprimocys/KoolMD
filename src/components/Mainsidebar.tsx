@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
@@ -25,7 +25,7 @@ import {
   Settings,
   ShieldCheck,
   Stethoscope,
-  UserCog,
+  Unlock,
   Users,
   X,
   type LucideIcon,
@@ -106,19 +106,23 @@ const SECTIONS: NavSection[] = [
     items: [
       { label: "Billing & Payments", href: "/billing", Icon: CreditCard },
       { label: "Reports", href: "/reports", Icon: ClipboardList },
-      { label: "Messages", href: "/messages", Icon: MessageSquare, badge: 1 },
-    ],
-  },
-  {
-    title: "ADMINISTRATION",
-    items: [
       {
-        label: "Staff Management",
-        href: "/staff",
-        Icon: UserCog,
-        requiredPermission: PERMISSIONS.STAFF_READ,
+        label: "Administration",
+        href: "/administration/chatunlock?tab=unlock-requests",
+        Icon: Settings,
+        children: [
+          { label: "Users", href: "/users", Icon: Users },
+          { label: "Roles & Permissions", href: "/roles-permissions", Icon: ShieldCheck },
+          {
+            label: "Chart Unlock (M28)",
+            href: "/administration/chatunlock?tab=unlock-requests",
+            Icon: Unlock,
+          },
+          { label: "Audit Logs", href: "/audit-logs", Icon: ClipboardList },
+          { label: "Settings", href: "/settings", Icon: Settings },
+        ],
       },
-      { label: "Settings", href: "/settings", Icon: Settings },
+      { label: "Messages", href: "/messages", Icon: MessageSquare, badge: 1 },
     ],
   },
 ];
@@ -194,6 +198,10 @@ type MainSidebarProps = {
   onToggleMini: () => void;
 };
 
+// The catch-all route can remount the sidebar as the selected page changes.
+// Keep its scroll position across those client-side navigations.
+let cachedNavigationScrollTop = 0;
+
 /** Drops items (and sub-items) the user lacks permission for, then any section left empty. */
 const filterSectionsByPermission = (
   sections: NavSection[],
@@ -218,17 +226,18 @@ const filterSectionsByPermission = (
 
 const checkIsActive = (href: string, pathname: string | null) => {
   if (!pathname) return false;
-  if (pathname === href) return true;
+  const path = href.split("?")[0];
+  if (pathname === path) return true;
 
-  if (href === "/providers") {
+  if (path === "/providers") {
     return pathname === "/providers" || pathname.includes("provider");
   }
 
-  if (href === "/patients") {
+  if (path === "/patients") {
     return pathname === "/patients" || pathname.includes("patient");
   }
 
-  if (href !== "/" && pathname.startsWith(`${href}/`)) {
+  if (path !== "/" && pathname.startsWith(`${path}/`)) {
     return true;
   }
 
@@ -237,6 +246,7 @@ const checkIsActive = (href: string, pathname: string | null) => {
 
 const MainSidebar = ({ isMini, onToggleMini }: MainSidebarProps) => {
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
   const permissionCodes = useAppSelector(selectPermissionCodes);
   // Recomputed only when the signed-in user's permissions change.
   const visibleSections = useMemo(
@@ -253,6 +263,10 @@ const MainSidebar = ({ isMini, onToggleMini }: MainSidebarProps) => {
 
   const [tooltip, setTooltip] = useState<TooltipContent | null>(null);
   const tooltipTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useLayoutEffect(() => {
+    if (navRef.current) navRef.current.scrollTop = cachedNavigationScrollTop;
+  }, [pathname]);
 
   const toggle = (label: string) =>
     setOpenGroups((s) => ({ ...s, [label]: !s[label] }));
@@ -328,7 +342,11 @@ const handleToggleMini = () => {
 
       {/* Navigation */}
       <nav
-        className={`hide-scrollbar flex-1 overflow-y-auto py-4 lg:py-5 ${
+        ref={navRef}
+        onScroll={(event) => {
+          cachedNavigationScrollTop = event.currentTarget.scrollTop;
+        }}
+        className={`hide-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y py-4 lg:py-5 ${
           isMini ? "px-2" : "px-3 lg:px-4"
         }`}
       >
@@ -384,7 +402,7 @@ const handleToggleMini = () => {
 
                 return (
                   <div key={label} className="relative">
-                    <button
+                    {!(isMini && label === "Administration") && <button
                       type="button"
                       onClick={() => !isMini && toggle(label)}
                       aria-expanded={isOpen}
@@ -406,7 +424,7 @@ const handleToggleMini = () => {
                           />
                         </>
                       )}
-                    </button>
+                    </button>}
 
                     {!isMini && (
                       <div
@@ -426,9 +444,9 @@ const handleToggleMini = () => {
                                   key={c.label}
                                   href={c.href}
                                   onClick={closeMobileSidebar}
-                                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-colors duration-200 lg:gap-3.5 lg:px-3.5 lg:py-2.5 lg:text-sm ${
+                                  className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-colors duration-200 lg:gap-3.5 lg:px-3.5 lg:py-2.5 lg:text-sm ${
                                     isSubActive
-                                      ? "bg-primary/10 font-medium text-primary"
+                                      ? "bg-primary/10 font-medium text-primary before:absolute before:-left-3 before:top-1/2 before:h-[85%] before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-primary"
                                       : "text-label/90 hover:bg-primary/5 hover:text-primary"
                                   }`}
                                 >

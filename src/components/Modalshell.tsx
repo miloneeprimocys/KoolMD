@@ -21,7 +21,7 @@ export const toOptions = (items: string[]): DropdownOption[] =>
   items.map((v) => ({ value: v, label: v }));
 
 export const ReqLabel = ({ children }: { children: ReactNode }) => (
-  <>
+  <>  
     {children} <span className="text-danger">*</span>
   </>
 );

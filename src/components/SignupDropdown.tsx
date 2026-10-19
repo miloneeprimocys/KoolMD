@@ -166,7 +166,9 @@ const chevronRight = compact ? "right-2" : "right-3.5";
 
     /* ---- Placement ---- */
     const computePlacement = () => {
-      const el = wrapRef.current;
+      const el = portalMenu
+        ? triggerRef.current ?? inputRef.current ?? wrapRef.current
+        : wrapRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
@@ -180,7 +182,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
           left: rect.left,
           top:
             nextPlacement === "up"
-              ? Math.max(8, rect.top - menuHeight - 6)
+              ? Math.max(8, rect.top - menuHeight - 4)
               : rect.bottom + 6,
           width: rect.width,
         });
@@ -192,10 +194,29 @@ const chevronRight = compact ? "right-2" : "right-3.5";
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, filtered.length, portalMenu]);
 
+    useLayoutEffect(() => {
+      if (!open || !portalMenu || !triggerRef.current || !listRef.current) return;
+
+      const triggerRect = triggerRef.current.getBoundingClientRect();
+      const menuRect = listRef.current.getBoundingClientRect();
+      const top =
+        placement === "up"
+          ? Math.max(8, triggerRect.top - menuRect.height - 4)
+          : triggerRect.bottom + 6;
+
+      setPortalPosition((current) => {
+        if (!current || Math.abs(current.top - top) < 1) return current;
+        return { ...current, top };
+      });
+    }, [open, placement, portalMenu, filtered.length]);
+
     useEffect(() => {
       if (!open) return;
-      const onScroll = () => {
+      const onScroll = (event: Event) => {
         if (portalMenu) {
+          if (event.target instanceof Node && listRef.current?.contains(event.target)) {
+            return;
+          }
           setOpen(false);
           setFocused(false);
           setQuery("");
@@ -498,14 +519,14 @@ const chevronRight = compact ? "right-2" : "right-3.5";
               }
               className={`
                 ${portalMenu ? "z-[500]" : "absolute left-0 right-0 z-[100]"}
-                ${portalMenu ? "overflow-visible" : "max-h-64 overflow-y-auto overflow-x-hidden"}
+                max-h-64 overflow-y-auto overflow-x-hidden
                 rounded-xl border border-border
                 bg-card
                 shadow-2xl shadow-black/20 dark:shadow-black/60
                 ring-1 ring-border/60
                 py-1
                 animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both]
-                ${!portalMenu && (placement === "down" ? "top-full mt-1.5" : "bottom-full mb-1.5")}
+                ${!portalMenu && (placement === "down" ? "top-full mt-1.5" : "bottom-full mb-1")}
               `}
             >
               {filtered.length === 0 ? (

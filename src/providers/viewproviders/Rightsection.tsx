@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileText, X } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
@@ -10,6 +10,7 @@ import SignupField from "@/components/SignupField";
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
 import FileDropzone from "@/components/Filedropzone";
 import DatePicker from "@/components/Datepicker";
+import CommonRightSection from "@/components/CommonRightSection";
 
 import { LICENSE_TYPES, LICENSE_STATES } from "./ViewLicenses";
 import { DOCUMENT_TYPES } from "./Documents";
@@ -654,35 +655,21 @@ const RightSection = ({
   const meta = META[panel.type];
 
   return (
-    <>
-      {/* Backdrop for md, lg, xl screens (below Mainheader, hidden on 2xl+) */}
-      <div
-        className={`fixed top-14 xl:top-16 inset-x-0 bottom-0 z-[140] bg-black/40 backdrop-blur-xs transition-opacity duration-300 ease-out 2xl:hidden ${isOpen && !isClosing ? "opacity-100" : "opacity-0"}`}
-        onClick={closePanel}
-        aria-hidden
-      />
-
-      {/* Right drawer: touches right, top (below Mainheader) and bottom */}
-      <aside
-        aria-label={meta.title}
-        key={panel.type === "verification" ? `v-${panel.row.id}` : panel.type}
-        className={`fixed top-14 xl:top-16 right-0 bottom-0 z-[150] flex h-[calc(100vh-3.5rem)] xl:h-[calc(100vh-4rem)] w-full max-w-[420px] 2xl:max-w-[460px] flex-col border-l border-border bg-card shadow-2xl transition-transform duration-300 ease-out ${isOpen && !isClosing ? "translate-x-0" : "translate-x-full"}`}
-      >
-        {/* Sticky Header */}
-        <header className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-border bg-card px-6 py-4.5 shrink-0">
+    <CommonRightSection
+      label={meta.title}
+      panelKey={panel.type === "verification" ? `v-${panel.row.id}` : panel.type}
+      open={isOpen}
+      closing={isClosing}
+      onClose={closePanel}
+      header={
           <div className="min-w-0 flex-1">
             <h3 className="text-base font-semibold text-heading sm:text-lg">{meta.title}</h3>
             {meta.subtitle && <p className="mt-0.5 text-xs text-body leading-normal">{meta.subtitle}</p>}
           </div>
-          <button
-            type="button"
-            onClick={closePanel}
-            aria-label="Close panel"
-            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-body transition-colors hover:bg-heading/5 hover:text-heading focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </header>
+      }
+      headerClassName="py-4"
+      panelClassName="2xl:max-w-[460px]"
+    >
 
         {/* Dynamic Content */}
         {panel.type === "license" && (
@@ -707,8 +694,7 @@ const RightSection = ({
           <VerificationDetails row={panel.row} onDownloadDocument={onDownloadDocument} />
         )}
         {panel.type === "profile" && <ProviderProfile provider={provider} onClose={closePanel} />}
-      </aside>
-    </>
+    </CommonRightSection>
   );
 };
 
