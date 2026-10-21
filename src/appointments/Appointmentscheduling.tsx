@@ -8,11 +8,13 @@ import AppointmentList from "./Appointmentlist";
 import Requests from "./Requests";
 import WaitingRoom from "./Waitingroom";
 import AppointmentHistory from "./Appointmenthistory";
+import ListView from "./listview/Listview";
 
 /* ---------- Tabs ---------- */
-type TabKey = "calendar" | "list" | "requests" | "waiting" | "history";
+type TabKey = "listview" | "calendar" | "list" | "requests" | "waiting" | "history";
 
 const TABS: { key: TabKey; label: string }[] = [
+  { key: "listview", label: "List View" },
   { key: "calendar", label: "Calendar View" },
   { key: "list", label: "Appointment List" },
   { key: "requests", label: "Requests" },
@@ -22,7 +24,7 @@ const TABS: { key: TabKey; label: string }[] = [
 
 /* ---------- Component ---------- */
 const AppointmentScheduling = () => {
-  const [tab, setTab] = useState<TabKey>("calendar");
+  const [tab, setTab] = useState<TabKey>("listview");
 
   return (
     <div className="mx-auto min-w-0 w-full max-w-[1600px] overflow-x-clip space-y-4 sm:space-y-5">
@@ -72,11 +74,13 @@ const AppointmentScheduling = () => {
 
       {/* Active tab */}
       <div role="tabpanel">
+        {tab === "listview" && <ListView />}
         {tab === "calendar" && <CalendarView />}
         {tab === "list" && <AppointmentList />}
         {tab === "requests" && <Requests />}
         {tab === "waiting" && <WaitingRoom />}
         {tab === "history" && <AppointmentHistory />}
+
       </div>
     </div>
   );

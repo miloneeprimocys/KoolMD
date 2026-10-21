@@ -9,6 +9,9 @@ import AddSurgeryModal from "@/patient/viewpatients/medicalhistory/Addsurgerymod
 import DeletePrescription from "@/prescriptions/Deleteprescription";
 import AssignQuestionnaireModal from "@/Questionnaires/Assignquestionnaire";
 import AddTemplateQuestionModal from "@/Questionnaires/template/Addtemplateques";
+import RescheduleModal from "@/appointments/listview/Reschedulemodal";
+import CancelAppointment from "@/appointments/listview/CancelAppointment";
+import JoinVideoVisit from "@/appointments/listview/JoinVideoVisit";
 import UnlockPopup from "@/administration/Unlockpopup";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
@@ -37,6 +40,7 @@ const DialogsContainer = () => {
   const addTemplateQuestionOpen = useAppSelector((state) => state.dialog.AddTemplateQuestion);
   const templateQuestionModal = useAppSelector((state) => state.dialog.templateQuestionModal);
   const unlockPopupOpen = useAppSelector((state) => state.dialog.UnlockPopup);
+  const cancelAppointmentOpen = useAppSelector((state) => state.dialog.CancelAppointment);
 
   return (
     <>
@@ -64,6 +68,12 @@ const DialogsContainer = () => {
         onClose={() => dispatch(hideModal("DeletePrescription"))}
         onDeleted={(id) => dispatch(prescriptionDeleted(id))}
       />
+      <RescheduleModal />
+      <CancelAppointment
+        open={cancelAppointmentOpen}
+        onClose={() => dispatch(hideModal("CancelAppointment"))}
+      />
+      <JoinVideoVisit />
     </>
   );
 };

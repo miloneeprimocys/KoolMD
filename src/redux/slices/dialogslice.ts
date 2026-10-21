@@ -34,6 +34,9 @@ interface ModalState {
     initialType: QuestionTypeKey;
   } | null;
   templateQuestionResult: TemplateQuestion | null;
+  RescheduleAppointment: boolean;
+  CancelAppointment: boolean;
+  JoinVideoVisit: boolean;
 }
 
 const initialState: ModalState = {
@@ -51,6 +54,9 @@ const initialState: ModalState = {
   unlockPopupConfirmed: false,
   templateQuestionModal: null,
   templateQuestionResult: null,
+  RescheduleAppointment: false,
+  CancelAppointment: false,
+  JoinVideoVisit: false,
 };
 
 // Only boolean keys can be toggled with showModal / hideModal
@@ -83,6 +89,9 @@ const dialogSlice = createSlice({
       }
       if (action.payload === "AddTemplateQuestion") {
         state.templateQuestionModal = null;
+      }
+      if (action.payload === "RescheduleAppointment") {
+        state.RescheduleAppointment = false;
       }
     },
     showDeletePrescription: (state, action: PayloadAction<PrescriptionToDelete>) => {
@@ -145,6 +154,9 @@ const dialogSlice = createSlice({
       state.unlockPopupConfirmed = false;
       state.templateQuestionModal = null;
       state.templateQuestionResult = null;
+      state.RescheduleAppointment = false;
+      state.CancelAppointment = false;
+      state.JoinVideoVisit = false;
     },
   },
 });
@@ -161,5 +173,6 @@ export const {
   templateQuestionSaved,
   clearTemplateQuestionResult,
   prescriptionDeleted,
+  
 } = dialogSlice.actions;
 export default dialogSlice.reducer;

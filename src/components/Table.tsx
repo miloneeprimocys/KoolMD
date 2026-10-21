@@ -64,6 +64,7 @@ const Table = ({
         <table
           className="w-max min-w-full border-collapse text-left"
         >
+          
           <colgroup>
             {columns.map((column) => {
               const width = getFixedWidth(column);
@@ -86,8 +87,9 @@ const Table = ({
             {rows.map((row, i) => (
               <tr
                 key={i}
-                className="border-b border-divider transition-colors duration-200 last:border-b-0 hover:bg-primary/5"
+                className="border-b border-divider transition-colors duration-200 last:border-b-0 dark:hover:bg-primary/5 hover:bg-primary/3"
               >
+
                 {columns.map((c) => {
                   const cell = row[c.key];
                   const rowKey = rowKeys[i];
