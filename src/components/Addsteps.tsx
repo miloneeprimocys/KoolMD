@@ -35,7 +35,8 @@ const AddSteps = ({
       aria-label="Progress"
       className={`rounded-2xl border border-border bg-card p-4 sm:p-5 ${className}`}
     >
-     <ol className="flex min-w-0 items-center overflow-x-auto px-1 py-1 hide-scrollbar">
+      <div className="sm:custom-scrollbar sm:overflow-x-auto">
+      <ol className="flex w-full min-w-0 items-center overflow-visible px-1 py-5 sm:w-max sm:min-w-full">
         {steps.map((step, idx) => {
           const complete = step.id < current;
           const isCurrent = step.id === current;
@@ -43,37 +44,45 @@ const AddSteps = ({
 
           return (
             <React.Fragment key={step.id}>
-              <li className="shrink-0">
+              <li className="flex min-w-0 flex-1 justify-center sm:flex-none sm:justify-start">
                 <button
                   type="button"
                   disabled={!clickable}
                   onClick={() => onStepClick?.(step.id)}
                   aria-current={isCurrent ? "step" : undefined}
-                  className={`group flex items-center gap-3 text-left ${
+                  className={`group flex w-full min-w-0 items-center gap-2 text-left sm:w-auto sm:gap-2.5 ${
                     clickable ? "cursor-pointer" : "cursor-default"
                   }`}
                 >
-                  <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors duration-200 ${
-                      complete
-                        ? "bg-primary text-white group-hover:bg-primary/90"
-                        : isCurrent
-                          ? "bg-primary text-white ring-4 ring-primary/20"
-                          : "bg-divider text-body"
-                    }`}
-                  >
-                    {complete ? <Check className="h-4 w-4" /> : step.id}
-                  </span>
-                  <span className={`min-w-0 whitespace-nowrap ${isCurrent ? "hidden sm:block" : "hidden xl:block"}`}>
+                  <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
+                    {isCurrent && (
+                      <span
+                        aria-hidden="true"
+                        className="animate-toast-ripple absolute inset-0 rounded-full bg-primary/40"
+                      />
+                    )}
                     <span
-                      className={`block text-sm font-semibold ${
+                      className={`relative flex h-full w-full items-center justify-center rounded-full text-sm font-semibold transition-colors duration-200 ${
+                        complete
+                          ? "bg-primary text-white group-hover:bg-primary/90"
+                          : isCurrent
+                            ? "animate-toast-icon bg-primary text-white ring-4 ring-primary/20"
+                            : "bg-divider text-body"
+                      }`}
+                    >
+                      {complete ? <Check className="h-4 w-4" /> : step.id}
+                    </span>
+                  </span>
+                  <span className={`min-w-0 flex-1 sm:flex-none sm:whitespace-nowrap ${isCurrent ? "hidden sm:block" : "hidden xl:block"}`}>
+                    <span
+                      className={`block break-words text-sm font-semibold leading-tight ${
                         isCurrent || complete ? "text-heading" : "text-body"
                       }`}
                     >
                       {step.title}
                     </span>
                     {step.subtitle && (
-                      <span className="block text-xs text-body">
+                      <span className="mt-0.5 block break-words text-xs leading-tight text-body">
                         {step.subtitle}
                       </span>
                     )}
@@ -84,7 +93,7 @@ const AddSteps = ({
               {idx < steps.length - 1 && (
                 <li
                   aria-hidden="true"
-                  className={`mx-3 h-px min-w-6 flex-1 transition-colors duration-300 ${
+                  className={`mx-1 h-px min-w-2 flex-1 transition-colors duration-300 sm:mx-2 sm:min-w-3 lg:mx-3 lg:min-w-5 ${
                     complete ? "bg-primary" : "bg-divider"
                   }`}
                 />
@@ -93,6 +102,7 @@ const AddSteps = ({
           );
         })}
       </ol>
+      </div>
 
       {active && (
         <p className="mt-3 text-sm sm:hidden">

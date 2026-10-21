@@ -254,7 +254,7 @@ const Appointments = ({
       {/* Stat cards */}
       <StatCards stats={STATS} />
 
-      <div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-[minmax(0,375px)_minmax(0,1fr)]">
+      <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,375px)_minmax(0,1fr)]">
         {/* ================= LEFT: calendar + filters ================= */}
         <div className="space-y-4 sm:space-y-5">
           <SectionCard
@@ -298,7 +298,7 @@ const Appointments = ({
               </button>
             }
           >
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 xl:grid-cols-2">
               <SignupDropdown
                 name="appointmentProvider"
                 label="Provider"

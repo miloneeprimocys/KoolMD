@@ -81,7 +81,7 @@ const DeleteDialog = ({
 
   return createPortal(
     <div
-      className={`fixed inset-0 ${zIndexClass} overflow-y-auto bg-[#18365f]/35 backdrop-blur-[2px]`}
+      className={`fixed inset-0 ${zIndexClass} overflow-y-auto  bg-primary/10 dark:bg-label/10 backdrop-blur-[2px]`}
       onPointerDown={(e) => {
         if (e.target instanceof Node && !cardRef.current?.contains(e.target)) close();
       }}
@@ -94,7 +94,7 @@ const DeleteDialog = ({
           aria-labelledby="delete-dialog-title"
           aria-describedby={description ? "delete-dialog-desc" : undefined}
           style={{ maxWidth: width }}
-          className="relative w-full rounded-2xl bg-card p-6 text-center shadow-2xl dark:bg-[#082858] dark:ring-1 dark:ring-primary/30 sm:p-6"
+          className="relative w-full rounded-2xl bg-card p-6 text-center shadow-2xl dark:bg-card dark:ring-1 dark:ring-primary/30 sm:p-6"
         >
           {/* Close */}
           <button

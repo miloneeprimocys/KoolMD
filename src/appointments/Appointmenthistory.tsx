@@ -2,6 +2,7 @@
 
 import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Download, MapPin, Video } from "lucide-react";
 
 import SearchAndFilter from "@/components/Searchandfilter";
@@ -100,6 +101,7 @@ const COLUMNS: TableColumn[] = [
 
 /* ---------- Component ---------- */
 const AppointmentHistory = () => {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState("newest");
   const [showPanel, setShowPanel] = useState(false);
@@ -217,7 +219,13 @@ const AppointmentHistory = () => {
         </div>
 
         {/* Right section */}
-        {showPanel && <RightSection variant="history" onClose={() => setShowPanel(false)} />}
+        {showPanel && (
+          <RightSection
+            variant="history"
+            onClose={() => setShowPanel(false)}
+            onBookAppointment={() => router.push("/book-appointment")}
+          />
+        )}
       </div>
     </div>
   );

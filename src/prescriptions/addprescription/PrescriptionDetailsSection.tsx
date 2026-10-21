@@ -247,7 +247,7 @@ const PrescriptionDetailsSection = ({
                 </button>
               </div>
 
-              <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+              <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 [&>*]:min-w-0">
                 <SignupField
                   name={`dose-${m.id}`}
                   label={<>Dose<Req /></>}
@@ -352,7 +352,7 @@ const PrescriptionDetailsSection = ({
         />
 
         {/* Delivery + actions */}
-        <div className="flex flex-col gap-4 border-t border-border pt-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-4 border-t border-border pt-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-heading">
             <label className="flex cursor-pointer items-center gap-2">
               <RadioCheckButtonh

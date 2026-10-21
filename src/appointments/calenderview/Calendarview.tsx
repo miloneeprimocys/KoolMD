@@ -2,6 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 
 import {
   addDays,
@@ -112,6 +114,7 @@ const navBtn =
 /*  Component                                                       */
 /* ---------------------------------------------------------------- */
 const CalendarView = () => {
+  const dispatch = useAppDispatch();
   const rightSectionRef = useRef<HTMLDivElement>(null);
   const [rightSectionHeight, setRightSectionHeight] = useState<number | null>(null);
   const [selected, setSelected] = useState(() => startOfDay(new Date()));
@@ -364,6 +367,9 @@ const CalendarView = () => {
                 initiallyOpen={!hasMountedDesktopPanelRef.current}
                 desktopLayoutControlled
                 data={panelData}
+                onJoinVideoVisit={() => dispatch(showModal("JoinVideoVisit"))}
+                onReschedule={() => dispatch(showModal("RescheduleAppointment"))}
+                onCancelAppointment={() => dispatch(showModal("CancelAppointment"))}
               />
             ) : (
               <aside className="hidden w-[360px] shrink-0 flex-col items-center justify-center rounded-[14px] border border-border bg-card px-6 py-12 text-center 2xl:flex">
@@ -384,6 +390,9 @@ const CalendarView = () => {
               variant="appointment"
               onClose={() => setShowPanel(false)}
               data={panelData}
+              onJoinVideoVisit={() => dispatch(showModal("JoinVideoVisit"))}
+              onReschedule={() => dispatch(showModal("RescheduleAppointment"))}
+              onCancelAppointment={() => dispatch(showModal("CancelAppointment"))}
             />
           </div>
         )}

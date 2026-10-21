@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import {
   Calendar,
   CalendarDays,
@@ -30,6 +30,9 @@ import Tags, { type TagTone } from "@/components/Tags";
 import EditButton from "@/components/EditButton";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
+import RightSubSection from "@/components/RightSubSection";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 
 /* ---------------------------------------------------------------- */
 /*  Shared helpers (used by every tab)                              */
@@ -301,13 +304,16 @@ const PanelButton = ({
   tone,
   icon: Icon,
   children,
+  onClick,
 }: {
   tone: keyof typeof BTN;
   icon: LucideIcon;
   children: string;
+  onClick?: () => void;
 }) => (
   <button
     type="button"
+    onClick={onClick}
     className={`flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${BTN[tone]}`}
   >
     <Icon className="h-4 w-4" />
@@ -315,7 +321,31 @@ const PanelButton = ({
   </button>
 );
 
-const PanelActions = ({ variant }: { variant: PanelVariant }) => {
+const PanelActions = ({
+  variant,
+  onJoinVideoVisit,
+  onReschedule,
+  onCancelAppointment,
+  onApproveRequest,
+  onDeclineRequest,
+  onSuggestAlternativeTime,
+  onStartConsultation,
+  onSendWaitingRoomMessage,
+  onMarkNoShow,
+  onBookAppointment,
+}: {
+  variant: PanelVariant;
+  onJoinVideoVisit?: () => void;
+  onReschedule?: () => void;
+  onCancelAppointment?: () => void;
+  onApproveRequest?: () => void;
+  onDeclineRequest?: () => void;
+  onSuggestAlternativeTime?: () => void;
+  onStartConsultation?: () => void;
+  onSendWaitingRoomMessage?: () => void;
+  onMarkNoShow?: () => void;
+  onBookAppointment?: () => void;
+}) => {
   switch (variant) {
     case "appointment":
       return (
@@ -324,32 +354,37 @@ const PanelActions = ({ variant }: { variant: PanelVariant }) => {
             text="Join Consultation"
             icon={<Video className="h-4 w-4" />}
             className="w-full"
+            onClick={onJoinVideoVisit}
           />
           <ImportButton
             text="Reschedule"
             icon={<Calendar className="h-4 w-4" />}
             className="w-full !border-primary/30 !bg-primary/5 !text-primary hover:!border-primary/40 hover:!bg-primary/10 hover:!text-primary"
+            onClick={onReschedule}
           />
           <ImportButton
             text="Cancel Appointment"
             icon={<Trash2 className="h-4 w-4" />}
             className="w-full !border-danger/40 !bg-danger/5 !text-danger hover:!border-danger/50 hover:!bg-danger/10 hover:!text-danger"
+            onClick={onCancelAppointment}
           />
         </>
       );
     case "request":
       return (
         <>
-          <PanelButton tone="success" icon={Check}>Approve Request</PanelButton>
+          <PanelButton tone="success" icon={Check} onClick={onApproveRequest}>Approve Request</PanelButton>
           <ImportButton
             text="Decline Request"
             icon={<X className="h-4 w-4" />}
             className="w-full !border-danger/40 !bg-danger/5 !text-danger hover:!border-danger/50 hover:!bg-danger/10 hover:!text-danger"
+            onClick={onDeclineRequest}
           />
           <ImportButton
             text="Suggest Alternative Time"
             icon={<Calendar className="h-4 w-4" />}
             className="w-full !border-primary/30 !bg-primary/5 !text-primary hover:!border-primary/40 hover:!bg-primary/10 hover:!text-primary"
+            onClick={onSuggestAlternativeTime}
           />
         </>
       );
@@ -360,16 +395,19 @@ const PanelActions = ({ variant }: { variant: PanelVariant }) => {
             text="Start Consultation"
             icon={<Video className="h-4 w-4" />}
             className="w-full"
+            onClick={onStartConsultation}
           />
           <ImportButton
             text="Send Message"
             icon={<MessageSquare className="h-4 w-4" />}
             className="w-full"
+            onClick={onSendWaitingRoomMessage}
           />
           <ImportButton
             text="Mark as No Show"
             icon={<UserX className="h-4 w-4" />}
             className="w-full !border-danger/40 !bg-danger/5 !text-danger hover:!border-danger/50 hover:!bg-danger/10 hover:!text-danger"
+            onClick={onMarkNoShow}
           />
         </>
       );
@@ -385,6 +423,7 @@ const PanelActions = ({ variant }: { variant: PanelVariant }) => {
             text="Book New Appointment"
             icon={<Calendar className="h-4 w-4" />}
             className="w-full"
+            onClick={onBookAppointment}
           />
         </>
       );
@@ -406,6 +445,17 @@ type Props = {
   className?: string;
   closeButtonClassName?: string;
   onHeightChange?: (height: number) => void;
+  onJoinVideoVisit?: () => void;
+  onReschedule?: () => void;
+  onCancelAppointment?: () => void;
+  onApproveRequest?: () => void;
+  onDeclineRequest?: () => void;
+  onSuggestAlternativeTime?: () => void;
+  onStartConsultation?: () => void;
+  onSendWaitingRoomMessage?: () => void;
+  onMarkNoShow?: () => void;
+  onBookAppointment?: () => void;
+  onEditAppointment?: () => void;
 };
 
 
@@ -422,75 +472,42 @@ const RightSection = ({
   className = "",
   closeButtonClassName = "",
   onHeightChange,
+  onJoinVideoVisit,
+  onReschedule,
+  onCancelAppointment,
+  onApproveRequest,
+  onDeclineRequest,
+  onSuggestAlternativeTime,
+  onStartConsultation,
+  onSendWaitingRoomMessage,
+  onMarkNoShow,
+  onBookAppointment,
+  onEditAppointment,
 }: Props) => {
-  const panelRef = useRef<HTMLElement>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [isOpen, setIsOpen] = useState(initiallyOpen);
-  const [isClosing, setIsClosing] = useState(false);
+  const dispatch = useAppDispatch();
   const c: Config = { ...PRESETS[variant], ...(data ?? {}) };
   const p = c.patient;
   const valueCls = c.plain ? "text-sm text-heading" : "text-sm font-semibold text-heading";
 
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setIsOpen(true));
-    return () => {
-      cancelAnimationFrame(frame);
-      if (closeTimer.current) clearTimeout(closeTimer.current);
-    };
-  }, []);
-
-  const closePanel = () => {
-    if (!onClose || closeTimer.current) return;
-    setIsClosing(true);
-    onCloseStart?.();
-    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 300;
-    closeTimer.current = setTimeout(() => {
-      closeTimer.current = null;
-      onClose();
-    }, duration);
-  };
-
-  useEffect(() => {
-    if (!onHeightChange || !panelRef.current) return;
-
-    const panel = panelRef.current;
-    const updateHeight = () => onHeightChange(Math.ceil(panel.getBoundingClientRect().height));
-    const observer = new ResizeObserver(updateHeight);
-
-    observer.observe(panel);
-    updateHeight();
-
-    return () => observer.disconnect();
-  }, [onHeightChange]);
-
   return (
-    <>
-  {/* fixed inset-x-0 bottom-0 t */}
-      {onClose && (
-        <div
-          className={`fixed inset-x-0 bottom-0 top-14 z-[140] bg-black/40 backdrop-blur-xs transition-opacity duration-300 ease-out xl:top-16 2xl:hidden ${isOpen && !isClosing ? "opacity-100" : "opacity-0"}`}
-          onClick={closePanel}
-          aria-hidden="true"
-        />
-      )}
-      <div
-        className={`contents 2xl:relative 2xl:block 2xl:shrink-0 2xl:overflow-hidden ${
-          desktopLayoutControlled
-            ? "2xl:w-[360px]"
-            : `2xl:transition-[width] 2xl:duration-300 2xl:ease-out ${isOpen && !isClosing ? "2xl:w-[360px]" : "2xl:w-0"}`
-        }`}
-      >
-        <aside
-          ref={panelRef}
-          aria-label={c.title}
-          className={`fixed right-0 top-14 z-[150] flex h-[calc(100dvh-3.5rem)] w-full max-w-[420px] flex-col overflow-y-auto border-y border-l border-border bg-card shadow-2xl transition-transform duration-300 ease-out xl:top-16 xl:h-[calc(100dvh-4rem)] 2xl:relative 2xl:bottom-auto 2xl:right-auto 2xl:top-auto 2xl:z-auto 2xl:h-auto 2xl:overflow-hidden 2xl:w-[360px] 2xl:max-w-none 2xl:shrink-0 2xl:rounded-[14px] 2xl:border-[1.5px] 2xl:shadow-none 2xl:transition-transform 2xl:duration-300 2xl:ease-out hide-scrollbar ${isOpen && !isClosing ? "translate-x-0" : "translate-x-full"} ${className}`}
-        >
+    <RightSubSection
+      ariaLabel={c.title}
+      onClose={onClose}
+      onCloseStart={onCloseStart}
+      initiallyOpen={initiallyOpen}
+      desktopLayoutControlled={desktopLayoutControlled}
+      width={360}
+      className={className}
+      onHeightChange={onHeightChange}
+    >
+      {(closePanel) => (
+        <>
       {/* Header */}
       <header className="sticky top-0 z-20 flex shrink-0 items-center justify-between gap-3 bg-card px-4 py-3.5 2xl:static">
         <h3 className="text-sm font-semibold text-heading sm:text-base">{c.title}</h3>
         <div className="flex items-center gap-1">
           {c.edit && (
-            <EditButton section="appointment" />
+            <EditButton section="appointment" onEdit={onEditAppointment ? () => onEditAppointment() : undefined} />
           )}
           {c.menu && (
             <button type="button" aria-label="More options" className={iconBtn}>
@@ -566,12 +583,24 @@ const RightSection = ({
 
         {/* Actions */}
         <div className="space-y-2.5">
-          <PanelActions variant={variant} />
+          <PanelActions
+            variant={variant}
+            onJoinVideoVisit={onJoinVideoVisit ?? (() => dispatch(showModal("JoinVideoVisit")))}
+            onReschedule={onReschedule ?? (() => dispatch(showModal("RescheduleAppointment")))}
+            onCancelAppointment={onCancelAppointment ?? (() => dispatch(showModal("CancelAppointment")))}
+            onApproveRequest={onApproveRequest ?? (() => dispatch(showModal("ApproveRequest")))}
+            onDeclineRequest={onDeclineRequest ?? (() => dispatch(showModal("DeclineRequest")))}
+            onSuggestAlternativeTime={onSuggestAlternativeTime ?? (() => dispatch(showModal("SuggestAlternativeTime")))}
+            onStartConsultation={onStartConsultation ?? (() => dispatch(showModal("StartConsultation")))}
+            onSendWaitingRoomMessage={onSendWaitingRoomMessage ?? (() => dispatch(showModal("SendWaitingRoomMessage")))}
+            onMarkNoShow={onMarkNoShow ?? (() => dispatch(showModal("MarkNoShow")))}
+            onBookAppointment={onBookAppointment}
+          />
         </div>
       </div>
-        </aside>
-      </div>
-    </>
+        </>
+      )}
+    </RightSubSection>
   );
 };
 

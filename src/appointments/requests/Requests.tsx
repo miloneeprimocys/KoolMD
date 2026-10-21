@@ -16,8 +16,10 @@ import RightSection, {
   StatusChips,
   checkboxCls,
   type ChipItem,
-} from "./Rightsection";
+} from "../Rightsection";
 import { TableSelectAllCheckbox, useTableSelection } from "@/components/TableSelection";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 
 /* ---------- Static data ---------- */
 const FILTERS = [
@@ -106,6 +108,7 @@ const iconBtn =
 
 /* ---------- Component ---------- */
 const Requests = () => {
+  const dispatch = useAppDispatch();
   const [chip, setChip] = useState("All");
   const [page, setPage] = useState(1);
   const [showPanel, setShowPanel] = useState(false);
@@ -176,10 +179,10 @@ const Requests = () => {
           </button>
           {x.status === "Pending" ? (
             <>
-              <button type="button" aria-label="Approve request" className={`${iconBtn} text-primary hover:bg-primary/10`}>
+              <button type="button" aria-label="Approve request" onClick={() => dispatch(showModal("ApproveRequest"))} className={`${iconBtn} text-primary hover:bg-primary/10`}>
                 <Check className="h-4 w-4" />
               </button>
-              <button type="button" aria-label="Decline request" className={`${iconBtn} text-danger hover:bg-danger/10`}>
+              <button type="button" aria-label="Decline request" onClick={() => dispatch(showModal("DeclineRequest"))} className={`${iconBtn} text-danger hover:bg-danger/10`}>
                 <X className="h-4 w-4" />
               </button>
             </>
@@ -219,7 +222,15 @@ const Requests = () => {
         </div>
 
         {/* Right section */}
-        {showPanel && <RightSection variant="request" onClose={() => setShowPanel(false)} />}
+        {showPanel && (
+          <RightSection
+            variant="request"
+            onClose={() => setShowPanel(false)}
+            onApproveRequest={() => dispatch(showModal("ApproveRequest"))}
+            onDeclineRequest={() => dispatch(showModal("DeclineRequest"))}
+            onSuggestAlternativeTime={() => dispatch(showModal("SuggestAlternativeTime"))}
+          />
+        )}
       </div>
     </div>
   );

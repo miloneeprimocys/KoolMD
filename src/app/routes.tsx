@@ -10,12 +10,15 @@ import Providers from "@/providers/Providers";
 import AddProvider from "@/providers/AddProvider";
 import ViewProvider from "@/providers/viewproviders/Viewprovider";
 import AppointmentScheduling from "@/appointments/Appointmentscheduling";
+import BookNewAppointment from "@/appointments/Booknewappointment";
 import Encounters from "@/encounters/Encounters";
 import NewEncounter from "@/encounters/newencounters/Newencounter";
 import ViewEncounters from "@/encounters/viewencounters/Viewencounters";
 import Prescriptions from "@/prescriptions/Prescriptions";
 import Addprescription from "@/prescriptions/addprescription/Addprescription";
 import ViewPrescriptions from "@/prescriptions/viewprescription/Viewprescriptions";
+import LabResults from "@/labresults/Labresults";
+import NewLabOrder from "@/labresults/newlaborder/Newlaborder";
 import QuestionnairesPage from "@/Questionnaires/Questionnairespage";
 import Administration from "@/administration/Administration";
 import EditQuestionnaire from "@/Questionnaires/Editquestionnaire";
@@ -103,6 +106,18 @@ export const ROUTES: Record<string, RouteConfig> = {
     access: "protected",
     requiredPermission: PERMISSIONS.APPOINTMENT_READ,
   },
+  "book-appointment": {
+    component: BookNewAppointment,
+    title: "Book Appointment",
+    access: "protected",
+    requiredPermission: PERMISSIONS.APPOINTMENT_READ,
+  },
+  "edit-appointment": {
+    component: BookNewAppointment,
+    title: "Edit Appointment",
+    access: "protected",
+    requiredPermission: PERMISSIONS.APPOINTMENT_READ,
+  },
   encounters: {
     component: Encounters,
     title: "Encounters",
@@ -144,6 +159,16 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "View Prescription",
     access: "protected",
     requiredPermission: PERMISSIONS.PRESCRIPTION_READ,
+  },
+  "lab-results": {
+    component: LabResults,
+    title: "Lab Results",
+    access: "protected",
+  },
+  "new-laborder": {
+    component: NewLabOrder,
+    title: "New Lab Order",
+    access: "protected",
   },
   questionnaires: {
     component: QuestionnairesPage,

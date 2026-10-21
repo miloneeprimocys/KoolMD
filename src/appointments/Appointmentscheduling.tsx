@@ -1,22 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import AddButton from "@/components/Addbutton";
 import CalendarView from "./calenderview/Calendarview";
-import AppointmentList from "./Appointmentlist";
-import Requests from "./Requests";
-import WaitingRoom from "./Waitingroom";
+import AppointmentList from "./listview/Appointmentlist";
+import Requests from "./requests/Requests";
+import WaitingRoom from "./waitingroom/Waitingroom";
 import AppointmentHistory from "./Appointmenthistory";
-import ListView from "./listview/Listview";
+
 
 /* ---------- Tabs ---------- */
-type TabKey = "listview" | "calendar" | "list" | "requests" | "waiting" | "history";
+type TabKey = "calendar" | "list" | "requests" | "waiting" | "history";
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "listview", label: "List View" },
-  { key: "calendar", label: "Calendar View" },
+
   { key: "list", label: "Appointment List" },
+  { key: "calendar", label: "Calendar View" },
   { key: "requests", label: "Requests" },
   { key: "waiting", label: "Waiting Room" },
   { key: "history", label: "Appointment History" },
@@ -24,7 +25,22 @@ const TABS: { key: TabKey; label: string }[] = [
 
 /* ---------- Component ---------- */
 const AppointmentScheduling = () => {
-  const [tab, setTab] = useState<TabKey>("listview");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const tab: TabKey = TABS.some((item) => item.key === requestedTab)
+    ? (requestedTab as TabKey)
+    : "list";
+
+  useEffect(() => {
+    if (!TABS.some((item) => item.key === requestedTab)) {
+      router.replace("/appointments?tab=list", { scroll: false });
+    }
+  }, [requestedTab, router]);
+
+  const changeTab = (key: TabKey) => {
+    router.push(`/appointments?tab=${key}`, { scroll: false });
+  };
 
   return (
     <div className="mx-auto min-w-0 w-full max-w-[1600px] overflow-x-clip space-y-4 sm:space-y-5">
@@ -40,7 +56,7 @@ const AppointmentScheduling = () => {
         </div>
         <AddButton
           text="Book Appointment"
-          onClick={() => {}}
+          onClick={() => router.push("/book-appointment")}
           className="shrink-0 whitespace-nowrap px-3 text-xs sm:px-5 sm:text-sm"
         />
       </div>
@@ -59,7 +75,7 @@ const AppointmentScheduling = () => {
               role="tab"
               type="button"
               aria-selected={isActive}
-              onClick={() => setTab(t.key)}
+              onClick={() => changeTab(t.key)}
               className={`-mb-px cursor-pointer whitespace-nowrap border-b-2 px-1 pb-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:pb-3 sm:text-sm ${
                 isActive
                   ? "border-primary text-primary"
@@ -74,7 +90,6 @@ const AppointmentScheduling = () => {
 
       {/* Active tab */}
       <div role="tabpanel">
-        {tab === "listview" && <ListView />}
         {tab === "calendar" && <CalendarView />}
         {tab === "list" && <AppointmentList />}
         {tab === "requests" && <Requests />}

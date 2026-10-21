@@ -17,6 +17,7 @@ import {
   CreditCard,
   DollarSign,
   FileText,
+  FlaskConical,
   LayoutDashboard,
   ListChecks,
   MessageSquare,
@@ -97,6 +98,7 @@ const SECTIONS: NavSection[] = [
         Icon: Receipt,
         requiredPermission: PERMISSIONS.PRESCRIPTION_READ,
       },
+      { label: "Lab Results", href: "/lab-results", Icon: FlaskConical },
       { label: "Questionnaires", href: "/questionnaires", Icon: ListChecks },
       { label: "Referrals", href: "/referrals", Icon: Send },
     ],
@@ -224,10 +226,25 @@ const filterSectionsByPermission = (
     .filter((section) => section.items.length > 0);
 };
 
+const RELATED_ROUTE_PATHS: Record<string, string[]> = {
+  "/patients": ["/add-patient", "/edit-patient", "/view-patient"],
+  "/providers": ["/add-provider", "/view-provider"],
+  "/appointments": ["/book-appointment", "/edit-appointment"],
+  "/encounters": ["/new-encounter", "/view-encounter"],
+  "/prescriptions": ["/add-prescription", "/edit-prescription", "/view-prescription"],
+  "/lab-results": ["/new-laborder", "/new-lab-order"],
+  "/questionnaires": ["/edit-questionnaire", "/view-response", "/edit-response", "/add-template"],
+};
+
 const checkIsActive = (href: string, pathname: string | null) => {
   if (!pathname) return false;
   const path = href.split("?")[0];
   if (pathname === path) return true;
+
+  const relatedPaths = RELATED_ROUTE_PATHS[path] ?? [];
+  if (relatedPaths.some((relatedPath) => pathname === relatedPath || pathname.startsWith(`${relatedPath}/`))) {
+    return true;
+  }
 
   if (path === "/providers") {
     return pathname === "/providers" || pathname.includes("provider");
@@ -399,6 +416,7 @@ const handleToggleMini = () => {
 
                 /* ---- Group with children ---- */
                 const isOpen = isMini || !!openGroups[label];
+                const hasActiveChild = children.some((child) => checkIsActive(child.href, pathname));
 
                 return (
                   <div key={label} className="relative">
@@ -409,7 +427,7 @@ const handleToggleMini = () => {
                       aria-controls={`submenu-${label}`}
                       onMouseEnter={(e) => isMini && showTooltip(e, label)}
                       onMouseLeave={hideTooltip}
-                      className={`${linkBase} ${linkIdle} cursor-pointer text-left ${
+                      className={`${linkBase} ${isActive || hasActiveChild ? linkActive : linkIdle} cursor-pointer text-left ${
                         isMini ? "justify-center px-2" : ""
                       }`}
                     >

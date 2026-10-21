@@ -75,7 +75,7 @@ const Pagination: React.FC<PaginationProps> = ({
   return (
     /* ONE row at every breakpoint: summary left, controls right */
     <div
-      className={`flex items-center justify-between gap-2 border-t border-divider pt-4 ${className}`}
+      className={`flex items-center justify-between gap-2  ${className}`}
     >
       {/* Summary — compact on phones, full on sm+ */}
       {totalItems != null && from != null && to != null && (

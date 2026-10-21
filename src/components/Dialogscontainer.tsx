@@ -12,6 +12,12 @@ import AddTemplateQuestionModal from "@/Questionnaires/template/Addtemplateques"
 import RescheduleModal from "@/appointments/listview/Reschedulemodal";
 import CancelAppointment from "@/appointments/listview/CancelAppointment";
 import JoinVideoVisit from "@/appointments/listview/JoinVideoVisit";
+import ApproveRequest from "@/appointments/requests/ApproveRequest";
+import DeclineRequest from "@/appointments/requests/DeclineRequest";
+import SuggestAlternativeTime from "@/appointments/requests/SuggestAlternativeTime";
+import StartConsultation from "@/appointments/waitingroom/StartConsultation";
+import SendWaitingRoomMessage from "@/appointments/waitingroom/SendMessage";
+import MarkNoShow from "@/appointments/waitingroom/MarkNoShow";
 import UnlockPopup from "@/administration/Unlockpopup";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
@@ -41,6 +47,8 @@ const DialogsContainer = () => {
   const templateQuestionModal = useAppSelector((state) => state.dialog.templateQuestionModal);
   const unlockPopupOpen = useAppSelector((state) => state.dialog.UnlockPopup);
   const cancelAppointmentOpen = useAppSelector((state) => state.dialog.CancelAppointment);
+  const declineRequestOpen = useAppSelector((state) => state.dialog.DeclineRequest);
+  const markNoShowOpen = useAppSelector((state) => state.dialog.MarkNoShow);
 
   return (
     <>
@@ -74,6 +82,15 @@ const DialogsContainer = () => {
         onClose={() => dispatch(hideModal("CancelAppointment"))}
       />
       <JoinVideoVisit />
+      <ApproveRequest />
+      <DeclineRequest
+        open={declineRequestOpen}
+        onClose={() => dispatch(hideModal("DeclineRequest"))}
+      />
+      <SuggestAlternativeTime />
+      <StartConsultation />
+      <SendWaitingRoomMessage />
+      <MarkNoShow open={markNoShowOpen} onClose={() => dispatch(hideModal("MarkNoShow"))} />
     </>
   );
 };

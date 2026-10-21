@@ -116,7 +116,7 @@ const LicenseCard = ({
         {badge}
       </span>
     </div>
-    <div className="mt-4 grid gap-4 lg:gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+    <div className="mt-4 grid gap-4 xl:gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
       {dropzone}
       <div>{children}</div>
     </div>

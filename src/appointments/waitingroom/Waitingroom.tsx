@@ -23,7 +23,9 @@ import Content from "@/components/Content";
 import Tags, { type TagTone } from "@/components/Tags";
 import Actions from "@/components/Actions";
 import { TableSelectAllCheckbox, useTableSelection } from "@/components/TableSelection";
-import RightSection, { BASE_FILTERS, checkboxCls } from "./Rightsection";
+import RightSection, { BASE_FILTERS, checkboxCls } from "../Rightsection";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 
 /* ---------- Static data ---------- */
 const STATS: StatItem[] = [
@@ -110,6 +112,7 @@ const InlineField = ({ label, children }: { label: string; children: React.React
 );
 /* ---------- Component ---------- */
 const WaitingRoom = () => {
+  const dispatch = useAppDispatch();
   const [showPanel, setShowPanel] = useState(false);
   const [panelHeight, setPanelHeight] = useState<number | null>(null);
   const [sort, setSort] = useState("oldest");
@@ -337,6 +340,9 @@ const WaitingRoom = () => {
             variant="waiting"
             onClose={() => setShowPanel(false)}
             onHeightChange={setPanelHeight}
+            onStartConsultation={() => dispatch(showModal("StartConsultation"))}
+            onSendWaitingRoomMessage={() => dispatch(showModal("SendWaitingRoomMessage"))}
+            onMarkNoShow={() => dispatch(showModal("MarkNoShow"))}
           />
         )}
       </div>

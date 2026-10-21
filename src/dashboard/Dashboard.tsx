@@ -78,7 +78,7 @@ const Dashboard = () => {
     <div className="mx-auto w-full max-w-[1600px] space-y-4 sm:space-y-5">
       <StatCards stats={STATS} />
 
-      <div className="grid gap-4 sm:gap-5 lg:grid-cols-[1.35fr_1fr]">
+      <div className="grid gap-4 sm:gap-5 xl:grid-cols-[1.35fr_1fr]">
         {/* ---------- Today's Appointments ---------- */}
         <section className={cardCls}>
           <div className="relative">
@@ -168,7 +168,7 @@ const Dashboard = () => {
         <div className="relative">
           <h2 className="text-sm font-semibold text-heading">Quick Actions</h2>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {ACTIONS.map(({ label, Icon, tone, bg }, i) => {
               const isSelected = selectedAction === i;
               return (

@@ -37,6 +37,12 @@ interface ModalState {
   RescheduleAppointment: boolean;
   CancelAppointment: boolean;
   JoinVideoVisit: boolean;
+  ApproveRequest: boolean;
+  DeclineRequest: boolean;
+  SuggestAlternativeTime: boolean;
+  StartConsultation: boolean;
+  SendWaitingRoomMessage: boolean;
+  MarkNoShow: boolean;
 }
 
 const initialState: ModalState = {
@@ -57,6 +63,12 @@ const initialState: ModalState = {
   RescheduleAppointment: false,
   CancelAppointment: false,
   JoinVideoVisit: false,
+  ApproveRequest: false,
+  DeclineRequest: false,
+  SuggestAlternativeTime: false,
+  StartConsultation: false,
+  SendWaitingRoomMessage: false,
+  MarkNoShow: false,
 };
 
 // Only boolean keys can be toggled with showModal / hideModal
@@ -157,6 +169,12 @@ const dialogSlice = createSlice({
       state.RescheduleAppointment = false;
       state.CancelAppointment = false;
       state.JoinVideoVisit = false;
+      state.ApproveRequest = false;
+      state.DeclineRequest = false;
+      state.SuggestAlternativeTime = false;
+      state.StartConsultation = false;
+      state.SendWaitingRoomMessage = false;
+      state.MarkNoShow = false;
     },
   },
 });

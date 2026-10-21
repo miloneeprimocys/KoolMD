@@ -204,8 +204,8 @@ const ViewPrescriptions = () => {
 
       {/* Patient card */}
       <div className="rounded-[14px] border border-border bg-card p-3.5 sm:p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
-          <div className="flex items-center gap-3 sm:gap-4 lg:w-[300px] lg:shrink-0">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4 xl:w-[300px] xl:shrink-0">
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-semibold text-primary sm:h-20 sm:w-20 sm:text-xl">
               {initials(patient.name)}
             </span>
@@ -218,9 +218,9 @@ const ViewPrescriptions = () => {
             </div>
           </div>
 
-          <dl className="grid min-w-0 flex-1 grid-cols-2 gap-4 lg:grid-cols-5 lg:gap-0 lg:divide-x lg:divide-divider">
+          <dl className="grid min-w-0 flex-1 grid-cols-2 gap-4 xl:grid-cols-5 xl:gap-0 xl:divide-x xl:divide-divider">
             {stats.map((s) => (
-              <div key={s.label} className="min-w-0 lg:px-5 lg:first:pl-0 lg:last:pr-0">
+              <div key={s.label} className="min-w-0 xl:px-5 xl:first:pl-0 xl:last:pr-0">
                 <dt className="text-xs text-body">{s.label}</dt>
                 <dd className="mt-1 break-words text-sm font-semibold text-heading">{s.value}</dd>
                 {s.sub && <dd className="text-xs text-body">{s.sub}</dd>}

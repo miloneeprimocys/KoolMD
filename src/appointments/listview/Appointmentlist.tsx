@@ -2,7 +2,10 @@
 
 import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Download, MapPin, Video } from "lucide-react";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 
 import SearchAndFilter from "@/components/Searchandfilter";
 import Table from "@/components/Table";
@@ -21,7 +24,7 @@ import RightSection, {
   StatusChips,
   checkboxCls,
   type ChipItem,
-} from "./Rightsection";
+} from "../Rightsection";
 
 /* ---------- Static data ---------- */
 const FILTERS = BASE_FILTERS;
@@ -115,6 +118,8 @@ const COLUMNS: TableColumn[] = [
 
 /* ---------- Component ---------- */
 const AppointmentList = () => {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
   const [chip, setChip] = useState("All");
   const [page, setPage] = useState(1);
   const [showPanel, setShowPanel] = useState(false);
@@ -171,6 +176,8 @@ const AppointmentList = () => {
             onAction={(action) => {
               if (action === "view") {
                 setShowPanel((open) => !open);
+              } else if (action === "edit") {
+                router.push("/edit-appointment");
               } else {
                 setShowPanel(true);
               }
@@ -216,7 +223,16 @@ const AppointmentList = () => {
         </div>
 
         {/* Right section (opens when a row is selected) */}
-        {showPanel && <RightSection variant="appointment" onClose={() => setShowPanel(false)} />}
+        {showPanel && (
+          <RightSection
+            variant="appointment"
+            onClose={() => setShowPanel(false)}
+            onJoinVideoVisit={() => dispatch(showModal("JoinVideoVisit"))}
+            onReschedule={() => dispatch(showModal("RescheduleAppointment"))}
+            onCancelAppointment={() => dispatch(showModal("CancelAppointment"))}
+            onEditAppointment={() => router.push("/edit-appointment")}
+          />
+        )}
       </div>
     </div>
   );

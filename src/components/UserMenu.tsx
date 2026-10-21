@@ -67,13 +67,13 @@ const UserMenu = () => {
         </span>
 
         {/* Name + role — large screens only */}
-        <div className="hidden text-left leading-tight lg:block">
+        <div className="hidden text-left leading-tight xl:block">
           <p className="text-xs font-semibold text-heading">{fullName}</p>
           <p className="text-[10px] text-body">{primaryRoleLabel}</p>
         </div>
 
         <ChevronDown
-          className={`hidden h-4 w-4 text-body transition-transform lg:block ${isMenuOpen ? "rotate-180" : ""}`}
+          className={`hidden h-4 w-4 text-body transition-transform xl:block ${isMenuOpen ? "rotate-180" : ""}`}
         />
       </button>
 

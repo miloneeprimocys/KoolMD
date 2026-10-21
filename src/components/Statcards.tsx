@@ -99,7 +99,7 @@ const StatCards = ({ stats = DEFAULT_STATS }: { stats?: StatItem[] }) => {
             {/* ── Wavy flowing layers ── */}
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-14 overflow-hidden opacity-40 transition-opacity duration-500 group-hover:opacity-100 lg:h-16"
+              className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-14 overflow-hidden opacity-40 transition-opacity duration-500 group-hover:opacity-100 xl:h-16"
             >
               <svg className="btn-wave btn-wave-1" viewBox="0 0 1200 120" preserveAspectRatio="none">
                 <path d={WAVE_PATH} fill={waveColor} opacity="0.10" />
