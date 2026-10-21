@@ -306,36 +306,7 @@ const SelectTests = ({ selected, onChange, error }: Props) => {
           </p>
         </div>
 
-        {/* Category tabs – these only filter the table below */}
-        <div
-          role="tablist"
-          aria-label="Test categories"
-          className="flex gap-4 overflow-x-auto border-b border-border hide-scrollbar sm:gap-6"
-        >
-          {TABS.map((t) => {
-            const active = t === tab;
-            return (
-              <button
-                key={t}
-                role="tab"
-                type="button"
-                aria-selected={active}
-                onClick={() => {
-                  setTab(t);
-                  setPage(1);
-                }}
-                className={`-mb-px cursor-pointer whitespace-nowrap border-b-2 px-1 pb-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:text-sm ${
-                  active
-                    ? "border-primary text-primary"
-                    : "border-transparent text-body hover:text-heading"
-                }`}
-              >
-                {t}
-              </button>
-            );
-          })}
-        </div>
-
+      
         {/* Search + category filter */}
         <SearchAndFilter
           placeholder="Search test name, code or keyword..."
