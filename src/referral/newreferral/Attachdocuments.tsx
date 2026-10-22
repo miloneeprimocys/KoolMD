@@ -162,7 +162,7 @@ const AttachDocuments = ({ values: v, onChange }: StepProps<ReferralValues>) => 
           <div className={`${cardCls} text-sm text-body`}>No patient selected.</div>
         )}
 
-        <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-primary/[0.06] p-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-primary/[0.06] dark:bg-primary/15 p-4 sm:flex-row sm:items-center">
           {provider ? (
             <>
               <div className="flex min-w-0 items-center gap-4">

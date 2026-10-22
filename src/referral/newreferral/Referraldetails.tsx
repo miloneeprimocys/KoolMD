@@ -140,7 +140,7 @@ export const validateReferralDetails = (v: ReferralValues): Errors => {
 /* ---------------------------------------------------------------- */
 /** Patient summary box (used on steps 1 and 3). */
 export const PatientSummaryCard = ({ patient, className = "" }: { patient: Patient; className?: string }) => (
-  <div className={`flex items-center gap-4 rounded-xl bg-primary/[0.06] p-4 ${className}`}>
+  <div className={`flex items-center gap-4 rounded-xl bg-primary/[0.06] dark:bg-primary/15 p-4 ${className}`}>
     <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-pink/15 text-base font-semibold text-pink">
       {initials(patient.name)}
     </span>
