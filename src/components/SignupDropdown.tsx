@@ -51,6 +51,12 @@ export interface SignupDropdownProps {
   triggerClassName?: string;
   /** Render the options in a viewport layer to escape clipped containers. */
   portalMenu?: boolean;
+  /** Maximum portal menu height in pixels when the menu is scrollable. */
+  menuMaxHeight?: number;
+  /** Allow the menu to grow to its full content height without an inner scrollbar. */
+  menuScrollable?: boolean;
+  /** Set a local stacking level for portal menus, such as below sticky table headers. */
+  portalMenuZIndex?: number;
   renderSelected?: (option: DropdownOption) => ReactNode;
   renderOption?: (option: DropdownOption) => ReactNode;
 }
@@ -81,6 +87,9 @@ const SignupDropdown = forwardRef<HTMLInputElement, SignupDropdownProps>(
       bordered = true,
       triggerClassName = "",
       portalMenu = false,
+      menuMaxHeight = 256,
+      menuScrollable = true,
+      portalMenuZIndex = 20,
       renderSelected,
       renderOption,
     },
@@ -177,7 +186,10 @@ const chevronRight = compact ? "right-2" : "right-3.5";
         spaceBelow < minSpaceBelow && spaceAbove > spaceBelow ? "up" : "down";
       setPlacement(nextPlacement);
       if (portalMenu) {
-        const menuHeight = Math.min(256, filtered.length * 44 + 8);
+        const menuHeight = Math.min(
+          menuScrollable ? menuMaxHeight : Number.POSITIVE_INFINITY,
+          filtered.length * 44 + 8,
+        );
         setPortalPosition({
           left: rect.left,
           top:
@@ -192,7 +204,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
     useLayoutEffect(() => {
       if (open) computePlacement();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, filtered.length, portalMenu]);
+    }, [open, filtered.length, portalMenu, menuMaxHeight, menuScrollable]);
 
     useLayoutEffect(() => {
       if (!open || !portalMenu || !triggerRef.current || !listRef.current) return;
@@ -341,7 +353,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
     return (
       <div
         ref={wrapRef}
-        className={`relative w-full ${open ? "z-[60]" : "z-10"} ${className}`}
+        className={`relative w-full ${portalMenu ? "" : open ? "z-[60]" : "z-10"} ${className}`}
       >
         {label && (
           <label
@@ -514,12 +526,15 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                       left: portalPosition?.left ?? 0,
                       top: portalPosition?.top ?? 0,
                       width: portalPosition?.width ?? wrapRef.current?.offsetWidth,
+                      maxHeight: menuScrollable ? menuMaxHeight : undefined,
+                      zIndex: portalMenuZIndex,
                     }
                   : undefined
               }
               className={`
-                ${portalMenu ? "z-[500]" : "absolute left-0 right-0 z-[100]"}
-                max-h-64 overflow-y-auto overflow-x-hidden
+                ${portalMenu ? "" : "absolute left-0 right-0 z-[100]"}
+                ${portalMenu ? "" : "max-h-64"}
+                ${menuScrollable ? "overflow-y-auto" : "overflow-y-visible"} overflow-x-hidden
                 rounded-xl border border-border
                 bg-card
                 shadow-2xl shadow-black/20 dark:shadow-black/60

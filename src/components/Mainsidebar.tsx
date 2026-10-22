@@ -100,7 +100,8 @@ const SECTIONS: NavSection[] = [
       },
       { label: "Lab Results", href: "/lab-results", Icon: FlaskConical },
       { label: "Questionnaires", href: "/questionnaires", Icon: ListChecks },
-      { label: "Referrals", href: "/referrals", Icon: Send },
+      { label: "Referrals", href: "/referral", Icon: Send },
+      { label: "eFax", href: "/efax", Icon: FileText },
     ],
   },
   {
@@ -108,6 +109,18 @@ const SECTIONS: NavSection[] = [
     items: [
       { label: "Billing & Payments", href: "/billing", Icon: CreditCard },
       { label: "Reports", href: "/reports", Icon: ClipboardList },
+      {
+        label: "Settings",
+        href: "/settings/integration",
+        Icon: Settings,
+        children: [
+          { label: "Integrations", href: "/settings/integration", Icon: Stethoscope },
+          { label: "Users & Roles", href: "/settings/users-roles", Icon: Users },
+          { label: "Templates", href: "/settings/templates", Icon: FileText },
+          { label: "System Preferences", href: "/settings/system-preferences", Icon: Settings },
+          { label: "Audit Logs", href: "/settings/audit-logs", Icon: ClipboardList },
+        ],
+      },
       {
         label: "Administration",
         href: "/administration/chatunlock?tab=unlock-requests",
@@ -121,7 +134,6 @@ const SECTIONS: NavSection[] = [
             Icon: Unlock,
           },
           { label: "Audit Logs", href: "/audit-logs", Icon: ClipboardList },
-          { label: "Settings", href: "/settings", Icon: Settings },
         ],
       },
       { label: "Messages", href: "/messages", Icon: MessageSquare, badge: 1 },
@@ -417,31 +429,24 @@ const handleToggleMini = () => {
                 /* ---- Group with children ---- */
                 const isOpen = isMini || !!openGroups[label];
                 const hasActiveChild = children.some((child) => checkIsActive(child.href, pathname));
+                const isGroupActive = !isOpen && (isActive || hasActiveChild);
 
                 return (
                   <div key={label} className="relative">
-                    {!(isMini && label === "Administration") && <button
+                    {!isMini && <button
                       type="button"
-                      onClick={() => !isMini && toggle(label)}
+                      onClick={() => toggle(label)}
                       aria-expanded={isOpen}
                       aria-controls={`submenu-${label}`}
-                      onMouseEnter={(e) => isMini && showTooltip(e, label)}
-                      onMouseLeave={hideTooltip}
-                      className={`${linkBase} ${isActive || hasActiveChild ? linkActive : linkIdle} cursor-pointer text-left ${
-                        isMini ? "justify-center px-2" : ""
-                      }`}
+                      className={`${linkBase} ${isGroupActive ? linkActive : linkIdle} cursor-pointer text-left`}
                     >
                       <Icon className="h-4 w-4 shrink-0 lg:h-[18px] lg:w-[18px] xl:h-5 xl:w-5" />
-                      {!isMini && (
-                        <>
-                          <span>{label}</span>
-                          <ChevronDown
-                            className={`ml-auto h-4 w-4 transition-transform duration-300 ease-in-out lg:h-[18px] lg:w-[18px] ${
-                              isOpen ? "rotate-0" : "-rotate-90"
-                            }`}
-                          />
-                        </>
-                      )}
+                      <span>{label}</span>
+                      <ChevronDown
+                        className={`ml-auto h-4 w-4 transition-transform duration-300 ease-in-out lg:h-[18px] lg:w-[18px] ${
+                          isOpen ? "rotate-0" : "-rotate-90"
+                        }`}
+                      />
                     </button>}
 
                     {!isMini && (

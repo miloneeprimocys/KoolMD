@@ -43,6 +43,7 @@ interface ModalState {
   StartConsultation: boolean;
   SendWaitingRoomMessage: boolean;
   MarkNoShow: boolean;
+  DisconnectIntegration: boolean;
 }
 
 const initialState: ModalState = {
@@ -69,6 +70,7 @@ const initialState: ModalState = {
   StartConsultation: false,
   SendWaitingRoomMessage: false,
   MarkNoShow: false,
+  DisconnectIntegration: false,
 };
 
 // Only boolean keys can be toggled with showModal / hideModal
@@ -175,6 +177,7 @@ const dialogSlice = createSlice({
       state.StartConsultation = false;
       state.SendWaitingRoomMessage = false;
       state.MarkNoShow = false;
+      state.DisconnectIntegration = false;
     },
   },
 });

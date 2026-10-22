@@ -488,7 +488,7 @@ const AddPatient = () => {
         </div>
       </div>
 
-      <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px]">
         {/* ================= LEFT: FORM ================= */}
         <form
           className={`${cardCls} min-w-0 sm:p-6`}

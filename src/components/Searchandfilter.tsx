@@ -31,6 +31,8 @@ export interface SearchAndFilterProps {
   dateRange?: DateRange;
   onDateRangeChange?: (range: DateRange) => void;
   onMoreFilters?: () => void;
+  /** Optional action shown after the filter controls. */
+  trailingFilterAction?: React.ReactNode;
   className?: string;
   filterLayout?: "flex" | "grid";
 }
@@ -50,6 +52,16 @@ const formatDateLabel = (isoDate: string) => {
   });
 };
 
+const formatCompactDateLabel = (isoDate: string) => {
+  if (!isoDate) return "";
+  const [y, m, d] = isoDate.split("-").map(Number);
+  if (!y || !m || !d) return isoDate;
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
 const DEFAULT_DATE_RANGE: DateRange = { start: "", end: "" };
 
 const SearchAndFilter = ({
@@ -63,6 +75,7 @@ const SearchAndFilter = ({
   dateRange = DEFAULT_DATE_RANGE,
   onDateRangeChange,
   onMoreFilters,
+  trailingFilterAction,
   className = "",
   filterLayout = "flex",
 }: SearchAndFilterProps) => {
@@ -132,10 +145,15 @@ const SearchAndFilter = ({
   };
 
   const hasActiveDateRange = Boolean(localDates.start || localDates.end);
-  const dateRangeDisplay = hasActiveDateRange
-    ? `${formatDateLabel(localDates.start) || "Start"} - ${formatDateLabel(localDates.end) || "End"
-    }`
-    : "Date Range";
+  const dateRangeDisplay =
+    localDates.start && localDates.end
+      ? `${formatCompactDateLabel(localDates.start)} - ${formatCompactDateLabel(localDates.end)}`
+      : hasActiveDateRange
+        ? `${formatDateLabel(localDates.start) || "Start"} - ${formatDateLabel(localDates.end) || "End"}`
+        : "Date Range";
+  const dateRangeTitle = hasActiveDateRange
+    ? `${formatDateLabel(localDates.start) || "Start"} - ${formatDateLabel(localDates.end) || "End"}`
+    : dateRangeDisplay;
 
   return (
     <div
@@ -193,7 +211,7 @@ const SearchAndFilter = ({
               <button
                 type="button"
                 onClick={() => setDatePopoverOpen((o) => !o)}
-                title={dateRangeDisplay}
+                title={dateRangeTitle}
                 className={`flex h-12 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border px-3.5 text-xs sm:text-sm font-normal transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${hasActiveDateRange || datePopoverOpen
                     ? "border-primary bg-primary/5 text-heading"
                     : "border-border bg-card text-placeholder hover:border-primary/40 hover:text-primary"
@@ -283,6 +301,9 @@ const SearchAndFilter = ({
               </button>
             </div>
           )}
+
+          {trailingFilterAction}
+
         </div>
       )}
     </div>

@@ -19,6 +19,7 @@ import StartConsultation from "@/appointments/waitingroom/StartConsultation";
 import SendWaitingRoomMessage from "@/appointments/waitingroom/SendMessage";
 import MarkNoShow from "@/appointments/waitingroom/MarkNoShow";
 import UnlockPopup from "@/administration/Unlockpopup";
+import DisconnectIntegration from "@/integration/DisconnectIntegration";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
   hideModal,
@@ -49,6 +50,7 @@ const DialogsContainer = () => {
   const cancelAppointmentOpen = useAppSelector((state) => state.dialog.CancelAppointment);
   const declineRequestOpen = useAppSelector((state) => state.dialog.DeclineRequest);
   const markNoShowOpen = useAppSelector((state) => state.dialog.MarkNoShow);
+  const disconnectIntegrationOpen = useAppSelector((state) => state.dialog.DisconnectIntegration);
 
   return (
     <>
@@ -91,6 +93,11 @@ const DialogsContainer = () => {
       <StartConsultation />
       <SendWaitingRoomMessage />
       <MarkNoShow open={markNoShowOpen} onClose={() => dispatch(hideModal("MarkNoShow"))} />
+      <DisconnectIntegration
+        open={disconnectIntegrationOpen}
+        onClose={() => dispatch(hideModal("DisconnectIntegration"))}
+        onConfirm={() => dispatch(hideModal("DisconnectIntegration"))}
+      />
     </>
   );
 };

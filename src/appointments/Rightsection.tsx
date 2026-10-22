@@ -30,6 +30,7 @@ import Tags, { type TagTone } from "@/components/Tags";
 import EditButton from "@/components/EditButton";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
+import DisconnectButton from "@/components/DisconnectButton";
 import RightSubSection from "@/components/RightSubSection";
 import { useAppDispatch } from "@/hooks/useAppHooks";
 import { showModal } from "@/redux/slices/dialogslice";
@@ -362,10 +363,10 @@ const PanelActions = ({
             className="w-full !border-primary/30 !bg-primary/5 !text-primary hover:!border-primary/40 hover:!bg-primary/10 hover:!text-primary"
             onClick={onReschedule}
           />
-          <ImportButton
+          <DisconnectButton
             text="Cancel Appointment"
             icon={<Trash2 className="h-4 w-4" />}
-            className="w-full !border-danger/40 !bg-danger/5 !text-danger hover:!border-danger/50 hover:!bg-danger/10 hover:!text-danger"
+            className="w-full"
             onClick={onCancelAppointment}
           />
         </>
@@ -374,10 +375,10 @@ const PanelActions = ({
       return (
         <>
           <PanelButton tone="success" icon={Check} onClick={onApproveRequest}>Approve Request</PanelButton>
-          <ImportButton
+          <DisconnectButton
             text="Decline Request"
             icon={<X className="h-4 w-4" />}
-            className="w-full !border-danger/40 !bg-danger/5 !text-danger hover:!border-danger/50 hover:!bg-danger/10 hover:!text-danger"
+            className="w-full"
             onClick={onDeclineRequest}
           />
           <ImportButton
@@ -403,10 +404,10 @@ const PanelActions = ({
             className="w-full"
             onClick={onSendWaitingRoomMessage}
           />
-          <ImportButton
+          <DisconnectButton
             text="Mark as No Show"
             icon={<UserX className="h-4 w-4" />}
-            className="w-full !border-danger/40 !bg-danger/5 !text-danger hover:!border-danger/50 hover:!bg-danger/10 hover:!text-danger"
+            className="w-full"
             onClick={onMarkNoShow}
           />
         </>

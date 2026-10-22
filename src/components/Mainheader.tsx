@@ -49,10 +49,10 @@ const MainHeader = ({ onSearch }: MainHeaderProps) => {
         </div> */}
 
         {/* Divider — large screens only */}
-        <span
+        {/* <span
           className="hidden h-6 w-px bg-border lg:block"
           aria-hidden="true"
-        />
+        /> */}
 
         {/* Theme toggle */}
         <ThemeToggle />

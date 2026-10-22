@@ -21,6 +21,10 @@ import LabResults from "@/labresults/Labresults";
 import NewLabOrder from "@/labresults/newlaborder/Newlaborder";
 import QuestionnairesPage from "@/Questionnaires/Questionnairespage";
 import Administration from "@/administration/Administration";
+import Integration from "@/integration/Integration";
+import ReferralManagement from "@/referral/Referralmanagement";
+import NewReferral from "@/referral/newreferral/Newreferral";
+import Efax from "@/efax/Efax";
 import EditQuestionnaire from "@/Questionnaires/Editquestionnaire";
 import ViewResponse from "@/Questionnaires/response/Viewresponse";
 import AddTemplate from "@/Questionnaires/template/Addtemplate";
@@ -173,6 +177,26 @@ export const ROUTES: Record<string, RouteConfig> = {
   questionnaires: {
     component: QuestionnairesPage,
     title: "Questionnaires",
+    access: "protected",
+  },
+  "settings/integration": {
+    component: Integration,
+    title: "Integrations",
+    access: "protected",
+  },
+  referral: {
+    component: ReferralManagement,
+    title: "Referrals",
+    access: "protected",
+  },
+  efax: {
+    component: Efax,
+    title: "eFax",
+    access: "protected",
+  },
+  "new-referral": {
+    component: NewReferral,
+    title: "New Referral",
     access: "protected",
   },
   "administration/chatunlock": {

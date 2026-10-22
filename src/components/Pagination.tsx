@@ -134,8 +134,8 @@ const Pagination: React.FC<PaginationProps> = ({
               aria-current={isActive ? "page" : undefined}
             className={`${pageBtn} ${
             isActive  
-              ? "bg-primary/20 text-label/80"
-              : "text-heading hover:bg-primary/10 hover:text-primary"
+              ? " bg-primary/15 dark:bg-primary/20 text-label/80"
+              : "text-heading hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary"
           }`}
             >
               {p}

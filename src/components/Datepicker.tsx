@@ -40,6 +40,10 @@ export interface DatePickerProps {
   align?: "left" | "right" | "auto";
   /** Stacking order for the portaled calendar, useful when rendered inside dialogs. */
   portalZIndex?: number;
+  /** Stacking order for the mobile calendar modal. Defaults to `portalZIndex`. */
+  mobilePortalZIndex?: number;
+  /** Optional stacking order for the trigger, useful inside sticky table rows. */
+  triggerZIndex?: number;
 }
 
 /* ---------------------------------------------------------------- */
@@ -111,6 +115,8 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       minSpaceBelow = 400,
       align = "auto",
       portalZIndex = 200,
+      mobilePortalZIndex,
+      triggerZIndex,
     },
     ref,
   ) => {
@@ -496,7 +502,8 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
     return (
       <div
         ref={wrapRef}
-        className={`relative w-full ${open ? "z-[60]" : "z-10"} ${className}`}
+        className={`relative w-full ${triggerZIndex == null ? (open ? "z-[60]" : "z-10") : ""} ${className}`}
+        style={triggerZIndex == null ? undefined : { zIndex: triggerZIndex }}
       >
         {label && (
           <label
@@ -576,7 +583,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
             <div
               onPointerDown={(e) => e.stopPropagation()}
               className="fixed inset-0 z-[200] flex items-center justify-center p-4"
-              style={{ zIndex: portalZIndex }}
+              style={{ zIndex: mobilePortalZIndex ?? portalZIndex }}
             >
               <div
                 aria-hidden="true"

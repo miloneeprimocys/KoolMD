@@ -255,11 +255,13 @@ const QuestionnaireList = ({
               onFilterChange={handleFilterChange}
               showDateRange={false}
               className="flex-col xl:flex-row 2xl:flex-row"
+              trailingFilterAction={
+                <div className="flex shrink-0 gap-2">
+                  <ImportButton text="Reset" icon={null} onClick={resetFilters} className="flex-none" />
+                  <AddButton text="Search" icon={null} onClick={applyFilters} className="flex-none" />
+                </div>
+              }
             />
-          </div>
-          <div className="flex gap-2">
-            <ImportButton text="Reset" icon={null} onClick={resetFilters} className="flex-none" />
-            <AddButton text="Search" icon={null} onClick={applyFilters} className="flex-none" />
           </div>
         </div>
       </div>

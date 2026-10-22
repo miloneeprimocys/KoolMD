@@ -33,9 +33,9 @@ const AddSteps = ({
   return (
     <nav
       aria-label="Progress"
-      className={`rounded-2xl border border-border bg-card p-4 sm:p-5 ${className}`}
+      className={`rounded-xl border border-border bg-card p-2 ${className}`}
     >
-      <div className="sm:custom-scrollbar sm:overflow-x-auto">
+      <div className="sm:custom-scrollbar sm:overflow-x-auto sm:overflow-y-hidden sm:px-5">
       <ol className="flex w-full min-w-0 items-center overflow-visible px-1 py-5 sm:w-max sm:min-w-full">
         {steps.map((step, idx) => {
           const complete = step.id < current;
@@ -54,7 +54,7 @@ const AddSteps = ({
                     clickable ? "cursor-pointer" : "cursor-default"
                   }`}
                 >
-                  <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
+                  <span className="relative flex h-9 w-9 shrink-0 items-center justify-center 2xl:h-12 2xl:w-12">
                     {isCurrent && (
                       <span
                         aria-hidden="true"
@@ -62,7 +62,7 @@ const AddSteps = ({
                       />
                     )}
                     <span
-                      className={`relative flex h-full w-full items-center justify-center rounded-full text-sm font-semibold transition-colors duration-200 ${
+                      className={`relative flex h-full w-full items-center justify-center rounded-full text-sm font-semibold transition-colors duration-200 2xl:text-base ${
                         complete
                           ? "bg-primary text-white group-hover:bg-primary/90"
                           : isCurrent
@@ -70,7 +70,7 @@ const AddSteps = ({
                             : "bg-divider text-body"
                       }`}
                     >
-                      {complete ? <Check className="h-4 w-4" /> : step.id}
+                      {complete ? <Check className="h-4 w-4 2xl:h-5 2xl:w-5" /> : step.id}
                     </span>
                   </span>
                   <span className={`min-w-0 flex-1 sm:flex-none sm:whitespace-nowrap ${isCurrent ? "hidden sm:block" : "hidden xl:block"}`}>
