@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import Breadcrumb from "@/components/Breadcrumb";
+import StickyColumns from "@/components/StickyColumns";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 import Tags, { type TagTone } from "@/components/Tags";
@@ -378,7 +379,7 @@ const ViewResponse = () => {
         </div>
       </div>
 
-      <div className="grid items-start gap-4 sm:gap-5 2xl:grid-cols-[minmax(0,1fr)_380px]">
+      <StickyColumns columnsClass="2xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="min-w-0 space-y-4 sm:space-y-5">
           <Card icon={Users} title="Patient Information">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,2fr)] md:items-center">
@@ -443,7 +444,7 @@ const ViewResponse = () => {
           </Card>
         </div>
 
-        <aside className="min-w-0 space-y-4 sm:space-y-5">
+        <aside>
           {/* Response status */}
           <Card icon={ShieldCheck} title="Response Status">
             <div className="flex items-center justify-between gap-3">
@@ -472,7 +473,7 @@ const ViewResponse = () => {
             </div>
           </Card>
         </aside>
-      </div>
+      </StickyColumns>
     </div>
   );
 };

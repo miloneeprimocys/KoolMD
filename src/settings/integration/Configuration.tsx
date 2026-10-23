@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { BookOpen, Plug } from "lucide-react";
+import { BookOpen, Eye, EyeOff, Plug } from "lucide-react";
 
 import SignupField from "@/components/SignupField";
 import SignupDropdown from "@/components/SignupDropdown";
@@ -125,6 +125,7 @@ const Configuration = ({
 }) => {
   const [values, setValues] = useState<ConfigurationValues>(initialConfiguration());
   const [errors, setErrors] = useState<Errors>({});
+  const [showClientSecret, setShowClientSecret] = useState(false);
 
   const set = <K extends keyof ConfigurationValues>(key: K, val: ConfigurationValues[K]) => {
     setValues((p) => ({ ...p, [key]: val }));
@@ -229,12 +230,22 @@ const Configuration = ({
           />
           <SignupField
             name="clientSecret"
-            type="password"
+            type={showClientSecret ? "text" : "password"}
             label={<>Client Secret<Req /></>}
             placeholder="Enter client secret"
             value={values.clientSecret}
             onChange={(e) => set("clientSecret", e.target.value)}
             error={errors.clientSecret}
+            trailing={
+              <button
+                type="button"
+                aria-label={showClientSecret ? "Hide client secret" : "Show client secret"}
+                onClick={() => setShowClientSecret((visible) => !visible)}
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-body transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                {showClientSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            }
           />
           <SignupField
             name="tokenUrl"

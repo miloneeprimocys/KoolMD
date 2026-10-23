@@ -8,6 +8,7 @@ import { type TableColumn } from "@/components/Tableheader";
 import Content from "@/components/Content";
 import Tags from "@/components/Tags";
 import { cardCls } from "@/providers/Shared";
+import LabOrderColumns from "./Labordercolumns";
 import {
   CATEGORY_TONE,
   EditLink,
@@ -103,7 +104,7 @@ const ReviewSave = ({ tests, snapshot, additional, patient = SAMPLE_PATIENT, onE
     .join("");
 
   return (
-    <div className="grid items-start gap-4 sm:gap-5 2xl:grid-cols-[minmax(0,1fr)_380px]">
+    <LabOrderColumns>
       {/* ================= LEFT ================= */}
       <div className="min-w-0 space-y-4 sm:space-y-5">
         {/* Patient information */}
@@ -186,7 +187,7 @@ const ReviewSave = ({ tests, snapshot, additional, patient = SAMPLE_PATIENT, onE
       </div>
 
       {/* ================= RIGHT ================= */}
-      <aside className="min-w-0 space-y-4 sm:space-y-5 2xl:sticky 2xl:top-0 2xl:self-start">
+      <aside>
         <section className={`${cardCls} sm:p-6`}>
           <h3 className="mb-3 text-base font-semibold text-heading">Order Summary</h3>
 
@@ -226,7 +227,7 @@ const ReviewSave = ({ tests, snapshot, additional, patient = SAMPLE_PATIENT, onE
           <span className="text-lg font-bold text-label">₹ {formatPrice(total)}</span>
         </div>
       </aside>
-    </div>
+    </LabOrderColumns>
   );
 };
 

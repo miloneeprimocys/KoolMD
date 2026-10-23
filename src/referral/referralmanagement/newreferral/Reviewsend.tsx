@@ -10,6 +10,7 @@ import { type TableColumn } from "@/components/Tableheader";
 import Content from "@/components/Content";
 import Tags from "@/components/Tags";
 import { cardCls, type StepProps } from "@/providers/Shared";
+import StickyColumns from "@/components/StickyColumns";
 import {
   PRIORITY_TONE,
   formatDate,
@@ -129,7 +130,7 @@ const ReviewSend = ({ values: v, onChange, onEdit }: Props) => {
   }));
 
   return (
-    <div className="grid items-start gap-4 sm:gap-5 2xl:grid-cols-[minmax(0,1fr)_340px]">
+    <StickyColumns columnsClass="2xl:grid-cols-[minmax(0,1fr)_340px]">
       {/* ================= LEFT: review cards ================= */}
       <div className="min-w-0 space-y-4 sm:space-y-5">
         <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
@@ -230,7 +231,7 @@ const ReviewSend = ({ values: v, onChange, onEdit }: Props) => {
       </div>
 
       {/* ================= RIGHT: ready to send ================= */}
-      <aside className={`${cardCls} space-y-5 sm:p-6 xl:sticky xl:top-0`}>
+      <aside className={`${cardCls} sm:p-6`}>
         <div className="flex items-start gap-4">
           <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Send className="h-6 w-6" />
@@ -282,7 +283,7 @@ const ReviewSend = ({ values: v, onChange, onEdit }: Props) => {
           </span>
         </label>
       </aside>
-    </div>
+    </StickyColumns>
   );
 };
 

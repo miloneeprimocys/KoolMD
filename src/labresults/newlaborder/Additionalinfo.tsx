@@ -18,6 +18,7 @@ import {
   type StepProps,
 } from "@/providers/Shared";
 import { SelectedTestsCard, EditLink, type LabTest } from "./Selecttests";
+import LabOrderColumns from "./Labordercolumns";
 
 /* ---------- Options ---------- */
 const SPECIMEN_SOURCES = toOptions([
@@ -136,7 +137,7 @@ const AdditionalInfo = ({
   const priority = effectivePriority(values, snapshot);
 
   return (
-    <div className="grid items-start gap-4 sm:gap-5 2xl:grid-cols-[minmax(0,1fr)_380px]">
+    <LabOrderColumns>
       {/* ================= LEFT ================= */}
       <section className={`${cardCls} min-w-0 space-y-4 sm:p-6`}>
         <div>
@@ -250,7 +251,7 @@ const AdditionalInfo = ({
       </section>
 
       {/* ================= RIGHT ================= */}
-      <aside className="space-y-4 sm:space-y-5 2xl:sticky 2xl:top-0 2xl:self-start">
+      <aside>
         <SelectedTestsCard
           tests={tests}
           onRemove={onRemoveTest}
@@ -277,7 +278,7 @@ const AdditionalInfo = ({
           </dl>
         </section>
       </aside>
-    </div>
+    </LabOrderColumns>
   );
 };
 

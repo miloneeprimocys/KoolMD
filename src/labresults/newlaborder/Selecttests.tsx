@@ -13,6 +13,7 @@ import Pagination from "@/components/Pagination";
 import { TableSelectAllCheckbox } from "@/components/TableSelection";
 import { FieldError } from "@/components/SignupField";
 import { cardCls } from "@/providers/Shared";
+import LabOrderColumns from "./Labordercolumns";
 
 /* ---------------------------------------------------------------- */
 /*  Shared data + helpers (also used by AdditionalInfo / Review)    */
@@ -296,7 +297,7 @@ const SelectTests = ({ selected, onChange, error }: Props) => {
   const selectedTests = selected.map(getTest).filter((t): t is LabTest => !!t);
 
   return (
-    <div className="grid items-start gap-4 sm:gap-5 2xl:grid-cols-[minmax(0,1fr)_380px]">
+    <LabOrderColumns>
       {/* ================= LEFT ================= */}
       <section className={`${cardCls} min-w-0 space-y-4 sm:p-6`}>
         <div>
@@ -348,7 +349,7 @@ const SelectTests = ({ selected, onChange, error }: Props) => {
       </section>
 
       {/* ================= RIGHT ================= */}
-      <aside className="space-y-4 sm:space-y-5 2xl:sticky 2xl:top-0 2xl:self-start">
+      <aside>
         <SelectedTestsCard
           tests={selectedTests}
           onRemove={(id) => onChange(selected.filter((x) => x !== id))}
@@ -357,7 +358,7 @@ const SelectTests = ({ selected, onChange, error }: Props) => {
           listMaxHeightClass="max-h-[70vh]"
         />
       </aside>
-    </div>
+    </LabOrderColumns>
   );
 };
 

@@ -19,6 +19,7 @@ import Addprescription from "@/prescriptions/addprescription/Addprescription";
 import ViewPrescriptions from "@/prescriptions/viewprescription/Viewprescriptions";
 import LabResults from "@/labresults/Labresults";
 import NewLabOrder from "@/labresults/newlaborder/Newlaborder";
+import Billing from "@/billing/Billing";
 import QuestionnairesPage from "@/Questionnaires/Questionnairespage";
 import Administration from "@/administration/chatunlock/Administration";
 import Integration from "@/settings/integration/Integration";
@@ -170,6 +171,31 @@ export const ROUTES: Record<string, RouteConfig> = {
   "lab-results": {
     component: LabResults,
     title: "Lab Results",
+    access: "protected",
+  },
+  billing: {
+    component: Billing,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/configuration": {
+    component: Billing,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/supported-methods": {
+    component: Billing,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/transaction-history": {
+    component: Billing,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/refund-settings": {
+    component: Billing,
+    title: "Billing & Payments",
     access: "protected",
   },
   "new-laborder": {

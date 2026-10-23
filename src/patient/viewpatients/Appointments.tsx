@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import StatCards, { type StatItem } from "@/components/Statcards";
+import StickyColumns from "@/components/StickyColumns";
 import Calendar, { dayKey, startOfDay } from "@/components/Calendar";
 import Table from "@/components/Table";
 import { type TableColumn } from "@/components/Tableheader";
@@ -254,7 +255,7 @@ const Appointments = ({
       {/* Stat cards */}
       <StatCards stats={STATS} />
 
-      <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,375px)_minmax(0,1fr)]">
+      <StickyColumns breakpoint="xl" columnsClass="xl:grid-cols-[minmax(0,375px)_minmax(0,1fr)]">
         {/* ================= LEFT: calendar + filters ================= */}
         <div className="space-y-4 sm:space-y-5">
           <SectionCard
@@ -447,7 +448,7 @@ const Appointments = ({
             <Table columns={HISTORY_COLUMNS} rows={historyRows} />
           </SectionCard>
         </div>
-      </div>
+      </StickyColumns>
     </div>
   );
 };

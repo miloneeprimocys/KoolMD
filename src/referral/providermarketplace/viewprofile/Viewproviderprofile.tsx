@@ -238,7 +238,7 @@ const ViewProviderProfile = ({ provider, initialTab = "overview" }: Props) => {
           </button>
         ))}
       </div>
-
+ 
       <div role="tabpanel">
         {tab === "overview" && <ProviderOverview profile={profile} />}
         {tab === "availability" && (

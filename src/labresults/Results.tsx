@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import {
   Building2,
   CalendarDays,
@@ -93,6 +93,7 @@ const ResultPanel = ({
   onPrev,
   onNext,
   onClose,
+  onHeightChange,
   isOpen,
 }: {
   result: Result;
@@ -100,6 +101,7 @@ const ResultPanel = ({
   onPrev: () => void;
   onNext: () => void;
   onClose: () => void;
+  onHeightChange: (height: number) => void;
   isOpen: boolean;
 }) => {
   const [tab, setTab] = useState<PanelTab>("Summary");
@@ -125,8 +127,9 @@ const ResultPanel = ({
       reopenKey={result.id}
       initiallyOpen={isOpen}
       onClose={onClose}
+      onHeightChange={onHeightChange}
       width={440}
-      className={cardCls}
+      className={`${cardCls} 2xl:sticky 2xl:top-4 2xl:self-start`}
     >
       {(closePanel) => (
         <>
@@ -240,6 +243,30 @@ const ResultPanel = ({
 const Results = () => {
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>("LAB-1008");
+  const [detailHeight, setDetailHeight] = useState(0);
+  const [listIsShorter, setListIsShorter] = useState(false);
+  const listRef = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (window.innerWidth < 1536 || !selectedId) {
+        setListIsShorter(false);
+        return;
+      }
+      const listHeight = listRef.current?.scrollHeight;
+      if (listHeight == null || listHeight === 0 || detailHeight === 0) return;
+      setListIsShorter(listHeight < detailHeight);
+    };
+
+    const observer = new ResizeObserver(measure);
+    if (listRef.current) observer.observe(listRef.current);
+    window.addEventListener("resize", measure);
+    measure();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [detailHeight, selectedId]);
 
   const selectedIndex = RESULTS.findIndex((r) => r.id === selectedId);
   const selected = selectedIndex >= 0 ? RESULTS[selectedIndex] : null;
@@ -294,7 +321,10 @@ const Results = () => {
   return (
     <div className="flex min-w-0 items-start gap-4 sm:gap-5">
       {/* ---------- Results list ---------- */}
-      <section className={`${cardCls} min-w-0 flex-1 space-y-4`}>
+      <section
+        ref={listRef}
+        className={`${cardCls} min-w-0 flex-1 space-y-4 ${listIsShorter ? "2xl:sticky 2xl:top-4 2xl:self-start" : ""}`}
+      >
         <h3 className="text-base font-semibold text-heading">Results ({18})</h3>
 
         <SearchAndFilter
@@ -326,6 +356,7 @@ const Results = () => {
         onPrev={() => setSelectedId(RESULTS[Math.max(selectedIndex - 1, 0)].id)}
         onNext={() => setSelectedId(RESULTS[Math.min(selectedIndex + 1, RESULTS.length - 1)].id)}
         onClose={() => setSelectedId(null)}
+        onHeightChange={setDetailHeight}
       />
     </div>
   );
