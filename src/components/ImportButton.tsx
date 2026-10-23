@@ -4,7 +4,7 @@ import React, { ReactNode } from "react";
 import { Upload } from "lucide-react";
 
 interface ImportButtonProps {
-  text?: string;
+  text?: ReactNode;
   /** Pass `null` to render without an icon */
   icon?: ReactNode | null;
   onClick?: () => void;

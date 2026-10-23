@@ -18,8 +18,8 @@ import SuggestAlternativeTime from "@/appointments/requests/SuggestAlternativeTi
 import StartConsultation from "@/appointments/waitingroom/StartConsultation";
 import SendWaitingRoomMessage from "@/appointments/waitingroom/SendMessage";
 import MarkNoShow from "@/appointments/waitingroom/MarkNoShow";
-import UnlockPopup from "@/administration/Unlockpopup";
-import DisconnectIntegration from "@/integration/DisconnectIntegration";
+import UnlockPopup from "@/administration/chatunlock/Unlockpopup";
+import DisconnectIntegration from "@/settings/integration/DisconnectIntegration";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
   hideModal,

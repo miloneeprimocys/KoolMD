@@ -16,7 +16,7 @@ import {
   patientMeta,
   type RequestStatus,
   type UnlockRequest,
-} from "./Chartrightsection";
+} from "../chatunlock/Chartrightsection";
 
 /* ---------- Static data ---------- */
 const FILTERS = [

@@ -10,7 +10,7 @@ import Content from "@/components/Content";
 import Actions from "@/components/Actions";
 import Pagination from "@/components/Pagination";
 import EditButton from "@/components/EditButton";
-import { LockBadge, type LockedChart } from "./Chartrightsection";
+import { LockBadge, type LockedChart } from "../chatunlock/Chartrightsection";
 
 /* ---------- Static data ---------- */
 const FILTERS = [

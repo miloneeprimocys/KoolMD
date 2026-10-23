@@ -10,7 +10,6 @@ import {
   Download,
   FileText,
   Maximize2,
-  Minimize2,
   Minus,
   Plus,
   ShieldCheck,
@@ -20,6 +19,7 @@ import {
 import Tags, { type TagTone } from "@/components/Tags";
 import ImportButton from "@/components/ImportButton";
 import CommonRightSection from "@/components/CommonRightSection";
+import MaximizeImage from "@/components/MaximizeImage";
 
 /* ---------- Types ---------- */
 export type PatientDocumentDetails = {
@@ -69,7 +69,7 @@ const CARD = {
 };
 
 const ZOOM_MIN = 50;
-const ZOOM_MAX = 200;
+const ZOOM_MAX = 150;
 const ZOOM_STEP = 25;
 
 /* ---------- Shared styles ---------- */
@@ -96,7 +96,7 @@ const DocumentPreview = ({
   <div
     className="mx-auto rounded-2xl border border-primary/20 bg-gradient-to-br from-shape-sky/30 via-card to-shape-sky/40 p-[1.5em] shadow-sm dark:from-slate-800 dark:via-slate-900 dark:to-blue-950"
     style={{
-      width: expanded ? "100%" : `${zoom}%`,
+      width: expanded ? `${640 * (zoom / 100)}px` : `${zoom}%`,
       fontSize: `${(13 * zoom) / 100}px`,
     }}
   >
@@ -150,32 +150,13 @@ const DocumentViewer = ({
 }) => {
   const [zoom, setZoom] = useState(100);
 
-  return (
-    <div
-      className={
-        expanded
-          ? "fixed inset-0 z-[200] flex flex-col items-center justify-center gap-5 bg-black/70 p-5 sm:p-8"
-          : "space-y-3"
-      }
-      onClick={expanded ? onToggleExpanded : undefined}
-    >
-      <div
-        className={
-          expanded
-            ? "w-full max-w-5xl"
-            : "overflow-auto rounded-2xl"
-        }
-        onClick={expanded ? (event) => event.stopPropagation() : undefined}
-      >
-        <DocumentPreview zoom={zoom} expanded={expanded} />
+  const viewer = (
+    <div className="space-y-3">
+      <div className="overflow-auto rounded-2xl">
+        <DocumentPreview zoom={zoom} expanded={false} />
       </div>
 
-      <div
-        className={`flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-2.5 py-2 ${
-          expanded ? "w-full max-w-5xl" : ""
-        }`}
-        onClick={expanded ? (event) => event.stopPropagation() : undefined}
-      >
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-card px-2.5 py-2">
         <button type="button" aria-label="Previous page" className={ctrlBtn}>
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -210,20 +191,32 @@ const DocumentViewer = ({
 
         <button
           type="button"
-          aria-label={expanded ? "Exit full screen" : "Full screen"}
-          title={expanded ? "Exit full screen" : "Full screen"}
+          aria-label="Full screen"
+          title="Full screen"
           aria-pressed={expanded}
-          onClick={onToggleExpanded}
+          onClick={() => onToggleExpanded()}
           className={ctrlBtn}
         >
-          {expanded ? (
-            <Minimize2 className="h-4 w-4" />
-          ) : (
-            <Maximize2 className="h-4 w-4" />
-          )}
+          <Maximize2 className="h-4 w-4" />
         </button>
       </div>
     </div>
+  );
+
+  return (
+    <>
+      {viewer}
+      <MaximizeImage
+        open={expanded}
+        onClose={onToggleExpanded}
+        title={`${CARD.insurer} card`}
+        pageLabel="1 / 1"
+        zoom={zoom}
+        onZoomChange={setZoom}
+      >
+        <DocumentPreview zoom={zoom} expanded />
+      </MaximizeImage>
+    </>
   );
 };
 

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 
 import BasicInformation, {
   initialBasic,
@@ -377,24 +378,23 @@ const AddProvider = () => {
       </div>
 
       {/* Sticky bottom buttons - contained within content width */}
-      <div className="sticky -bottom-4 sm:-bottom-6 z-[200] -mx-4 -mb-4 sm:-mb-6 mt-4 border-t border-border bg-card px-4 py-4 sm:-mx-6 sm:px-6 sm:py-5">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-end gap-3">
-          <ImportButton
-            text="Cancel"
-            icon={null}
-            onClick={handleCancel}
-          />
-          {!isFirstStep && (
+      <div className="sticky -bottom-4 sm:-bottom-6 z-[250] -mx-4 -mb-4 sm:-mb-6 mt-4 border-t border-border bg-card px-4 py-4 sm:-mx-6 sm:px-6 sm:py-5">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 sm:gap-3">
+          {isFirstStep ? (
+            <ImportButton text="Cancel" icon={null} onClick={handleCancel} className="shrink-0 whitespace-nowrap px-3 sm:px-5" />
+          ) : (
             <ImportButton
               text="Back"
-              icon={null}
+              icon={<ArrowLeft className="h-4 w-4" />}
               onClick={handleBack}
+              className="shrink-0 whitespace-nowrap px-3 sm:px-5"
             />
           )}
           <AddButton
             text={isLastStep ? (isSaving ? "Saving…" : "Save Provider") : "Next"}
-            icon={null}
+            icon={isLastStep ? <Check className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
             onClick={handleNext}
+            className="shrink-0 whitespace-nowrap px-3 sm:px-5"
             disabled={isSaving || createRequest.status === "succeeded"}
           />
         </div>

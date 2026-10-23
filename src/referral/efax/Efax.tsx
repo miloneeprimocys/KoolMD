@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowUpDown, CheckCircle2, Clock, FileText, Plus, Send, XCircle } from "lucide-react";
 
 import StatCards, { type StatItem } from "@/components/Statcards";
@@ -113,6 +114,7 @@ const COLUMNS: TableColumn[] = [
 /*  Page                                                            */
 /* ---------------------------------------------------------------- */
 const Efax = () => {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("Inbox");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -182,7 +184,7 @@ const Efax = () => {
             <h2 className="text-base font-semibold text-heading sm:text-xl 2xl:text-2xl">eFax Center</h2>
             <p className="mt-0.5 text-sm text-body">Send and track referral and imaging documents securely.</p>
           </div>
-          <AddButton text="New Fax" icon={<Plus className="h-4 w-4" />} onClick={() => {}} />
+          <AddButton text="New Fax" icon={<Plus className="h-4 w-4" />} onClick={() => router.push("/referral/efax/new-efax")} />
         </div>
 
         <StatCards stats={STATS} />

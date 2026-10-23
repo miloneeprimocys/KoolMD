@@ -395,7 +395,7 @@ const ReferralManagement = () => {
           <AddButton
             text="New Referral"
             icon={<Plus className="h-4 w-4" />}
-            onClick={() => router.push("/new-referral")}
+            onClick={() => router.push("/referral/management/new-referral")}
           />
         </div>
 

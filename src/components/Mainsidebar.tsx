@@ -100,8 +100,17 @@ const SECTIONS: NavSection[] = [
       },
       { label: "Lab Results", href: "/lab-results", Icon: FlaskConical },
       { label: "Questionnaires", href: "/questionnaires", Icon: ListChecks },
-      { label: "Referrals", href: "/referral", Icon: Send },
-      { label: "eFax", href: "/efax", Icon: FileText },
+      {
+        label: "Referrals",
+        href: "/referral",
+        Icon: Send,
+        children: [
+          { label: "Referral Management", href: "/referral/management", Icon: ClipboardList },
+          { label: "Basic Imaging Referral", href: "/referral/basic-imaging", Icon: FileText },
+          { label: "Provider Marketplace", href: "/referral/provider-marketplace", Icon: BookUser },
+          { label: "eFax", href: "/referral/efax", Icon: FileText },
+        ],
+      },
     ],
   },
   {
@@ -246,6 +255,7 @@ const RELATED_ROUTE_PATHS: Record<string, string[]> = {
   "/prescriptions": ["/add-prescription", "/edit-prescription", "/view-prescription"],
   "/lab-results": ["/new-laborder", "/new-lab-order"],
   "/questionnaires": ["/edit-questionnaire", "/view-response", "/edit-response", "/add-template"],
+  "/referral/efax": ["/referral/efax/new-efax"],
 };
 
 const checkIsActive = (href: string, pathname: string | null) => {
@@ -259,7 +269,7 @@ const checkIsActive = (href: string, pathname: string | null) => {
   }
 
   if (path === "/providers") {
-    return pathname === "/providers" || pathname.includes("provider");
+    return pathname === "/providers" || pathname.startsWith("/providers/");
   }
 
   if (path === "/patients") {

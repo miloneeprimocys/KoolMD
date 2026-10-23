@@ -20,11 +20,14 @@ import ViewPrescriptions from "@/prescriptions/viewprescription/Viewprescription
 import LabResults from "@/labresults/Labresults";
 import NewLabOrder from "@/labresults/newlaborder/Newlaborder";
 import QuestionnairesPage from "@/Questionnaires/Questionnairespage";
-import Administration from "@/administration/Administration";
-import Integration from "@/integration/Integration";
-import ReferralManagement from "@/referral/Referralmanagement";
-import NewReferral from "@/referral/newreferral/Newreferral";
-import Efax from "@/efax/Efax";
+import Administration from "@/administration/chatunlock/Administration";
+import Integration from "@/settings/integration/Integration";
+import ReferralManagement from "@/referral/referralmanagement/Referralmanagement";
+import NewReferral from "@/referral/referralmanagement/newreferral/Newreferral";
+import BasicImagingReferral from "@/referral/basicimaging/Basicimagingreferral";
+import Efax from "@/referral/efax/Efax";
+import NewEfax from "@/referral/efax/newefax/Newefax";
+import ProviderMarketPlace, { ProviderMarketplaceProfilePage } from "@/referral/providermarketplace/Providermarketplace";
 import EditQuestionnaire from "@/Questionnaires/Editquestionnaire";
 import ViewResponse from "@/Questionnaires/response/Viewresponse";
 import AddTemplate from "@/Questionnaires/template/Addtemplate";
@@ -184,7 +187,7 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "Integrations",
     access: "protected",
   },
-  referral: {
+  "referral/management": {
     component: ReferralManagement,
     title: "Referrals",
     access: "protected",
@@ -194,9 +197,39 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "eFax",
     access: "protected",
   },
-  "new-referral": {
+  "referral/efax": {
+    component: Efax,
+    title: "eFax",
+    access: "protected",
+  },
+  "new-efax": {
+    component: NewEfax,
+    title: "New Fax",
+    access: "protected",
+  },
+  "referral/efax/new-efax": {
+    component: NewEfax,
+    title: "New Fax",
+    access: "protected",
+  },
+  "referral/management/new-referral": {
     component: NewReferral,
     title: "New Referral",
+    access: "protected",
+  },
+  "referral/basic-imaging": {
+    component: BasicImagingReferral,
+    title: "Basic Imaging Referral",
+    access: "protected",
+  },
+  "referral/provider-marketplace": {
+    component: ProviderMarketPlace,
+    title: "Provider Marketplace",
+    access: "protected",
+  },
+  "referral/provider-marketplace/viewprofile": {
+    component: ProviderMarketplaceProfilePage,
+    title: "Provider Profile",
     access: "protected",
   },
   "administration/chatunlock": {

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, Send } from "lucide-react";
 
 import Breadcrumb from "@/components/Breadcrumb";
 import AddSteps from "@/components/Addsteps";
@@ -29,7 +29,7 @@ const SUBTITLES = [
   "Review the referral details and send to the selected provider.",
 ];
 
-const LIST_ROUTE = "/referral";
+const LIST_ROUTE = "/referral/management";
 
 const initialValues = (): ReferralValues => ({
   patient: PATIENTS[0]?.id ?? "",
@@ -149,10 +149,13 @@ const NewReferral = () => {
       </div>
 
       {/* Sticky bottom buttons */}
-      <div className="sticky -bottom-4 sm:-bottom-6 z-[200] -mx-4 -mb-4 sm:-mb-6 mt-4 border-t border-border bg-card px-4 py-4 sm:-mx-6 sm:px-6 sm:py-5">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-center gap-2 sm:justify-end sm:gap-3">
-          <ImportButton text="Cancel" icon={null} onClick={() => router.push(LIST_ROUTE)} className="shrink-0 px-3 whitespace-nowrap sm:px-5" />
-          {!isFirstStep && <ImportButton text="Back" icon={null} onClick={handleBack} className="shrink-0 px-3 whitespace-nowrap sm:px-5" />}
+      <div className="sticky -bottom-4 sm:-bottom-6 z-[250] -mx-4 -mb-4 sm:-mb-6 mt-4 border-t border-border bg-card px-4 py-4 sm:-mx-6 sm:px-6 sm:py-5">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 sm:gap-3">
+          {isFirstStep ? (
+            <ImportButton text="Cancel" icon={null} onClick={() => router.push(LIST_ROUTE)} className="shrink-0 whitespace-nowrap px-3 sm:px-5" />
+          ) : (
+            <ImportButton text="Back" icon={<ArrowLeft className="h-4 w-4" />} onClick={handleBack} className="shrink-0 whitespace-nowrap px-3 sm:px-5" />
+          )}
           {nextButton}
         </div>
       </div>

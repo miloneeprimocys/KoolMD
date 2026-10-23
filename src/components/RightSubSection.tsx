@@ -110,7 +110,7 @@ const RightSubSection = ({
           ref={panelRef}
           aria-label={ariaLabel}
           style={{ ...widthStyle, maxWidth: `${width}px` }}
-          className={`fixed right-0 top-14 z-[150] flex h-[calc(100dvh-3.5rem)] w-full max-w-[420px] flex-col overflow-y-auto border-y border-l border-border bg-card shadow-2xl transition-transform duration-300 ease-out xl:top-16 xl:h-[calc(100dvh-4rem)] 2xl:relative 2xl:bottom-auto 2xl:right-auto 2xl:top-auto 2xl:z-auto 2xl:h-auto 2xl:w-[var(--right-subsection-width)] 2xl:max-w-none 2xl:shrink-0 2xl:rounded-[14px] 2xl:border-[1.5px] 2xl:shadow-none 2xl:transition-transform 2xl:duration-300 2xl:ease-out hide-scrollbar ${visible ? "translate-x-0" : "translate-x-full"} ${className}`}
+          className={`fixed right-0 top-14 z-[150] flex h-[calc(100dvh-3.5rem)] w-full max-w-[420px] flex-col overflow-y-auto rounded-none border-y border-l border-border bg-card shadow-2xl transition-transform duration-300 ease-out xl:top-16 xl:h-[calc(100dvh-4rem)] 2xl:relative 2xl:bottom-auto 2xl:right-auto 2xl:top-auto 2xl:z-auto 2xl:h-auto 2xl:w-[var(--right-subsection-width)] 2xl:max-w-none 2xl:shrink-0 2xl:rounded-[14px] 2xl:border-[1.5px] 2xl:shadow-none 2xl:transition-transform 2xl:duration-300 2xl:ease-out hide-scrollbar ${visible ? "translate-x-0" : "translate-x-full"} ${className}`}
         >
           {children(closePanel)}
         </aside>
