@@ -14,11 +14,11 @@ import {
 } from "lucide-react";
 
 import MaximizeImage from "@/components/MaximizeImage";
+import EditButton from "@/components/EditButton";
 import Tags from "@/components/Tags";
 import { cardCls, type StepProps } from "@/providers/Shared";
 import { DocTile } from "./Imagingclinical";
 import {
-  EditLink,
   formatDate,
   getPatient,
   getReferringProvider,
@@ -40,7 +40,7 @@ const CardHeader = ({
       {Icon && <Icon className="h-4 w-4 text-body sm:h-5 sm:w-5" />}
       {title}
     </h3>
-    {onEdit && <EditLink onClick={onEdit} />}
+    {onEdit && <EditButton section={title} onEdit={onEdit} />}
   </div>
 );
 
