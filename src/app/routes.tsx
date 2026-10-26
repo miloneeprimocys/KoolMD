@@ -19,7 +19,24 @@ import Addprescription from "@/prescriptions/addprescription/Addprescription";
 import ViewPrescriptions from "@/prescriptions/viewprescription/Viewprescriptions";
 import LabResults from "@/labresults/Labresults";
 import NewLabOrder from "@/labresults/newlaborder/Newlaborder";
-import Billing from "@/billing/Billing";
+import Billing from "@/billing/payment/payment-gateway/Billing";
+import ClearinghouseAccounts from "@/billing/clearinghouse/clearingaccount/ClearinghouseAccounts";
+import AddClearinghouseAccount from "@/billing/clearinghouse/clearingaccount/AddClearinghouseAccount";
+import EditClearinghouseAccount from "@/billing/clearinghouse/clearingaccount/EditClearinghouseAccount";
+import ViewClearinghouseAccount from "@/billing/clearinghouse/clearingaccount/viewaccount/Viewclearingaccounts";
+import EditPayerId from "@/billing/clearinghouse/clearingaccount/viewaccount/Editpayerid";
+import EligibilityVerification from "@/billing/clearinghouse/eligibility/EligibilityVerification";
+import CheckEligibility from "@/billing/clearinghouse/eligibility/checkeligibility/CheckEligibility";
+import Invoice from "@/billing/manage/invoice/Invoice";
+import CreateInvoice from "@/billing/manage/invoice/createinvoice/CreateInvoice";
+import MembershipPlans from "@/billing/membership/membership-plans/Membershipplans";
+import CreateMembershipPlan from "@/billing/membership/membership-plans/createplan/Createmembershipplan";
+import MembershipHistory from "@/billing/membership/history/Membershiphistory";
+import CancelMembership from "@/billing/membership/history/Cancelmembership";
+import Payments from "@/billing/manage/payments/Payments";
+import Refunds from "@/billing/manage/refunds/Refunds";
+import CreateRefund from "@/billing/manage/refunds/CreateRefund";
+import PaymentMethods from "@/billing/manage/payment-method/PaymentMethods";
 import QuestionnairesPage from "@/Questionnaires/Questionnairespage";
 import Administration from "@/administration/chatunlock/Administration";
 import Integration from "@/settings/integration/Integration";
@@ -178,24 +195,189 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "Billing & Payments",
     access: "protected",
   },
-  "billing/configuration": {
+  "billing/payment-gateway": {
     component: Billing,
     title: "Billing & Payments",
     access: "protected",
   },
-  "billing/supported-methods": {
+  "billing/payment-gateway/supported-methods": {
     component: Billing,
     title: "Billing & Payments",
     access: "protected",
   },
-  "billing/transaction-history": {
+  "billing/payment-gateway/transaction-history": {
     component: Billing,
     title: "Billing & Payments",
     access: "protected",
   },
-  "billing/refund-settings": {
+  "billing/payment-gateway/refund-settings": {
     component: Billing,
     title: "Billing & Payments",
+    access: "protected",
+  },
+  "payment/membership-plans": {
+    component: MembershipPlans,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/membership-history": {
+    component: MembershipHistory,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/membership-history/cancel": {
+    component: CancelMembership,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "payment/membership-plans/create": {
+    component: CreateMembershipPlan,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "payment/membership-plans/edit": {
+    component: CreateMembershipPlan,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/invoice": {
+    component: Invoice,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/invoice/create": {
+    component: CreateInvoice,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/payments": {
+    component: Payments,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/refunds": {
+    component: Refunds,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/refunds/create": {
+    component: CreateRefund,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "billing/payment-methods": {
+    component: PaymentMethods,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "payment/payment-gateway": {
+    component: Billing,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "payment/payment-gateway/supported-methods": {
+    component: Billing,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "payment/payment-gateway/transaction-history": {
+    component: Billing,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "payment/payment-gateway/refund-settings": {
+    component: Billing,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "membership/plans": {
+    component: MembershipPlans,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "membership/plans/create": {
+    component: CreateMembershipPlan,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "membership/plans/edit": {
+    component: CreateMembershipPlan,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "membership/history": {
+    component: MembershipHistory,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "membership/history/cancel": {
+    component: CancelMembership,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "manage/invoice": {
+    component: Invoice,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "manage/invoice/create": {
+    component: CreateInvoice,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "manage/payments": {
+    component: Payments,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "manage/refunds": {
+    component: Refunds,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "manage/refunds/create": {
+    component: CreateRefund,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "manage/payment-methods": {
+    component: PaymentMethods,
+    title: "Billing & Payments",
+    access: "protected",
+  },
+  "payers/accounts": {
+    component: ClearinghouseAccounts,
+    title: "Clearinghouse",
+    access: "protected",
+  },
+  "payers/eligibility-verification": {
+    component: EligibilityVerification,
+    title: "Clearinghouse",
+    access: "protected",
+  },
+  "payers/eligibility-verification/check": {
+    component: CheckEligibility,
+    title: "Clearinghouse",
+    access: "protected",
+  },
+  "payers/add-accounts": {
+    component: AddClearinghouseAccount,
+    title: "Clearinghouse",
+    access: "protected",
+  },
+  "payers/edit-accounts": {
+    component: EditClearinghouseAccount,
+    title: "Clearinghouse",
+    access: "protected",
+  },
+  "payers/view-accounts": {
+    component: ViewClearinghouseAccount,
+    title: "Clearinghouse",
+    access: "protected",
+  },
+  "payers/edit-payer-ids": {
+    component: EditPayerId,
+    title: "Clearinghouse",
     access: "protected",
   },
   "new-laborder": {

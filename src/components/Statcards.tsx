@@ -55,7 +55,13 @@ const WAVE_PATH =
   "M0 60C100 10 200 10 300 60S500 110 600 60S800 10 900 60S1100 110 1200 60V120H0Z";
 
 /* No props → the 4 dashboard cards.  stats={[...]} → any set of cards. */
-const StatCards = ({ stats = DEFAULT_STATS }: { stats?: StatItem[] }) => {
+const StatCards = ({
+  stats = DEFAULT_STATS,
+  truncateContent = false,
+}: {
+  stats?: StatItem[];
+  truncateContent?: boolean;
+}) => {
   /*
     Grid rules:
     - phone                  → 1 per row
@@ -72,6 +78,7 @@ const StatCards = ({ stats = DEFAULT_STATS }: { stats?: StatItem[] }) => {
     <div className={`grid gap-4 ${grid}`}>
       {stats.map(({ label, value, change, positive, tag, Icon, accent }) => {
         const { tone, color: waveColor, glow } = ACCENTS[accent];
+        const isNumericValue = /^[\d,$.]+$/.test(value);
 
         return (
           <div
@@ -123,10 +130,10 @@ const StatCards = ({ stats = DEFAULT_STATS }: { stats?: StatItem[] }) => {
 
               {/* Content column */}
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-label">{label}</p>
+                <p className={`text-sm font-medium text-label ${truncateContent ? "truncate" : ""}`}>{label}</p>
 
                 <div className="mt-1.5 flex min-w-0 items-center gap-2">
-                  <p className="shrink-0 text-3xl font-bold leading-none tracking-tight text-heading">
+                  <p className={`text-3xl font-bold leading-none tracking-tight text-heading ${truncateContent && !isNumericValue ? "min-w-0 truncate" : "shrink-0"}`}>
                     {value}
                   </p>
 

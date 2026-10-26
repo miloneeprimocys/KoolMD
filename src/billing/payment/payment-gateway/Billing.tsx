@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import Breadcrumb from "@/components/Breadcrumb";
@@ -38,10 +38,10 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"];
 const TAB_PATHS: Record<TabKey, string> = {
-  configuration: "/billing/configuration",
-  methods: "/billing/supported-methods",
-  transactions: "/billing/transaction-history",
-  refunds: "/billing/refund-settings",
+  configuration: "/payment/payment-gateway",
+  methods: "/payment/payment-gateway/supported-methods",
+  transactions: "/payment/payment-gateway/transaction-history",
+  refunds: "/payment/payment-gateway/refund-settings",
 };
 const PATH_TABS: Record<string, TabKey> = Object.fromEntries(
   Object.entries(TAB_PATHS).map(([key, path]) => [path, key]),
@@ -52,6 +52,9 @@ const Billing = () => {
   const pathname = usePathname();
   const router = useRouter();
   const tab = PATH_TABS[pathname ?? ""] ?? "configuration";
+  useEffect(() => {
+    if (pathname === "/billing") router.replace(TAB_PATHS.configuration);
+  }, [pathname, router]);
   /* Enabled payment methods are shared by the Configuration and Supported Methods tabs. */
   const [methods, setMethods] = useState<MethodsState>(DEFAULT_METHODS);
 
@@ -62,7 +65,7 @@ const Billing = () => {
     <div className="mx-auto w-full max-w-[1600px] space-y-4 sm:space-y-5">
       <Breadcrumb
         items={[
-          { label: "Billing & Payments", href: "/billing" },
+          { label: "Billing & Payments", href: "/payment/payment-gateway" },
           { label: current.label },
         ]}
       />
@@ -121,3 +124,25 @@ const Billing = () => {
 };
 
 export default Billing;
+
+const BillingPlaceholder = ({ title, description }: { title: string; description: string }) => (
+  <div className="mx-auto w-full max-w-[1600px] space-y-4 sm:space-y-5">
+    <Breadcrumb items={[{ label: "Billing & Payments", href: "/payment/payment-gateway" }, { label: title }]} />
+    <div>
+      <h2 className="text-lg font-semibold text-heading sm:text-xl 2xl:text-2xl">{title}</h2>
+      <p className="mt-0.5 text-sm text-body">{description}</p>
+    </div>
+    <div className="rounded-xl border border-divider bg-card p-6 text-sm text-body">
+      {title} details will appear here.
+    </div>
+  </div>
+);
+
+export const MembershipPlans = () => (
+  <BillingPlaceholder title="Membership Plans" description="Create and manage membership plans for your patients." />
+);
+
+export const Invoices = () => (
+  <BillingPlaceholder title="Invoice" description="View and manage billing invoices." />
+);
+

@@ -24,7 +24,7 @@ export const FieldError = ({ message }: { message?: string }) => (
 /*  Types                                                           */
 /* ---------------------------------------------------------------- */
 export interface SignupFieldProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "className"> {
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "className" | "onChange" | "onFocus" | "onBlur" | "type"> {
   /** Field label shown above the input */
   label?: ReactNode;
   /** Leading icon (rendered inside, on the left) */
@@ -37,12 +37,20 @@ export interface SignupFieldProps
   hint?: string;
   /** Custom className for the outer wrapper */
   className?: string;
+  /** Render a multiline textarea instead of a single-line input. */
+  multiline?: boolean;
+  /** Number of visible lines when rendered as a textarea. */
+  rows?: number;
+  type?: React.HTMLInputTypeAttribute;
+  onChange?: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  onFocus?: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  onBlur?: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
 }
 
 /* ---------------------------------------------------------------- */
 /*  Component                                                       */
 /* ---------------------------------------------------------------- */
-const SignupField = forwardRef<HTMLInputElement, SignupFieldProps>(
+const SignupField = forwardRef<HTMLInputElement | HTMLTextAreaElement, SignupFieldProps>(
   (
     {
       label,
@@ -53,6 +61,14 @@ const SignupField = forwardRef<HTMLInputElement, SignupFieldProps>(
       className = "",
       id,
       disabled,
+      multiline = false,
+      rows = 4,
+      type = "text",
+      maxLength,
+      value,
+      onChange,
+      onFocus,
+      onBlur,
       ...rest
     },
     ref,
@@ -95,29 +111,62 @@ const SignupField = forwardRef<HTMLInputElement, SignupFieldProps>(
             </span>
           )}
 
-          <input
-            ref={ref}
-            id={inputId}
-            disabled={disabled}
-            onFocus={(e) => {
-              setFocused(true);
-              rest.onFocus?.(e);
-            }}
-            onBlur={(e) => {
-              setFocused(false);
-              rest.onBlur?.(e);
-            }}
-            className={`
-              peer h-12 w-full rounded-xl border bg-card
-              ${icon ? "pl-11" : "pl-4"}
-              ${trailing ? "pr-11" : "pr-4"}
-              text-sm text-heading placeholder:text-placeholder
-              outline-none transition-colors duration-200
-              disabled:cursor-not-allowed disabled:opacity-60
-              ${borderClass}
-            `}
-            {...rest}
-          />
+          {multiline ? (
+            <>
+              <textarea
+                ref={ref as React.Ref<HTMLTextAreaElement>}
+                id={inputId}
+                disabled={disabled}
+                rows={rows}
+                maxLength={maxLength}
+                value={value}
+                onFocus={(e) => {
+                  setFocused(true);
+                  onFocus?.(e);
+                }}
+                onBlur={(e) => {
+                  setFocused(false);
+                  onBlur?.(e);
+                }}
+                onChange={onChange}
+                className={`w-full resize-y rounded-xl border bg-card px-4 pb-7 pt-3 text-sm text-heading placeholder:text-placeholder outline-none transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${borderClass}`}
+                {...(rest as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
+              />
+              {typeof value === "string" && maxLength !== undefined && (
+                <span className="pointer-events-none absolute bottom-2.5 right-3.5 text-[11px] text-body">
+                  {value.length}/{maxLength}
+                </span>
+              )}
+            </>
+          ) : (
+            <input
+              ref={ref as React.Ref<HTMLInputElement>}
+              id={inputId}
+              type={type}
+              disabled={disabled}
+              value={value}
+              maxLength={maxLength}
+              onFocus={(e) => {
+                setFocused(true);
+                onFocus?.(e);
+              }}
+              onBlur={(e) => {
+                setFocused(false);
+                onBlur?.(e);
+              }}
+              onChange={onChange}
+              className={`
+                peer h-12 w-full rounded-xl border bg-card
+                ${icon ? "pl-11" : "pl-4"}
+                ${trailing ? "pr-11" : "pr-4"}
+                text-sm text-heading placeholder:text-placeholder
+                outline-none transition-colors duration-200
+                disabled:cursor-not-allowed disabled:opacity-60
+                ${borderClass}
+              `}
+              {...rest}
+            />
+          )}
 
           {trailing && (
             <span className="absolute right-3.5 top-1/2 -translate-y-1/2">

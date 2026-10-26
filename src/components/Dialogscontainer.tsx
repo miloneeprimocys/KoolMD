@@ -7,6 +7,13 @@ import AddFamilyHistoryModal from "@/patient/viewpatients/medicalhistory/Addfami
 import AddImmunizationModal from "@/patient/viewpatients/medicalhistory/Addimmunizationmodal";
 import AddSurgeryModal from "@/patient/viewpatients/medicalhistory/Addsurgerymodal";
 import DeletePrescription from "@/prescriptions/Deleteprescription";
+import DeletePlan from "@/billing/membership/membership-plans/DeletePlan";
+import ViewMembershipPlanModal from "@/billing/membership/membership-plans/Viewmembershipplan";
+import AddCustomItem from "@/billing/manage/invoice/createinvoice/AddCustomItem";
+import DeleteCustomItem from "@/billing/manage/invoice/createinvoice/DeleteCustomItem";
+import DeletePaymentMethod from "@/billing/manage/payment-method/DeletePaymentMethod";
+import DeleteClearinghouseAccount from "@/billing/clearinghouse/clearingaccount/DeleteClearinghouseAccount";
+import TestConnection from "@/billing/clearinghouse/clearingaccount/TestConnection";
 import AssignQuestionnaireModal from "@/Questionnaires/Assignquestionnaire";
 import AddTemplateQuestionModal from "@/Questionnaires/template/Addtemplateques";
 import RescheduleModal from "@/appointments/listview/Reschedulemodal";
@@ -26,6 +33,11 @@ import {
   confirmUnlockPopup,
   prescriptionDeleted,
   templateQuestionSaved,
+  membershipPlanDeleted,
+  customInvoiceItemSaved,
+  customInvoiceItemDeleted,
+  paymentMethodDeleted,
+  clearinghouseAccountDeleted,
 } from "@/redux/slices/dialogslice";
 
 /**
@@ -44,6 +56,21 @@ const DialogsContainer = () => {
   const dispatch = useAppDispatch();
   const deletePrescriptionOpen = useAppSelector((state) => state.dialog.DeletePrescription);
   const deletePrescriptionTarget = useAppSelector((state) => state.dialog.deletePrescriptionTarget);
+  const viewMembershipPlanOpen = useAppSelector((state) => state.dialog.ViewMembershipPlan);
+  const deleteMembershipPlanOpen = useAppSelector((state) => state.dialog.DeleteMembershipPlan);
+  const membershipPlanTarget = useAppSelector((state) => state.dialog.membershipPlanTarget);
+  const addCustomInvoiceItemOpen = useAppSelector((state) => state.dialog.AddCustomInvoiceItem);
+  const customInvoiceItem = useAppSelector((state) => state.dialog.customInvoiceItem);
+  const customInvoiceItemDefaultDate = useAppSelector((state) => state.dialog.customInvoiceItemDefaultDate);
+  const deleteCustomInvoiceItemOpen = useAppSelector((state) => state.dialog.DeleteCustomInvoiceItem);
+  const customInvoiceItemDeleteTarget = useAppSelector((state) => state.dialog.customInvoiceItemDeleteTarget);
+  const deletePaymentMethodOpen = useAppSelector((state) => state.dialog.DeletePaymentMethod);
+  const paymentMethodDeleteTarget = useAppSelector((state) => state.dialog.paymentMethodDeleteTarget);
+  const paymentMethodDeleteIsDefault = useAppSelector((state) => state.dialog.paymentMethodDeleteIsDefault);
+  const testConnectionOpen = useAppSelector((state) => state.dialog.TestConnection);
+  const clearinghouseTestResult = useAppSelector((state) => state.dialog.clearinghouseTestResult);
+  const deleteClearinghouseAccountOpen = useAppSelector((state) => state.dialog.DeleteClearinghouseAccount);
+  const clearinghouseAccountDeleteTarget = useAppSelector((state) => state.dialog.clearinghouseAccountDeleteTarget);
   const addTemplateQuestionOpen = useAppSelector((state) => state.dialog.AddTemplateQuestion);
   const templateQuestionModal = useAppSelector((state) => state.dialog.templateQuestionModal);
   const unlockPopupOpen = useAppSelector((state) => state.dialog.UnlockPopup);
@@ -77,6 +104,50 @@ const DialogsContainer = () => {
         prescription={deletePrescriptionTarget ?? undefined}
         onClose={() => dispatch(hideModal("DeletePrescription"))}
         onDeleted={(id) => dispatch(prescriptionDeleted(id))}
+      />
+      <ViewMembershipPlanModal
+        open={viewMembershipPlanOpen}
+        plan={membershipPlanTarget}
+        onClose={() => dispatch(hideModal("ViewMembershipPlan"))}
+        onEdit={() => dispatch(hideModal("ViewMembershipPlan"))}
+        onToggleStatus={() => dispatch(hideModal("ViewMembershipPlan"))}
+      />
+      <DeletePlan
+        open={deleteMembershipPlanOpen}
+        plan={membershipPlanTarget}
+        onClose={() => dispatch(hideModal("DeleteMembershipPlan"))}
+        onDeleted={(id) => dispatch(membershipPlanDeleted(id))}
+      />
+      <AddCustomItem
+        open={addCustomInvoiceItemOpen}
+        item={customInvoiceItem}
+        defaultDate={customInvoiceItemDefaultDate}
+        onClose={() => dispatch(hideModal("AddCustomInvoiceItem"))}
+        onSave={(item) => dispatch(customInvoiceItemSaved(item))}
+      />
+      <DeleteCustomItem
+        open={deleteCustomInvoiceItemOpen}
+        item={customInvoiceItemDeleteTarget}
+        onClose={() => dispatch(hideModal("DeleteCustomInvoiceItem"))}
+        onDeleted={(id) => dispatch(customInvoiceItemDeleted(id))}
+      />
+      <DeletePaymentMethod
+        open={deletePaymentMethodOpen}
+        method={paymentMethodDeleteTarget}
+        isDefault={paymentMethodDeleteIsDefault}
+        onClose={() => dispatch(hideModal("DeletePaymentMethod"))}
+        onDeleted={(id) => dispatch(paymentMethodDeleted(id))}
+      />
+      <TestConnection
+        open={testConnectionOpen}
+        result={clearinghouseTestResult}
+        onClose={() => dispatch(hideModal("TestConnection"))}
+      />
+      <DeleteClearinghouseAccount
+        open={deleteClearinghouseAccountOpen}
+        account={clearinghouseAccountDeleteTarget}
+        onClose={() => dispatch(hideModal("DeleteClearinghouseAccount"))}
+        onDeleted={(id) => dispatch(clearinghouseAccountDeleted(id))}
       />
       <RescheduleModal />
       <CancelAppointment

@@ -3,6 +3,11 @@ import type {
   QuestionTypeKey,
   TemplateQuestion,
 } from "@/Questionnaires/template/Addtemplateques";
+import type { MembershipPlan } from "@/billing/membership/membership-plans/Viewmembershipplan";
+import type { InvoiceItem } from "@/billing/manage/invoice/createinvoice/AddCustomItem";
+import type { DeletablePaymentMethod } from "@/billing/manage/payment-method/DeletePaymentMethod";
+import type { ClearinghouseAccount } from "@/billing/clearinghouse/clearingaccount/ClearinghouseAccounts";
+import type { TestResult } from "@/billing/clearinghouse/clearingaccount/TestConnection";
 
 export interface PrescriptionToDelete {
   id: string;
@@ -23,6 +28,26 @@ interface ModalState {
   DeletePrescription: boolean;
   deletePrescriptionTarget: PrescriptionToDelete | null;
   deletedPrescriptionIds: string[];
+  ViewMembershipPlan: boolean;
+  DeleteMembershipPlan: boolean;
+  membershipPlanTarget: MembershipPlan | null;
+  deletedMembershipPlanIds: string[];
+  AddCustomInvoiceItem: boolean;
+  customInvoiceItem: InvoiceItem | null;
+  customInvoiceItemDefaultDate: string;
+  customInvoiceItemResult: InvoiceItem | null;
+  DeleteCustomInvoiceItem: boolean;
+  customInvoiceItemDeleteTarget: InvoiceItem | null;
+  customInvoiceItemDeletedId: string | null;
+  DeletePaymentMethod: boolean;
+  paymentMethodDeleteTarget: DeletablePaymentMethod | null;
+  paymentMethodDeleteIsDefault: boolean;
+  deletedPaymentMethodId: string | null;
+  TestConnection: boolean;
+  clearinghouseTestResult: TestResult | null;
+  DeleteClearinghouseAccount: boolean;
+  clearinghouseAccountDeleteTarget: ClearinghouseAccount | null;
+  deletedClearinghouseAccountId: string | null;
   AssignQuestionnaire: boolean;
   /** Questionnaire preselected when the assign modal opens (null = default / first one). */
   assignQuestionnaireId: string | null;
@@ -54,6 +79,26 @@ const initialState: ModalState = {
   DeletePrescription: false,
   deletePrescriptionTarget: null,
   deletedPrescriptionIds: [],
+  ViewMembershipPlan: false,
+  DeleteMembershipPlan: false,
+  membershipPlanTarget: null,
+  deletedMembershipPlanIds: [],
+  AddCustomInvoiceItem: false,
+  customInvoiceItem: null,
+  customInvoiceItemDefaultDate: "",
+  customInvoiceItemResult: null,
+  DeleteCustomInvoiceItem: false,
+  customInvoiceItemDeleteTarget: null,
+  customInvoiceItemDeletedId: null,
+  DeletePaymentMethod: false,
+  paymentMethodDeleteTarget: null,
+  paymentMethodDeleteIsDefault: false,
+  deletedPaymentMethodId: null,
+  TestConnection: false,
+  clearinghouseTestResult: null,
+  DeleteClearinghouseAccount: false,
+  clearinghouseAccountDeleteTarget: null,
+  deletedClearinghouseAccountId: null,
   AssignQuestionnaire: false,
   assignQuestionnaireId: null,
   AddTemplateQuestion: false,
@@ -98,6 +143,26 @@ const dialogSlice = createSlice({
       if (action.payload === "DeletePrescription") {
         state.deletePrescriptionTarget = null;
       }
+      if (action.payload === "ViewMembershipPlan" || action.payload === "DeleteMembershipPlan") {
+        state.membershipPlanTarget = null;
+      }
+      if (action.payload === "AddCustomInvoiceItem") {
+        state.customInvoiceItem = null;
+        state.customInvoiceItemDefaultDate = "";
+      }
+      if (action.payload === "DeleteCustomInvoiceItem") {
+        state.customInvoiceItemDeleteTarget = null;
+      }
+      if (action.payload === "DeletePaymentMethod") {
+        state.paymentMethodDeleteTarget = null;
+        state.paymentMethodDeleteIsDefault = false;
+      }
+      if (action.payload === "TestConnection") {
+        state.clearinghouseTestResult = null;
+      }
+      if (action.payload === "DeleteClearinghouseAccount") {
+        state.clearinghouseAccountDeleteTarget = null;
+      }
       if (action.payload === "AssignQuestionnaire") {
         state.assignQuestionnaireId = null;
       }
@@ -111,6 +176,87 @@ const dialogSlice = createSlice({
     showDeletePrescription: (state, action: PayloadAction<PrescriptionToDelete>) => {
       state.deletePrescriptionTarget = action.payload;
       state.DeletePrescription = true;
+    },
+    showMembershipPlanView: (state, action: PayloadAction<MembershipPlan>) => {
+      state.membershipPlanTarget = action.payload;
+      state.DeleteMembershipPlan = false;
+      state.ViewMembershipPlan = true;
+    },
+    showMembershipPlanDelete: (state, action: PayloadAction<MembershipPlan>) => {
+      state.membershipPlanTarget = action.payload;
+      state.ViewMembershipPlan = false;
+      state.DeleteMembershipPlan = true;
+    },
+    selectMembershipPlanForEdit: (state, action: PayloadAction<MembershipPlan>) => {
+      state.membershipPlanTarget = action.payload;
+      state.ViewMembershipPlan = false;
+      state.DeleteMembershipPlan = false;
+    },
+    membershipPlanDeleted: (state, action: PayloadAction<string>) => {
+      if (!state.deletedMembershipPlanIds.includes(action.payload)) {
+        state.deletedMembershipPlanIds.push(action.payload);
+      }
+      state.membershipPlanTarget = null;
+      state.DeleteMembershipPlan = false;
+    },
+    showAddCustomInvoiceItem: (
+      state,
+      action: PayloadAction<{ item?: InvoiceItem | null; defaultDate?: string }>,
+    ) => {
+      state.customInvoiceItem = action.payload.item ?? null;
+      state.customInvoiceItemDefaultDate = action.payload.defaultDate ?? "";
+      state.AddCustomInvoiceItem = true;
+    },
+    customInvoiceItemSaved: (state, action: PayloadAction<InvoiceItem>) => {
+      state.customInvoiceItemResult = action.payload;
+      state.AddCustomInvoiceItem = false;
+      state.customInvoiceItem = null;
+      state.customInvoiceItemDefaultDate = "";
+    },
+    clearCustomInvoiceItemResult: (state) => {
+      state.customInvoiceItemResult = null;
+    },
+    showDeleteCustomInvoiceItem: (state, action: PayloadAction<InvoiceItem>) => {
+      state.customInvoiceItemDeleteTarget = action.payload;
+      state.DeleteCustomInvoiceItem = true;
+    },
+    customInvoiceItemDeleted: (state, action: PayloadAction<string>) => {
+      state.customInvoiceItemDeletedId = action.payload;
+      state.customInvoiceItemDeleteTarget = null;
+      state.DeleteCustomInvoiceItem = false;
+    },
+    clearCustomInvoiceItemDeletedId: (state) => {
+      state.customInvoiceItemDeletedId = null;
+    },
+    showDeletePaymentMethod: (state, action: PayloadAction<{ method: DeletablePaymentMethod; isDefault: boolean }>) => {
+      state.paymentMethodDeleteTarget = action.payload.method;
+      state.paymentMethodDeleteIsDefault = action.payload.isDefault;
+      state.DeletePaymentMethod = true;
+    },
+    paymentMethodDeleted: (state, action: PayloadAction<string>) => {
+      state.deletedPaymentMethodId = action.payload;
+      state.paymentMethodDeleteTarget = null;
+      state.paymentMethodDeleteIsDefault = false;
+      state.DeletePaymentMethod = false;
+    },
+    clearDeletedPaymentMethodId: (state) => {
+      state.deletedPaymentMethodId = null;
+    },
+    showTestConnection: (state, action: PayloadAction<TestResult>) => {
+      state.clearinghouseTestResult = action.payload;
+      state.TestConnection = true;
+    },
+    showDeleteClearinghouseAccount: (state, action: PayloadAction<ClearinghouseAccount>) => {
+      state.clearinghouseAccountDeleteTarget = action.payload;
+      state.DeleteClearinghouseAccount = true;
+    },
+    clearinghouseAccountDeleted: (state, action: PayloadAction<string>) => {
+      state.deletedClearinghouseAccountId = action.payload;
+      state.clearinghouseAccountDeleteTarget = null;
+      state.DeleteClearinghouseAccount = false;
+    },
+    clearDeletedClearinghouseAccountId: (state) => {
+      state.deletedClearinghouseAccountId = null;
     },
     /** Open the assign modal, optionally preselecting a questionnaire id. */
     showAssignQuestionnaire: {
@@ -161,6 +307,25 @@ const dialogSlice = createSlice({
       state.AddSurgery = false;
       state.DeletePrescription = false;
       state.deletePrescriptionTarget = null;
+      state.ViewMembershipPlan = false;
+      state.DeleteMembershipPlan = false;
+      state.membershipPlanTarget = null;
+      state.AddCustomInvoiceItem = false;
+      state.customInvoiceItem = null;
+      state.customInvoiceItemDefaultDate = "";
+      state.customInvoiceItemResult = null;
+      state.DeleteCustomInvoiceItem = false;
+      state.customInvoiceItemDeleteTarget = null;
+      state.customInvoiceItemDeletedId = null;
+      state.DeletePaymentMethod = false;
+      state.paymentMethodDeleteTarget = null;
+      state.paymentMethodDeleteIsDefault = false;
+      state.deletedPaymentMethodId = null;
+      state.TestConnection = false;
+      state.clearinghouseTestResult = null;
+      state.DeleteClearinghouseAccount = false;
+      state.clearinghouseAccountDeleteTarget = null;
+      state.deletedClearinghouseAccountId = null;
       state.AssignQuestionnaire = false;
       state.assignQuestionnaireId = null;
       state.AddTemplateQuestion = false;
@@ -187,6 +352,23 @@ export const {
   hideModal,
   hideAllModals,
   showDeletePrescription,
+  showMembershipPlanView,
+  showMembershipPlanDelete,
+  selectMembershipPlanForEdit,
+  membershipPlanDeleted,
+  showAddCustomInvoiceItem,
+  customInvoiceItemSaved,
+  clearCustomInvoiceItemResult,
+  showDeleteCustomInvoiceItem,
+  customInvoiceItemDeleted,
+  clearCustomInvoiceItemDeletedId,
+  showDeletePaymentMethod,
+  paymentMethodDeleted,
+  clearDeletedPaymentMethodId,
+  showTestConnection,
+  showDeleteClearinghouseAccount,
+  clearinghouseAccountDeleted,
+  clearDeletedClearinghouseAccountId,
   showAssignQuestionnaire,
   showAddTemplateQuestion,
   confirmUnlockPopup,

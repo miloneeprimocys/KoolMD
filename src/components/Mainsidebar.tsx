@@ -18,16 +18,20 @@ import {
   DollarSign,
   FileText,
   FlaskConical,
+  History,
   LayoutDashboard,
+  Landmark,
   ListChecks,
   MessageSquare,
   Receipt,
+  RefreshCw,
   Send,
   Settings,
   ShieldCheck,
   Stethoscope,
   Unlock,
   Users,
+  Wallet,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -113,10 +117,11 @@ const SECTIONS: NavSection[] = [
       },
     ],
   },
+
   {
     title: "OPERATIONS",
     items: [
-      { label: "Billing & Payments", href: "/billing", Icon: CreditCard },
+
       { label: "Reports", href: "/reports", Icon: ClipboardList },
       {
         label: "Settings",
@@ -146,6 +151,48 @@ const SECTIONS: NavSection[] = [
         ],
       },
       { label: "Messages", href: "/messages", Icon: MessageSquare, badge: 1 },
+    ],
+  },
+  {
+    title: "BILLING & PAYMENTS",
+    items: [
+      {
+        label: "Payment",
+        href: "/payment/payment-gateway",
+        Icon: CreditCard,
+        children: [
+          { label: "Payment Gateway", href: "/payment/payment-gateway", Icon: CreditCard },
+        ],
+      },
+      {
+        label: "Membership",
+        href: "/membership/plans",
+        Icon: Users,
+        children: [
+          { label: "Membership Plans", href: "/membership/plans", Icon: Users },
+          { label: "Membership History", href: "/membership/history", Icon: History },
+        ],
+      },
+      {
+        label: "Manage",
+        href: "/manage/invoice",
+        Icon: ClipboardList,
+        children: [
+          { label: "Invoice", href: "/manage/invoice", Icon: Receipt },
+          { label: "Payments", href: "/manage/payments", Icon: DollarSign },
+          { label: "Refunds", href: "/manage/refunds", Icon: RefreshCw },
+          { label: "Payment Methods", href: "/manage/payment-methods", Icon: Wallet },
+        ],
+      },
+      {
+        label: "Payers",
+        href: "/payers/accounts",
+        Icon: Landmark,
+        children: [
+          { label: "Clearinghouse Accounts", href: "/payers/accounts", Icon: Wallet },
+          { label: "Eligibility Verification", href: "/payers/eligibility-verification", Icon: ShieldCheck },
+        ],
+      },
     ],
   },
 ];
@@ -256,6 +303,13 @@ const RELATED_ROUTE_PATHS: Record<string, string[]> = {
   "/lab-results": ["/new-laborder", "/new-lab-order"],
   "/questionnaires": ["/edit-questionnaire", "/view-response", "/edit-response", "/add-template"],
   "/referral/efax": ["/referral/efax/new-efax"],
+  "/payers/accounts": [
+    "/payers/add-accounts",
+    "/payers/edit-accounts",
+    "/payers/view-accounts",
+    "/payers/edit-payer-ids",
+  ],
+  "/payers/eligibility-verification": ["/payers/eligibility-verification/check"],
 };
 
 const checkIsActive = (href: string, pathname: string | null) => {
@@ -304,30 +358,38 @@ const MainSidebar = ({ isMini, onToggleMini }: MainSidebarProps) => {
   const tooltipTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useLayoutEffect(() => {
-    if (navRef.current) navRef.current.scrollTop = cachedNavigationScrollTop;
+    let frame = 0;
+    const restoreScroll = () => {
+      if (navRef.current) navRef.current.scrollTop = cachedNavigationScrollTop;
+    };
+
+    restoreScroll();
+    frame = window.requestAnimationFrame(restoreScroll);
+    return () => window.cancelAnimationFrame(frame);
   }, [pathname]);
 
   const toggle = (label: string) =>
     setOpenGroups((s) => ({ ...s, [label]: !s[label] }));
 
-const handleToggleMini = () => {
-  const next = !isMini; // what it will become
-  onToggleMini();       // tell the parent
+  const handleToggleMini = () => {
+    const next = !isMini; // what it will become
+    onToggleMini();       // tell the parent
 
-  // Re-open all groups whenever we expand back to full mode
-  if (!next) {
-    setOpenGroups(
-      Object.fromEntries(
-        SECTIONS.flatMap((s) => s.items)
-          .filter((n) => n.children)
-          .map((n) => [n.label, true])
-      )
-    );
-  }
-  setTooltip(null);
-};
+    // Re-open all groups whenever we expand back to full mode
+    if (!next) {
+      setOpenGroups(
+        Object.fromEntries(
+          SECTIONS.flatMap((s) => s.items)
+            .filter((n) => n.children)
+            .map((n) => [n.label, true])
+        )
+      );
+    }
+    setTooltip(null);
+  };
 
-  const closeMobileSidebar = () => {
+  const handleNavigationClick = () => {
+    if (navRef.current) cachedNavigationScrollTop = navRef.current.scrollTop;
     const toggleInput = document.getElementById("sidebar-toggle") as HTMLInputElement | null;
     if (toggleInput) {
       toggleInput.checked = false;
@@ -350,15 +412,13 @@ const handleToggleMini = () => {
 
   return (
     <aside
-      className={`group/sidebar fixed inset-y-0 left-0 z-40 flex shrink-0 flex-col border-r border-border bg-card transition-all duration-300 ease-out -translate-x-full peer-checked:translate-x-0 lg:static lg:translate-x-0 ${
-        isMini ? "w-[68px] lg:w-[80px]" : "w-64 lg:w-72 xl:w-80"
-      }`}
+      className={`group/sidebar fixed inset-y-0 left-0 z-40 flex shrink-0 flex-col border-r border-border bg-card transition-all duration-300 ease-out -translate-x-full peer-checked:translate-x-0 lg:static lg:translate-x-0 ${isMini ? "w-[68px] lg:w-[80px]" : "w-64 lg:w-72 xl:w-80"
+        }`}
     >
       {/* Logo + mobile close */}
       <div
-        className={`flex h-14 shrink-0 items-center border-b border-border lg:h-16 ${
-          isMini ? "justify-center px-2" : "justify-between px-5 lg:px-6"
-        }`}
+        className={`flex h-14 shrink-0 items-center border-b border-border lg:h-16 ${isMini ? "justify-center px-2" : "justify-between px-5 lg:px-6"
+          }`}
       >
         <div className={`flex items-center gap-2 lg:gap-3 ${isMini ? "justify-center" : ""}`}>
           <Logo mini={isMini} />
@@ -385,9 +445,8 @@ const handleToggleMini = () => {
         onScroll={(event) => {
           cachedNavigationScrollTop = event.currentTarget.scrollTop;
         }}
-        className={`hide-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y py-4 lg:py-5 ${
-          isMini ? "px-2" : "px-3 lg:px-4"
-        }`}
+        className={`hide-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y py-4 lg:py-5 ${isMini ? "px-2" : "px-3 lg:px-4"
+          }`}
       >
         {visibleSections.map((section, sIdx) => (
           <div key={section.title ?? `section-${sIdx}`} className={sIdx > 0 ? "mt-5" : ""}>
@@ -411,26 +470,25 @@ const handleToggleMini = () => {
                     <div key={label} className="relative">
                       <Link
                         href={href}
-                        onClick={closeMobileSidebar}
+                        scroll={false}
+                        onClick={handleNavigationClick}
                         onMouseEnter={(e) => isMini && showTooltip(e, label)}
                         onMouseLeave={hideTooltip}
-                        className={`${linkBase} ${isActive ? linkActive : linkIdle} ${
-                          isMini ? "justify-center px-2" : ""
-                        }`}
+                        className={`${linkBase} ${isActive ? linkActive : linkIdle} ${isMini ? "justify-center px-2" : ""
+                          }`}
                       >
                         <Icon className="h-4 w-4 shrink-0 lg:h-[18px] lg:w-[18px] xl:h-5 xl:w-5" />
                         {!isMini && <span className="truncate">{label}</span>}
 
-                       {/* Badge (red dot with count) */}
-{badge != null && (
-  <span
-    className={`ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[10px] font-semibold text-on-primary ${
-      isMini ? "absolute right-1 top-1 h-2 w-2 min-w-0 p-0" : ""
-    }`}
-  >
-    {badge}
-  </span>
-)}
+                        {/* Badge (red dot with count) */}
+                        {badge != null && (
+                          <span
+                            className={`ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[10px] font-semibold text-on-primary ${isMini ? "absolute right-1 top-1 h-2 w-2 min-w-0 p-0" : ""
+                              }`}
+                          >
+                            {badge}
+                          </span>
+                        )}
                       </Link>
                     </div>
                   );
@@ -453,20 +511,18 @@ const handleToggleMini = () => {
                       <Icon className="h-4 w-4 shrink-0 lg:h-[18px] lg:w-[18px] xl:h-5 xl:w-5" />
                       <span>{label}</span>
                       <ChevronDown
-                        className={`ml-auto h-4 w-4 transition-transform duration-300 ease-in-out lg:h-[18px] lg:w-[18px] ${
-                          isOpen ? "rotate-0" : "-rotate-90"
-                        }`}
+                        className={`ml-auto h-4 w-4 transition-transform duration-300 ease-in-out lg:h-[18px] lg:w-[18px] ${isOpen ? "rotate-0" : "-rotate-90"
+                          }`}
                       />
                     </button>}
 
                     {!isMini && (
                       <div
                         id={`submenu-${label}`}
-                        className={`grid transition-[grid-template-rows,opacity,visibility] duration-300 ease-in-out ${
-                          isOpen
+                        className={`grid transition-[grid-template-rows,opacity,visibility] duration-300 ease-in-out ${isOpen
                             ? "visible grid-rows-[1fr] opacity-100"
                             : "invisible grid-rows-[0fr] opacity-0"
-                        }`}
+                          }`}
                       >
                         <div className="min-h-0 overflow-hidden">
                           <div className="ml-5 mt-1 space-y-1 border-l border-divider pl-2 lg:ml-6 lg:mt-1.5 lg:space-y-1.5 lg:pl-3">
@@ -476,12 +532,12 @@ const handleToggleMini = () => {
                                 <Link
                                   key={c.label}
                                   href={c.href}
-                                  onClick={closeMobileSidebar}
-                                  className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-colors duration-200 lg:gap-3.5 lg:px-3.5 lg:py-2.5 lg:text-sm ${
-                                    isSubActive
+                                  scroll={false}
+                                  onClick={handleNavigationClick}
+                                  className={`relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-colors duration-200 lg:gap-3.5 lg:px-3.5 lg:py-2.5 lg:text-sm ${isSubActive
                                       ? "bg-primary/10 font-medium text-primary before:absolute before:-left-3 before:top-1/2 before:h-[85%] before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-primary"
                                       : "text-label/90 hover:bg-primary/5 hover:text-primary"
-                                  }`}
+                                    }`}
                                 >
                                   <c.Icon className="h-4 w-4 shrink-0 lg:h-[17px] lg:w-[17px]" />
                                   {c.label}
@@ -501,12 +557,12 @@ const handleToggleMini = () => {
                             <Link
                               key={c.label}
                               href={c.href}
-                              onClick={closeMobileSidebar}
+                              scroll={false}
+                              onClick={handleNavigationClick}
                               onMouseEnter={(e) => showTooltip(e, c.label)}
                               onMouseLeave={hideTooltip}
-                              className={`${linkBase} ${
-                                isSubActive ? linkActive : linkIdle
-                              } justify-center px-2`}
+                              className={`${linkBase} ${isSubActive ? linkActive : linkIdle
+                                } justify-center px-2`}
                             >
                               <c.Icon className="h-4 w-4 shrink-0 lg:h-[18px] lg:w-[18px] xl:h-5 xl:w-5" />
                             </Link>
@@ -521,8 +577,8 @@ const handleToggleMini = () => {
           </div>
         ))}
 
-         {/* HIPAA compliance card (bottom) */}
-      {/* {!isMini && (
+        {/* HIPAA compliance card (bottom) */}
+        {/* {!isMini && (
         <div className="shrink-0   pt-2">
           <div className="flex items-start gap-3 rounded-xl bg-primary/5 p-3.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center  text-primary">
@@ -542,11 +598,11 @@ const handleToggleMini = () => {
 
       </nav>
 
-     
+
       {/* Mini mode toggle */}
-     <button
-  type="button"
-  onClick={handleToggleMini}
+      <button
+        type="button"
+        onClick={handleToggleMini}
         aria-label={isMini ? "Expand sidebar" : "Collapse sidebar"}
         className="absolute -right-3 top-14 z-50 hidden h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-card shadow-sm transition-all hover:border-primary hover:text-primary lg:top-16 lg:flex lg:h-7 lg:w-7"
       >
