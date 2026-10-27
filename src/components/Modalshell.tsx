@@ -119,28 +119,47 @@ interface ModalRadioGroupProps {
 
 export const ModalRadioGroup = ({
   name, label, value, onChange, options, error, disabled = false, className = "",
-}: ModalRadioGroupProps) => (
-  <div className="w-full">
-    <p className="mb-2 text-sm font-medium text-label">{label}</p>
-    <div className={`flex flex-wrap items-center gap-x-6 gap-y-2 ${className}`} role="radiogroup">
-      {options.map((o) => (
-        <label key={o.value} className={`flex items-center gap-2 text-sm text-heading ${disabled ? "cursor-default" : "cursor-pointer"}`}>
-          <RadioCheckButtonh
-            type="radio"
-            name={name}
-            value={o.value}
-            checked={value === o.value}
-            onChange={() => onChange(o.value)}
-            disabled={disabled}
-            className="h-4 w-4 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-default"
-          />
-          {o.label}
-        </label>
-      ))}
+}: ModalRadioGroupProps) => {
+  const isGrid = className.includes("grid");
+  const isCustomFlex = className.includes("flex-col") || isGrid;
+
+  return (
+    <div className="w-full">
+      {label ? <p className="mb-2 text-sm font-medium text-label">{label}</p> : null}
+      <div
+        className={`${isGrid ? "" : "flex"} ${
+          isCustomFlex
+            ? ""
+            : `items-center gap-y-2 ${
+                className.includes("flex-nowrap") ? "" : "flex-wrap"
+              } ${className.includes("gap-x-") ? "" : "gap-x-6"}`
+        } ${className}`}
+        role="radiogroup"
+      >
+        {options.map((o) => (
+          <label
+            key={o.value}
+            className={`flex items-center gap-2 text-sm text-heading ${
+              disabled ? "cursor-default" : "cursor-pointer"
+            }`}
+          >
+            <RadioCheckButtonh
+              type="radio"
+              name={name}
+              value={o.value}
+              checked={value === o.value}
+              onChange={() => onChange(o.value)}
+              disabled={disabled}
+              className="h-4 w-4 shrink-0 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-default"
+            />
+            <span className="whitespace-nowrap">{o.label}</span>
+          </label>
+        ))}
+      </div>
+      <FieldError message={error} />
     </div>
-    <FieldError message={error} />
-  </div>
-);
+  );
+};
 
 interface ModalCheckboxGroupProps {
   label: ReactNode;
@@ -223,7 +242,28 @@ export const FormGrid = ({ children }: { children: ReactNode }) => (
 export const FullRow = ({ children }: { children: ReactNode }) => (
   <div className="sm:col-span-2">{children}</div>
 );
-
+/* Bordered section with an icon badge (used in the longer modals) */
+export const ModalSection = ({
+  icon,
+  title,
+  children,
+}: {
+  icon?: ReactNode;
+  title: ReactNode;
+  children: ReactNode;
+}) => (
+  <section className="rounded-xl border border-border p-4">
+    <div className="mb-3 flex items-center gap-3">
+      {icon && (
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          {icon}
+        </span>
+      )}
+      <h4 className="text-sm font-semibold text-heading">{title}</h4>
+    </div>
+    {children}
+  </section>
+);
 /* ---------------------------------------------------------------- */
 /*  Modal shell (no MUI — Tailwind + portal)                        */
 /* ---------------------------------------------------------------- */

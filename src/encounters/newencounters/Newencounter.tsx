@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import Breadcrumb from "@/components/Breadcrumb";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 
-import { PATIENT, PatientProfileCard } from "../viewencounters/Viewencounters";
+import Tags from "@/components/Tags";
 import VerticalSteps, { type VerticalStepItem } from "@/components/Verticalsteps";
 import VisitInformation from "./Visitinformation";
 import ClinicalNotes from "./Clinicalnotes";
@@ -15,6 +15,40 @@ import AssessmentPlan from "./Assessmentplan";
 import OrdersPrescriptions from "./Ordersprescriptions";
 import Attachments from "./Attachments";
 import FollowUp from "./Followup";
+
+/* ---------- Shared patient stub (replace with API data) ---------- */
+const PATIENT = {
+  initials: "MP",
+  name: "milonee primocys",
+  age: "21 years",
+  gender: "Female",
+  status: "Active" as const,
+  patientId: "KMD-0000003",
+  dob: "Jul 11, 2005",
+  primaryProvider: "Dr. Sarah Lee",
+};
+
+const PatientProfileCard = () => (
+  <div className="flex min-w-0 flex-col gap-4 rounded-[14px] border border-border bg-card p-4 sm:flex-row sm:items-center sm:p-5">
+    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-semibold text-primary">
+      {PATIENT.initials}
+    </span>
+    <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-8 sm:gap-y-1">
+      <div className="min-w-0">
+        <p className="truncate text-base font-semibold text-heading">{PATIENT.name}</p>
+        <p className="mt-0.5 text-sm text-body">
+          {PATIENT.age} <span className="mx-1 text-border">•</span> {PATIENT.gender}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-body">
+        <span><span className="font-medium text-heading">ID:</span> {PATIENT.patientId}</span>
+        <span><span className="font-medium text-heading">DOB:</span> {PATIENT.dob}</span>
+        <span><span className="font-medium text-heading">Provider:</span> {PATIENT.primaryProvider}</span>
+      </div>
+    </div>
+    <Tags text={PATIENT.status} tone="success" />
+  </div>
+);
 
 /* ---------- Steps ---------- */
 const STEPS: VerticalStepItem[] = [
@@ -29,7 +63,10 @@ const STEPS: VerticalStepItem[] = [
 /* ---------- Component ---------- */
 const NewEncounter = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const patientId = useSearchParams().get("id");
+  const isEditMode = pathname === "/edit-encounter";
+  const encounterTitle = isEditMode ? "Edit Encounter" : "New Encounter";
   const query = patientId ? `?id=${patientId}` : "";
   const viewHref = `/view-encounters${query}`;
 
@@ -46,12 +83,12 @@ const NewEncounter = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step]);
 
-  /* Breadcrumb grows with the step: …/ New Encounter / Clinical Notes */
+  /* Breadcrumb grows with the step: …/ Encounter / Clinical Notes */
   const crumbs = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Encounter", href: "/encounters" },
     { label: PATIENT.name, href: `/view-patient${query}` },
-    isFirst ? { label: "New Encounter" } : { label: "New Encounter", href: "#" },
+    isFirst ? { label: encounterTitle } : { label: encounterTitle, href: "#" },
     ...(isFirst ? [] : [{ label: current.title }]),
   ];
 
@@ -62,7 +99,7 @@ const NewEncounter = () => {
       {/* Title + step actions */}
       <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-heading sm:text-xl 2xl:text-2xl">New Encounter</h2>
+          <h2 className="text-base font-semibold text-heading sm:text-xl 2xl:text-2xl">{encounterTitle}</h2>
           <p className="mt-0.5 text-xs text-body sm:text-sm">
             Document clinical notes, diagnoses, treatment plan and follow-up for this visit.
           </p>

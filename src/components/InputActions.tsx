@@ -230,6 +230,7 @@ const InputActions = ({
             compact
             bordered={false}
             portalMenu
+            portalMenuZIndex={1000}
             triggerClassName="!h-8 !min-h-8 !rounded-md !px-2 !pr-6"
             className="!w-28"
           />

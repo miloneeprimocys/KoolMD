@@ -27,6 +27,18 @@ import SendWaitingRoomMessage from "@/appointments/waitingroom/SendMessage";
 import MarkNoShow from "@/appointments/waitingroom/MarkNoShow";
 import UnlockPopup from "@/administration/chatunlock/Unlockpopup";
 import DisconnectIntegration from "@/settings/integration/DisconnectIntegration";
+import AddAllergyModal from "@/patient/viewpatients/allergies/AddAllergyModal";
+import ViewAllergy from "@/patient/viewpatients/allergies/ViewAllergy";
+import EditAllergy from "@/patient/viewpatients/allergies/Editallergy";
+import DeleteAllergy from "@/patient/viewpatients/allergies/Deleteallergy";
+import AddMedicationModal from "@/patient/viewpatients/medications/AddMedicationModal";
+import AddClinicalNoteModal from "@/patient/viewpatients/medicalhistory/AddClinicalNoteModal";
+import EditContactInformationModal from "@/patient/viewpatients/overview/EditContactInformationModal";
+import EditLifestyleModal from "@/patient/viewpatients/medicalhistory/EditLifestyleModal";
+import ViewMedication from "@/patient/viewpatients/medications/ViewMedication";
+import EditMedication from "@/patient/viewpatients/medications/Editmedication";
+import DeleteMedication from "@/patient/viewpatients/medications/Deletemedication";
+import MarkInactiveMedication from "@/patient/viewpatients/medications/Markinactivemedication";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
   hideModal,
@@ -38,6 +50,8 @@ import {
   customInvoiceItemDeleted,
   paymentMethodDeleted,
   clearinghouseAccountDeleted,
+  showEditMedication,
+  showEditAllergy,
 } from "@/redux/slices/dialogslice";
 
 /**
@@ -78,6 +92,20 @@ const DialogsContainer = () => {
   const declineRequestOpen = useAppSelector((state) => state.dialog.DeclineRequest);
   const markNoShowOpen = useAppSelector((state) => state.dialog.MarkNoShow);
   const disconnectIntegrationOpen = useAppSelector((state) => state.dialog.DisconnectIntegration);
+  const addAllergyOpen = useAppSelector((state) => state.dialog.AddAllergy);
+  const viewAllergyOpen = useAppSelector((state) => state.dialog.ViewAllergy);
+  const editAllergyOpen = useAppSelector((state) => state.dialog.EditAllergy);
+  const deleteAllergyOpen = useAppSelector((state) => state.dialog.DeleteAllergy);
+  const allergyTarget = useAppSelector((state) => state.dialog.allergyTarget);
+  const addMedicationOpen = useAppSelector((state) => state.dialog.AddMedication);
+  const addClinicalNoteOpen = useAppSelector((state) => state.dialog.AddClinicalNote);
+  const editContactInformationOpen = useAppSelector((state) => state.dialog.EditContactInformation);
+  const editLifestyleOpen = useAppSelector((state) => state.dialog.EditLifestyle);
+  const viewMedicationOpen = useAppSelector((state) => state.dialog.ViewMedication);
+  const editMedicationOpen = useAppSelector((state) => state.dialog.EditMedication);
+  const deleteMedicationOpen = useAppSelector((state) => state.dialog.DeleteMedication);
+  const markInactiveMedicationOpen = useAppSelector((state) => state.dialog.MarkInactiveMedication);
+  const medicationTarget = useAppSelector((state) => state.dialog.medicationTarget);
 
   return (
     <>
@@ -168,6 +196,62 @@ const DialogsContainer = () => {
         open={disconnectIntegrationOpen}
         onClose={() => dispatch(hideModal("DisconnectIntegration"))}
         onConfirm={() => dispatch(hideModal("DisconnectIntegration"))}
+      />
+      <AddAllergyModal />
+      <ViewAllergy
+        open={viewAllergyOpen}
+        allergy={allergyTarget}
+        onClose={() => dispatch(hideModal("ViewAllergy"))}
+        onEdit={(allergy) => {
+          dispatch(hideModal("ViewAllergy"));
+          dispatch(showEditAllergy(allergy));
+        }}
+      />
+      <EditAllergy
+        open={editAllergyOpen}
+        allergy={allergyTarget}
+        onClose={() => dispatch(hideModal("EditAllergy"))}
+        onSave={(allergy) => {
+          // TODO: handle save in your state/API
+          dispatch(hideModal("EditAllergy"));
+        }}
+      />
+      <DeleteAllergy
+        open={deleteAllergyOpen}
+        allergy={allergyTarget}
+        onClose={() => dispatch(hideModal("DeleteAllergy"))}
+        onDeleted={(id) => {
+          // TODO: handle deletion in your state/API
+          dispatch(hideModal("DeleteAllergy"));
+        }}
+      />
+      <AddMedicationModal />
+      <AddClinicalNoteModal />
+      <EditContactInformationModal />
+      <EditLifestyleModal />
+      <ViewMedication
+        open={viewMedicationOpen}
+        medication={medicationTarget}
+        onClose={() => dispatch(hideModal("ViewMedication"))}
+        onEdit={(medication) => {
+          dispatch(hideModal("ViewMedication"));
+          dispatch(showEditMedication(medication));
+        }}
+      />
+      <EditMedication
+        open={editMedicationOpen}
+        medication={medicationTarget}
+        onClose={() => dispatch(hideModal("EditMedication"))}
+      />
+      <DeleteMedication
+        open={deleteMedicationOpen}
+        medication={medicationTarget}
+        onClose={() => dispatch(hideModal("DeleteMedication"))}
+      />
+      <MarkInactiveMedication
+        open={markInactiveMedicationOpen}
+        medication={medicationTarget}
+        onClose={() => dispatch(hideModal("MarkInactiveMedication"))}
       />
     </>
   );

@@ -37,6 +37,8 @@ export interface SignupFieldProps
   hint?: string;
   /** Custom className for the outer wrapper */
   className?: string;
+  /** Custom className for the inner input or textarea element */
+  inputClassName?: string;
   /** Render a multiline textarea instead of a single-line input. */
   multiline?: boolean;
   /** Number of visible lines when rendered as a textarea. */
@@ -59,6 +61,7 @@ const SignupField = forwardRef<HTMLInputElement | HTMLTextAreaElement, SignupFie
       error,
       hint,
       className = "",
+      inputClassName = "",
       id,
       disabled,
       multiline = false,
@@ -163,6 +166,7 @@ const SignupField = forwardRef<HTMLInputElement | HTMLTextAreaElement, SignupFie
                 outline-none transition-colors duration-200
                 disabled:cursor-not-allowed disabled:opacity-60
                 ${borderClass}
+                ${inputClassName}
               `}
               {...rest}
             />

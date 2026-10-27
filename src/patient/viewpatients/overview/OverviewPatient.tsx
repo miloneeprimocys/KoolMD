@@ -22,6 +22,8 @@ import Tags from "@/components/Tags";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 import EditButton from "@/components/EditButton";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 
 /* ---------- Static data (replace with API data later) ---------- */
 const NOT_PROVIDED = "Not provided";
@@ -134,15 +136,11 @@ type Props = {
   onEdit?: (section: string) => void;
 };
 
-/**
- * Layout:
- *  Row 1 — 3 columns of cards:
- *    1) Contact + Emergency Contact
- *    2) Personal + Insurance
- *    3) Account Status + Recent Appointments
- *  Row 2 — full-width HIPAA Privacy Reminder banner
- */
-const OverviewPatient = ({ onEdit }: Props) => (
+const OverviewPatient = ({ onEdit }: Props) => {
+  const dispatch = useAppDispatch();
+
+
+  return (
   <div className="flex flex-col gap-4 sm:gap-5">
     {/* ---- Row 1: 3 columns of cards ---- */}
     <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 2xl:grid-cols-3">
@@ -154,7 +152,7 @@ const OverviewPatient = ({ onEdit }: Props) => (
           title="Contact Information"
           action={
             CONTACT.some((item) => hasProvidedValue(item.value)) ? (
-              <EditButton section="Contact Information" onEdit={onEdit} />
+              <EditButton section="Contact Information" onEdit={() => dispatch(showModal("EditContactInformation"))} />
             ) : undefined
           }
         >
@@ -270,6 +268,7 @@ const OverviewPatient = ({ onEdit }: Props) => (
       </div>
     </div> */}
   </div>
-);
+  );
+};
 
 export default OverviewPatient;

@@ -9,10 +9,10 @@ import Tags from "@/components/Tags";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 
-import Overview from "./OverviewPatient";
+import Overview from "./overview/OverviewPatient";
 import MedicalHistory from "./medicalhistory/Medicalhistory";
-import Medications from "./Medications";
-import Allergies from "./Allergies";
+import Medications from "./medications/Medications";
+import Allergies from "./allergies/Allergies";
 import Documents from "./Documents";
 import Appointments from "./Appointments";
 import PatientRightSection, {

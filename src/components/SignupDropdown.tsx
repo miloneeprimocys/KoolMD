@@ -107,7 +107,7 @@ const SignupDropdown = forwardRef<HTMLInputElement, SignupDropdownProps>(
     } | null>(null);
 
     const wrapRef = useRef<HTMLDivElement>(null);
-    const triggerRef = useRef<HTMLButtonElement | null>(null);
+    const triggerRef = useRef<HTMLElement | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
     const listRef = useRef<HTMLUListElement>(null);
 
@@ -175,9 +175,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
 
     /* ---- Placement ---- */
     const computePlacement = () => {
-      const el = portalMenu
-        ? triggerRef.current ?? inputRef.current ?? wrapRef.current
-        : wrapRef.current;
+      const el = triggerRef.current ?? wrapRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
@@ -217,10 +215,32 @@ const chevronRight = compact ? "right-2" : "right-3.5";
           : triggerRect.bottom + 6;
 
       setPortalPosition((current) => {
-        if (!current || Math.abs(current.top - top) < 1) return current;
-        return { ...current, top };
+        if (
+          current &&
+          Math.abs(current.top - top) < 1 &&
+          Math.abs(current.left - triggerRect.left) < 1 &&
+          Math.abs(current.width - triggerRect.width) < 1
+        ) {
+          return current;
+        }
+        return {
+          left: triggerRect.left,
+          top,
+          width: triggerRect.width,
+        };
       });
     }, [open, placement, portalMenu, filtered.length]);
+
+    useEffect(() => {
+      if (!open || !portalMenu || !triggerRef.current) return;
+      if (typeof ResizeObserver === "undefined") return;
+
+      const ro = new ResizeObserver(() => {
+        computePlacement();
+      });
+      ro.observe(triggerRef.current);
+      return () => ro.disconnect();
+    }, [open, portalMenu]);
 
     useEffect(() => {
       if (!open) return;
@@ -296,6 +316,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
       if (!open) {
         if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
           e.preventDefault();
+          computePlacement();
           setOpen(true);
         }
         return;
@@ -369,6 +390,9 @@ const chevronRight = compact ? "right-2" : "right-3.5";
           {searchable ? (
             /* ===== Searchable input ===== */
             <div
+              ref={(el) => {
+                triggerRef.current = el;
+              }}
               className={`
                 relative flex w-full min-w-0 items-center
                 ${compact ? "h-8" : "h-12"}
@@ -405,7 +429,10 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                 value={open ? query : displayLabel}
                 onChange={(e) => {
                   setQuery(e.target.value);
-                  if (!open) setOpen(true);
+                  if (!open) {
+                    computePlacement();
+                    setOpen(true);
+                  }
                 }}
                 onFocus={() => {
                   setFocused(true);
@@ -415,7 +442,10 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                 }}
                 onKeyDown={handleKeyDown}
                 onClick={() => {
-                  if (!disabled) setOpen(true);
+                  if (!disabled) {
+                    computePlacement();
+                    setOpen(true);
+                  }
                 }}
                 className={`
                   h-full min-w-0 flex-1 bg-transparent
@@ -454,7 +484,9 @@ const chevronRight = compact ? "right-2" : "right-3.5";
           ) : (
             /* ===== Non-searchable trigger button ===== */
             <button
-              ref={triggerRef}
+              ref={(el) => {
+                triggerRef.current = el;
+              }}
               id={inputId}
               name={name}
               aria-label={typeof label === "string" ? label : placeholder}
@@ -464,6 +496,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
               aria-expanded={open}
               onClick={() => {
                 if (disabled) return;
+                computePlacement();
                 setOpen((o) => !o);
                 setFocused(true);
               }}
@@ -523,9 +556,9 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                 portalMenu
                   ? {
                       position: "fixed",
-                      left: portalPosition?.left ?? 0,
-                      top: portalPosition?.top ?? 0,
-                      width: portalPosition?.width ?? wrapRef.current?.offsetWidth,
+                      left: portalPosition?.left ?? (triggerRef.current ? triggerRef.current.getBoundingClientRect().left : 0),
+                      top: portalPosition?.top ?? (triggerRef.current ? triggerRef.current.getBoundingClientRect().bottom + 6 : 0),
+                      width: portalPosition?.width ?? (triggerRef.current ? triggerRef.current.getBoundingClientRect().width : wrapRef.current?.offsetWidth),
                       maxHeight: menuScrollable ? menuMaxHeight : undefined,
                       zIndex: portalMenuZIndex,
                     }
@@ -584,7 +617,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                           {opt.icon && (
                             <span className="flex-shrink-0">{opt.icon}</span>
                           )}
-                          <span className="truncate">{opt.label}</span>
+                          <span title={opt.label} className="truncate">{opt.label}</span>
                         </span>
                       )}
                       {isSelected && (

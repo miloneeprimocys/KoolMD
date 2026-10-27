@@ -225,6 +225,7 @@ const LifestyleRow = ({
 /*  Component                                                       */
 /* ---------------------------------------------------------------- */
 const MedicalHistory = () => {
+  const dispatch = useAppDispatch();
   const conditionRows = CONDITIONS.map((c) => ({
     name: <Content title={c.name} truncate />,
     date: <Content title={c.date} truncate />,
@@ -352,7 +353,7 @@ const MedicalHistory = () => {
             [...LIFESTYLE_LEFT, ...LIFESTYLE_RIGHT].some(
               (item) => item.value.trim() && item.value !== "Not provided",
             ) ? (
-              <EditButton section="Lifestyle & Social History" onEdit={() => {}} />
+              <EditButton section="Lifestyle & Social History" onEdit={() => dispatch(showModal("EditLifestyle"))} />
             ) : undefined
           }
         >
@@ -377,7 +378,7 @@ const MedicalHistory = () => {
           icon={FileText}
           tone="blue"
           title="Clinical Notes"
-          action={<AddAction text="Add Note" />}
+          action={<AddAction text="Add Note" modal="AddClinicalNote" />}
         >
           <ScrollArea>
             <Table

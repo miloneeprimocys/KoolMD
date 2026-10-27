@@ -191,6 +191,7 @@ const SECTIONS: NavSection[] = [
         children: [
           { label: "Clearinghouse Accounts", href: "/payers/accounts", Icon: Wallet },
           { label: "Eligibility Verification", href: "/payers/eligibility-verification", Icon: ShieldCheck },
+          { label: "Claims", href: "/payers/claims", Icon: ClipboardList },
         ],
       },
     ],
@@ -298,7 +299,7 @@ const RELATED_ROUTE_PATHS: Record<string, string[]> = {
   "/patients": ["/add-patient", "/edit-patient", "/view-patient"],
   "/providers": ["/add-provider", "/view-provider"],
   "/appointments": ["/book-appointment", "/edit-appointment"],
-  "/encounters": ["/new-encounter", "/view-encounter"],
+  "/encounters": ["/new-encounter", "/edit-encounter", "/view-encounter"],
   "/prescriptions": ["/add-prescription", "/edit-prescription", "/view-prescription"],
   "/lab-results": ["/new-laborder", "/new-lab-order"],
   "/questionnaires": ["/edit-questionnaire", "/view-response", "/edit-response", "/add-template"],
@@ -310,6 +311,7 @@ const RELATED_ROUTE_PATHS: Record<string, string[]> = {
     "/payers/edit-payer-ids",
   ],
   "/payers/eligibility-verification": ["/payers/eligibility-verification/check"],
+  "/payers/claims": ["/payers/claims/submit", "/payers/claims/view"],
 };
 
 const checkIsActive = (href: string, pathname: string | null) => {

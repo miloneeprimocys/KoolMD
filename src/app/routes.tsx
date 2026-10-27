@@ -27,6 +27,9 @@ import ViewClearinghouseAccount from "@/billing/clearinghouse/clearingaccount/vi
 import EditPayerId from "@/billing/clearinghouse/clearingaccount/viewaccount/Editpayerid";
 import EligibilityVerification from "@/billing/clearinghouse/eligibility/EligibilityVerification";
 import CheckEligibility from "@/billing/clearinghouse/eligibility/checkeligibility/CheckEligibility";
+import Claims from "@/billing/clearinghouse/claims/Claims";
+import SubmitClaim from "@/billing/clearinghouse/claims/Submitclaim";
+import ViewClaims from "@/billing/clearinghouse/claims/Viewclaims";
 import Invoice from "@/billing/manage/invoice/Invoice";
 import CreateInvoice from "@/billing/manage/invoice/createinvoice/CreateInvoice";
 import MembershipPlans from "@/billing/membership/membership-plans/Membershipplans";
@@ -152,6 +155,12 @@ export const ROUTES: Record<string, RouteConfig> = {
   "new-encounter": {
     component: NewEncounter,
     title: "New Encounter",
+    access: "protected",
+    requiredPermission: PERMISSIONS.ENCOUNTER_READ,
+  },
+  "edit-encounter": {
+    component: NewEncounter,
+    title: "Edit Encounter",
     access: "protected",
     requiredPermission: PERMISSIONS.ENCOUNTER_READ,
   },
@@ -358,6 +367,21 @@ export const ROUTES: Record<string, RouteConfig> = {
   "payers/eligibility-verification/check": {
     component: CheckEligibility,
     title: "Clearinghouse",
+    access: "protected",
+  },
+  "payers/claims": {
+    component: Claims,
+    title: "Claims",
+    access: "protected",
+  },
+  "payers/claims/submit": {
+    component: SubmitClaim,
+    title: "Submit Claim",
+    access: "protected",
+  },
+  "payers/claims/view": {
+    component: ViewClaims,
+    title: "View Claim",
     access: "protected",
   },
   "payers/add-accounts": {

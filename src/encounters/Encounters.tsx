@@ -140,6 +140,7 @@ const Encounters = () => {
         <Actions
           onAction={(action) => {
             if (action === "view") openPatient(x.id);
+            if (action === "edit") router.push(`/edit-encounter?id=${x.id}`);
           }}
         />
       </div>

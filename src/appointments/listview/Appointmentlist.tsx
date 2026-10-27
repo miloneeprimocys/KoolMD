@@ -173,11 +173,14 @@ const AppointmentList = () => {
       actions: (
         <div className="flex w-full items-center justify-center">
           <Actions
+            actions={["view", "edit", "delete"]}
             onAction={(action) => {
               if (action === "view") {
                 setShowPanel((open) => !open);
               } else if (action === "edit") {
                 router.push("/edit-appointment");
+              } else if (action === "delete") {
+                dispatch(showModal("CancelAppointment"));
               } else {
                 setShowPanel(true);
               }
@@ -222,7 +225,8 @@ const AppointmentList = () => {
           </div>
         </div>
 
-        {/* Right section (opens when a row is selected) */}
+
+      {/* Right section (opens when a row is selected) */}
         {showPanel && (
           <RightSection
             variant="appointment"
