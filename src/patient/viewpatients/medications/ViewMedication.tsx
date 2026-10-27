@@ -11,7 +11,7 @@ import Tags from "@/components/Tags";
 /* ---------------------------------------------------------------- */
 /*  Shared type + helpers (also used by Edit / MarkInactive / Delete) */
 /* ---------------------------------------------------------------- */
-export type MedicationTone = "primary" | "pink" | "success" | "warning";
+export type MedicationTone = "primary" | "pink" | "success" | "warning" | "violet";
 
 export type Medication = {
   id: string;
@@ -43,6 +43,7 @@ export const TONE_CLS: Record<MedicationTone, string> = {
   pink: "bg-pink/10 text-pink",
   success: "bg-success/10 text-success",
   warning: "bg-warning/10 text-warning",
+  violet: "bg-violet/10 text-violet",
 };
 
 /** "2023-03-15" -> "Mar 15, 2023" */

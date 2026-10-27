@@ -43,6 +43,9 @@ export const TONES = {
   green:  "bg-success/40 text-success",
   orange: "bg-warning/40 text-warning",
   pink:   "bg-pink/40 text-pink",
+  primary: "bg-primary/40 text-primary",
+  success: "bg-success/40 text-success",
+  warning: "bg-warning/40 text-warning",
 } as const;
 export type Tone = keyof typeof TONES;
 
