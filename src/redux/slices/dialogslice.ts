@@ -20,6 +20,13 @@ export interface PrescriptionToDelete {
   prescribedDate: string;
   prescribedBy: string;
 }
+export interface LicenseToDelete {
+  id: string;
+  provider: string;
+  licenseNumber: string;
+  state: string;
+  licenseType?: string;
+}
 
 /** Modal visibility and transient modal state. */
 interface ModalState {
@@ -30,6 +37,9 @@ interface ModalState {
   DeletePrescription: boolean;
   deletePrescriptionTarget: PrescriptionToDelete | null;
   deletedPrescriptionIds: string[];
+  DeleteLicense: boolean;
+  licenseDeleteTarget: LicenseToDelete | null;
+  deletedLicenseIds: string[];
   ViewMembershipPlan: boolean;
   DeleteMembershipPlan: boolean;
   membershipPlanTarget: MembershipPlan | null;
@@ -85,6 +95,8 @@ interface ModalState {
   EditAllergy: boolean;
   DeleteAllergy: boolean;
   allergyTarget: Allergy | null;
+  AddDocument: boolean;
+  SelectMedication: boolean;
 }
 
 const initialState: ModalState = {
@@ -95,6 +107,9 @@ const initialState: ModalState = {
   DeletePrescription: false,
   deletePrescriptionTarget: null,
   deletedPrescriptionIds: [],
+  DeleteLicense: false,
+  licenseDeleteTarget: null,
+  deletedLicenseIds: [],
   ViewMembershipPlan: false,
   DeleteMembershipPlan: false,
   membershipPlanTarget: null,
@@ -146,6 +161,8 @@ const initialState: ModalState = {
   EditAllergy: false,
   DeleteAllergy: false,
   allergyTarget: null,
+  AddDocument: false,
+  SelectMedication: false,
 };
 
 // Only boolean keys can be toggled with showModal / hideModal
@@ -172,6 +189,9 @@ const dialogSlice = createSlice({
       }
       if (action.payload === "DeletePrescription") {
         state.deletePrescriptionTarget = null;
+      }
+      if (action.payload === "DeleteLicense") {
+        state.licenseDeleteTarget = null;
       }
       if (action.payload === "ViewMembershipPlan" || action.payload === "DeleteMembershipPlan") {
         state.membershipPlanTarget = null;
@@ -208,10 +228,24 @@ const dialogSlice = createSlice({
       if (action.payload === "ViewAllergy" || action.payload === "EditAllergy" || action.payload === "DeleteAllergy") {
         state.allergyTarget = null;
       }
+      if (action.payload === "SelectMedication") {
+        state.medicationTarget = null;
+      }
     },
     showDeletePrescription: (state, action: PayloadAction<PrescriptionToDelete>) => {
       state.deletePrescriptionTarget = action.payload;
       state.DeletePrescription = true;
+    },
+    showDeleteLicense: (state, action: PayloadAction<LicenseToDelete>) => {
+      state.licenseDeleteTarget = action.payload;
+      state.DeleteLicense = true;
+    },
+    licenseDeleted: (state, action: PayloadAction<string>) => {
+      if (!state.deletedLicenseIds.includes(action.payload)) {
+        state.deletedLicenseIds.push(action.payload);
+      }
+      state.licenseDeleteTarget = null;
+      state.DeleteLicense = false;
     },
     showMembershipPlanView: (state, action: PayloadAction<MembershipPlan>) => {
       state.membershipPlanTarget = action.payload;
@@ -364,6 +398,10 @@ const dialogSlice = createSlice({
       state.allergyTarget = action.payload;
       state.DeleteAllergy = true;
     },
+    selectMedication: (state, action: PayloadAction<any>) => {
+      state.medicationTarget = action.payload;
+      state.SelectMedication = false;
+    },
     hideAllModals: (state) => {
       state.AddMedicalCondition = false;
       state.AddFamilyHistory = false;
@@ -371,6 +409,8 @@ const dialogSlice = createSlice({
       state.AddSurgery = false;
       state.DeletePrescription = false;
       state.deletePrescriptionTarget = null;
+      state.DeleteLicense = false;
+      state.licenseDeleteTarget = null;
       state.ViewMembershipPlan = false;
       state.DeleteMembershipPlan = false;
       state.membershipPlanTarget = null;
@@ -421,6 +461,9 @@ const dialogSlice = createSlice({
       state.EditAllergy = false;
       state.DeleteAllergy = false;
       state.allergyTarget = null;
+      state.AddDocument = false;
+      state.SelectMedication = false;
+      state.medicationTarget = null;
     },
   },
 });
@@ -430,6 +473,8 @@ export const {
   hideModal,
   hideAllModals,
   showDeletePrescription,
+  showDeleteLicense,
+  licenseDeleted,
   showMembershipPlanView,
   showMembershipPlanDelete,
   selectMembershipPlanForEdit,
@@ -461,6 +506,10 @@ export const {
   showViewAllergy,
   showEditAllergy,
   showDeleteAllergy,
+  selectMedication,
 
 } = dialogSlice.actions;
 export default dialogSlice.reducer;
+
+
+

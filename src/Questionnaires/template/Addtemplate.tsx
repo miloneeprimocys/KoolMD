@@ -424,12 +424,12 @@ const AddTemplate = () => {
             onClick={() => router.push("/questionnaires")}
             className="whitespace-nowrap"
           />
-          <ImportButton
+          {/* <ImportButton
             text="Save as Draft"
             icon={null}
             onClick={() => submit("draft")}
             className="whitespace-nowrap"
-          />
+          /> */}
           <AddButton
             text="Publish Template"
             icon={null}

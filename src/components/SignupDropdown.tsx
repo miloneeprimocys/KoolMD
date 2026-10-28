@@ -552,6 +552,8 @@ const chevronRight = compact ? "right-2" : "right-3.5";
               ref={listRef}
               id={inputId ? `${inputId}-listbox` : undefined}
               role="listbox"
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
               style={
                 portalMenu
                   ? {
@@ -591,8 +593,16 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                       role="option"
                       aria-selected={isSelected}
                       onMouseEnter={() => setHighlightedIndex(idx)}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => commitSelection(opt.value)}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        commitSelection(opt.value);
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        commitSelection(opt.value);
+                      }}
                       className={`
                         mx-1 flex cursor-pointer items-center justify-between gap-2
                         rounded-lg px-3 py-2.5

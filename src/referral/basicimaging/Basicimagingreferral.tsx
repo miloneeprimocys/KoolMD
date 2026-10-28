@@ -141,7 +141,7 @@ const BasicImagingReferral = () => {
           )}
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {isLastStep && (
+            {/* {isLastStep && (
               <ImportButton
                 text="Save as Draft"
                 icon={null}
@@ -151,7 +151,7 @@ const BasicImagingReferral = () => {
                 }}
                 className="shrink-0 whitespace-nowrap px-3 sm:px-5"
               />
-            )}
+            )} */}
             <AddButton
               text={NEXT_LABEL[currentStep - 1]}
               icon={isLastStep ? <Send className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}

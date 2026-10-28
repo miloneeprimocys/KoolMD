@@ -79,10 +79,30 @@ const SECTIONS: NavSection[] = [
         requiredPermission: PERMISSIONS.PATIENT_READ,
       },
       {
-        label: "Providers",
-        href: "/providers",
+        label: "Provider",
+        href: "/provider/provider-list",
         Icon: BookUser,
         requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+        children: [
+          {
+            label: "Provider List",
+            href: "/provider/provider-list",
+            Icon: BookUser,
+            requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+          },
+          {
+            label: "Practitioner",
+            href: "/provider/practitioner",
+            Icon: Stethoscope,
+            requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+          },
+          {
+            label: "License Management",
+            href: "/provider/license-management",
+            Icon: ShieldCheck,
+            requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+          },
+        ],
       },
       {
         label: "Appointments",
@@ -297,7 +317,14 @@ const filterSectionsByPermission = (
 
 const RELATED_ROUTE_PATHS: Record<string, string[]> = {
   "/patients": ["/add-patient", "/edit-patient", "/view-patient"],
-  "/providers": ["/add-provider", "/view-provider"],
+  "/providers": ["/provider/add-provider", "/provider/view-provider"],
+  "/provider/provider-list": ["/provider/add-provider", "/provider/view-provider", "/providers"],
+  "/provider/practitioner": ["/provider/add-practitioner", "/provider/view-practitioner"],
+  "/provider/license-management": [
+    "/provider/license-management/add",
+    "/provider/license-management/view",
+    "/provider/license-management/edit",
+  ],
   "/appointments": ["/book-appointment", "/edit-appointment"],
   "/encounters": ["/new-encounter", "/edit-encounter", "/view-encounter"],
   "/prescriptions": ["/add-prescription", "/edit-prescription", "/view-prescription"],
@@ -324,8 +351,22 @@ const checkIsActive = (href: string, pathname: string | null) => {
     return true;
   }
 
-  if (path === "/providers") {
-    return pathname === "/providers" || pathname.startsWith("/providers/");
+  if (path === "/providers" || path === "/provider/provider-list") {
+    return (
+      pathname === "/providers" ||
+      pathname === "/provider/provider-list" ||
+      pathname.startsWith("/providers/") ||
+      pathname.startsWith("/provider/provider-list/") ||
+      pathname === "/provider/add-provider" ||
+      pathname === "/provider/view-provider"
+    );
+  }
+
+  if (path === "/provider/practitioner") {
+    return (
+      pathname === "/provider/practitioner" ||
+      pathname.startsWith("/provider/practitioner/")
+    );
   }
 
   if (path === "/patients") {
@@ -628,3 +669,5 @@ const MainSidebar = ({ isMini, onToggleMini }: MainSidebarProps) => {
 };
 
 export default MainSidebar;
+
+

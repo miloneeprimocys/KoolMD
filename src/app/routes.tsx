@@ -7,8 +7,15 @@ import Patient from "@/patient/Patient";
 import AddPatient from "@/patient/AddPatient";
 import ViewPatient from "@/patient/viewpatients/Viewpatient";
 import Providers from "@/providers/Providers";
+import Practitioner from "@/providers/practitioner/Practitioner";
+import AddPractitioner from "@/providers/practitioner/addpractitioner/Addpractitioner";
+import ViewPractitioner from "@/providers/practitioner/viewpractitioner/Viewpractitioner";
 import AddProvider from "@/providers/AddProvider";
 import ViewProvider from "@/providers/viewproviders/Viewprovider";
+import LicenseManagement from "@/providers/licensemanagement/Licensemanagement";
+import AddLicense from "@/providers/licensemanagement/addlicense/Addlicense";
+import ViewLicense from "@/providers/licensemanagement/Viewlicense";
+import EditLicense from "@/providers/licensemanagement/Editlicense";
 import AppointmentScheduling from "@/appointments/Appointmentscheduling";
 import BookNewAppointment from "@/appointments/Booknewappointment";
 import Encounters from "@/encounters/Encounters";
@@ -41,6 +48,7 @@ import Refunds from "@/billing/manage/refunds/Refunds";
 import CreateRefund from "@/billing/manage/refunds/CreateRefund";
 import PaymentMethods from "@/billing/manage/payment-method/PaymentMethods";
 import QuestionnairesPage from "@/Questionnaires/Questionnairespage";
+import CreateQuestionnaire from "@/Questionnaires/CreateQuestionnaire";
 import Administration from "@/administration/chatunlock/Administration";
 import Integration from "@/settings/integration/Integration";
 import ReferralManagement from "@/referral/referralmanagement/Referralmanagement";
@@ -116,17 +124,66 @@ export const ROUTES: Record<string, RouteConfig> = {
     access: "protected",
     requiredPermission: PERMISSIONS.PRACTITIONER_READ,
   },
-  "add-provider": {
+  "provider/provider-list": {
+    component: Providers,
+    title: "Provider List",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+  },
+  "provider/practitioner": {
+    component: Practitioner,
+    title: "Practitioner",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+  },
+  "provider/view-practitioner": {
+    component: ViewPractitioner,
+    title: "View Practitioner",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+  },
+  "provider/add-practitioner": {
+    component: AddPractitioner,
+    title: "Add Practitioner",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRACTITIONER_MANAGE,
+  },
+  
+  "provider/add-provider": {
     component: AddProvider,
     title: "Add Provider",
     access: "protected",
     requiredPermission: PERMISSIONS.PRACTITIONER_MANAGE,
   },
-  "view-provider": {
+  "provider/view-provider": {
     component: ViewProvider,
     title: "View Provider",
     access: "protected",
     requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+  },
+  "provider/license-management": {
+    component: LicenseManagement,
+    title: "License Management",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+  },
+  "provider/license-management/add": {
+    component: AddLicense,
+    title: "Add License",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRACTITIONER_MANAGE,
+  },
+  "provider/license-management/view": {
+    component: ViewLicense,
+    title: "View License",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRACTITIONER_READ,
+  },
+  "provider/license-management/edit": {
+    component: EditLicense,
+    title: "Edit License",
+    access: "protected",
+    requiredPermission: PERMISSIONS.PRACTITIONER_MANAGE,
   },
   appointments: {
     component: AppointmentScheduling,
@@ -409,6 +466,11 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "New Lab Order",
     access: "protected",
   },
+  "questionnaires/create": {
+    component: CreateQuestionnaire,
+    title: "Create Questionnaire",
+    access: "protected",
+  },
   questionnaires: {
     component: QuestionnairesPage,
     title: "Questionnaires",
@@ -490,3 +552,5 @@ export const ROUTES: Record<string, RouteConfig> = {
     access: "protected",
   },
 };
+
+

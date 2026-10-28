@@ -30,7 +30,7 @@ const AddButton = ({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className={`group relative isolate inline-flex h-10 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg border border-primary bg-primary px-5 text-sm font-medium text-on-primary shadow-md shadow-primary/25 transition-all duration-300 ease-out hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+      className={`group relative isolate inline-flex h-10 cursor-pointer items-center justify-center gap-2 whitespace-nowrap overflow-hidden rounded-lg border border-primary bg-primary px-4 sm:px-5 text-sm font-medium text-on-primary shadow-md shadow-primary/25 transition-all duration-300 ease-out hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
     >
       {/* shine sweep on hover */}
       <span

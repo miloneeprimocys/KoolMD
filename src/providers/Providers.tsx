@@ -259,7 +259,7 @@ const Providers = () => {
         <div className="flex w-full items-center justify-center">
           <Actions
             onAction={(action) => {
-              if (action === "view") router.push(`/view-provider?id=${practitioner.id}`);
+              if (action === "view") router.push(`/provider/view-provider?id=${practitioner.id}`);
             }}
           />
         </div>
@@ -306,7 +306,7 @@ const Providers = () => {
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <AddButton text="Add Provider" onClick={() => router.push("/add-provider")} />
+          <AddButton text="Add Provider" onClick={() => router.push("/provider/add-provider")} />
         </div>
       </div>
 

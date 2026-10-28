@@ -6,6 +6,9 @@ import { History, MoreVertical, Pill } from "lucide-react";
 
 import EditButton from "@/components/EditButton";
 import Tags, { type TagTone } from "@/components/Tags";
+import AddInternalButton from "@/components/AddInternalButton";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 import { Panel } from "./PrescriptionDetailsSection";
 
 /* ---------- Static data ---------- */
@@ -54,11 +57,27 @@ const PrescriptionSidebar = ({
   patientId,
 }: Props) => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
 
   return (
     <aside className="min-w-0 space-y-4 sm:space-y-5">
-   
+      {/* Medication Catalog */}
+      <Panel
+        icon={Pill}
+        title="Medication Catalog"
+        action={
+          <AddInternalButton
+            className="h-10!"
+            text="Select from Catalog"
+            onClick={() => dispatch(showModal("SelectMedication"))}
+          />
+        }
+      >
+        <p className="text-sm text-body">
+          Browse and select medications from the catalog to add to this prescription.
+        </p>
+      </Panel>
 
       {/* Previous prescriptions */}
       <Panel

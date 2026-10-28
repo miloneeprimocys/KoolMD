@@ -20,7 +20,7 @@ import {
   Printer,
   RefreshCw,
   Stethoscope,
-  type LucideIcon,
+type LucideIcon,
 } from "lucide-react";
 
 import Breadcrumb from "@/components/Breadcrumb";
@@ -29,6 +29,8 @@ import AddButton from "@/components/Addbutton";
 import AddInternalButton from "@/components/AddInternalButton";
 import ImportButton from "@/components/ImportButton";
 import EditButton from "@/components/EditButton";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 import { Panel } from "../addprescription/PrescriptionDetailsSection";
 import { PRESCRIPTIONS } from "../Prescriptions";
 
@@ -132,6 +134,7 @@ const iconBtn =
 /* ---------- Page ---------- */
 const ViewPrescriptions = () => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
   const selectedPrescription = PRESCRIPTIONS.find(
     (prescription) => prescription.id === searchParams.get("id"),
@@ -285,7 +288,7 @@ const ViewPrescriptions = () => {
           <Panel
             icon={Paperclip}
             title="Attached Documents"
-            action={<AddInternalButton className="h-10!" text="Add Document" onClick={() => {}} />}
+            action={<AddInternalButton className="h-10!" text="Add Document" onClick={() => dispatch(showModal("AddDocument"))} />}
           >
             <div className="flex items-center gap-3 rounded-xl border border-border p-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-500 dark:bg-red-950/40 dark:text-red-400">

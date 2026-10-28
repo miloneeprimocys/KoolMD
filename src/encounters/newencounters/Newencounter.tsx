@@ -121,7 +121,7 @@ const NewEncounter = () => {
               onClick={() => goTo(step - 1)}
             />
           )}
-          <ImportButton text="Save as Draft" icon={null} className="whitespace-nowrap" onClick={() => {}} />
+          {/* <ImportButton text="Save as Draft" icon={null} className="whitespace-nowrap" onClick={() => {}} /> */}
           {isLast ? (
             <AddButton
               text="Complete Encounter"

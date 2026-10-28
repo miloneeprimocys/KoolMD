@@ -9,6 +9,8 @@ import SignupDropdown, { type DropdownOption } from "@/components/SignupDropdown
 import ImportButton from "@/components/ImportButton";
 import AddButton from "@/components/Addbutton";
 import AddInternalButton from "@/components/AddInternalButton";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 
 /* ---------- Types (shared — move to a types file if preferred) ---------- */
 export type MedicationEntry = {
@@ -178,6 +180,7 @@ const PrescriptionDetailsSection = ({
   onSave,
   onScrollToMedicationList,
 }: Props) => {
+  const dispatch = useAppDispatch();
   return (
     <Panel
       icon={ClipboardList}
@@ -186,7 +189,7 @@ const PrescriptionDetailsSection = ({
         <ImportButton
           className="text-primary"
           text="Add from Medication List"
-          onClick={onScrollToMedicationList}
+          onClick={() => dispatch(showModal("SelectMedication"))}
         />
       }
     >

@@ -39,6 +39,9 @@ import ViewMedication from "@/patient/viewpatients/medications/ViewMedication";
 import EditMedication from "@/patient/viewpatients/medications/Editmedication";
 import DeleteMedication from "@/patient/viewpatients/medications/Deletemedication";
 import MarkInactiveMedication from "@/patient/viewpatients/medications/Markinactivemedication";
+import AddDocumentModal from "@/prescriptions/viewprescription/AddDocumentModal";
+import SelectMedicationModal from "@/prescriptions/addprescription/SelectMedicationModal";
+import DeleteLicense from "@/providers/licensemanagement/Deletelicense";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
   hideModal,
@@ -52,6 +55,8 @@ import {
   clearinghouseAccountDeleted,
   showEditMedication,
   showEditAllergy,
+  selectMedication,
+  licenseDeleted,
 } from "@/redux/slices/dialogslice";
 
 /**
@@ -70,6 +75,8 @@ const DialogsContainer = () => {
   const dispatch = useAppDispatch();
   const deletePrescriptionOpen = useAppSelector((state) => state.dialog.DeletePrescription);
   const deletePrescriptionTarget = useAppSelector((state) => state.dialog.deletePrescriptionTarget);
+  const deleteLicenseOpen = useAppSelector((state) => state.dialog.DeleteLicense);
+  const licenseDeleteTarget = useAppSelector((state) => state.dialog.licenseDeleteTarget);
   const viewMembershipPlanOpen = useAppSelector((state) => state.dialog.ViewMembershipPlan);
   const deleteMembershipPlanOpen = useAppSelector((state) => state.dialog.DeleteMembershipPlan);
   const membershipPlanTarget = useAppSelector((state) => state.dialog.membershipPlanTarget);
@@ -106,6 +113,8 @@ const DialogsContainer = () => {
   const deleteMedicationOpen = useAppSelector((state) => state.dialog.DeleteMedication);
   const markInactiveMedicationOpen = useAppSelector((state) => state.dialog.MarkInactiveMedication);
   const medicationTarget = useAppSelector((state) => state.dialog.medicationTarget);
+  const addDocumentOpen = useAppSelector((state) => state.dialog.AddDocument);
+  const selectMedicationOpen = useAppSelector((state) => state.dialog.SelectMedication);
 
   return (
     <>
@@ -132,6 +141,12 @@ const DialogsContainer = () => {
         prescription={deletePrescriptionTarget ?? undefined}
         onClose={() => dispatch(hideModal("DeletePrescription"))}
         onDeleted={(id) => dispatch(prescriptionDeleted(id))}
+      />
+      <DeleteLicense
+        open={deleteLicenseOpen}
+        license={licenseDeleteTarget}
+        onClose={() => dispatch(hideModal("DeleteLicense"))}
+        onDeleted={(id) => dispatch(licenseDeleted(id))}
       />
       <ViewMembershipPlanModal
         open={viewMembershipPlanOpen}
@@ -253,8 +268,18 @@ const DialogsContainer = () => {
         medication={medicationTarget}
         onClose={() => dispatch(hideModal("MarkInactiveMedication"))}
       />
+      <AddDocumentModal
+        open={addDocumentOpen}
+        onClose={() => dispatch(hideModal("AddDocument"))}
+      />
+      <SelectMedicationModal
+        open={selectMedicationOpen}
+        onClose={() => dispatch(hideModal("SelectMedication"))}
+        onSelect={(medication) => dispatch(selectMedication(medication))}
+      />
     </>
   );
 };
 
 export default DialogsContainer;
+

@@ -323,6 +323,12 @@ const ModalShell = ({
     <div
       className={`fixed inset-0 ${zIndexClass} overflow-y-auto bg-primary/10 dark:bg-label/10 backdrop-blur-[2px]`}
       onPointerDown={(e) => {
+        if (
+          e.target instanceof Element &&
+          e.target.closest('[role="listbox"], [role="menu"], [data-portal], .portal-menu')
+        ) {
+          return;
+        }
         if (e.target instanceof Node && !modalRef.current?.contains(e.target)) {
           onClose();
         }

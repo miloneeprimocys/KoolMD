@@ -7,8 +7,7 @@ import { CheckCircle2, Clock, FileText, Users } from "lucide-react";
 import Breadcrumb from "@/components/Breadcrumb";
 import AddButton from "@/components/Addbutton";
 import StatCards, { type StatItem } from "@/components/Statcards";
-import { useAppDispatch } from "@/hooks/useAppHooks";
-import { showModal } from "@/redux/slices/dialogslice";
+import { useRouter } from "next/navigation";
 
 import QuestionnaireList, { QUESTIONNAIRES, type QuestionnaireRow } from "./Questionnairelist";
 import ResponseList from "./response/Responselist";
@@ -33,7 +32,7 @@ const TABS: { key: TabKey; label: string }[] = [
 
 /* ---------- Component ---------- */
 const QuestionnairesPage = () => {
-  const dispatch = useAppDispatch();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const tab: TabKey =
@@ -68,8 +67,8 @@ const QuestionnairesPage = () => {
         </div>
         {tab === "list" && (
           <AddButton
-            text="Assign Questionnaire"
-            onClick={() => dispatch(showModal("AssignQuestionnaire"))}
+            text="Create Questionnaire"
+            onClick={() => router.push("/questionnaires/create")}
             className="w-fit shrink-0 whitespace-nowrap"
           />
         )}

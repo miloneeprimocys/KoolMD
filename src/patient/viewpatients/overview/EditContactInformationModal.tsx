@@ -62,6 +62,13 @@ const EditContactInformationModal = ({
   const [values, setValues] = useState<ContactValues>(initial(defaults));
   const [errors, setErrors] = useState<Errors>({});
 
+  React.useEffect(() => {
+    if (open) {
+      setValues(initial(defaults));
+      setErrors({});
+    }
+  }, [open, defaults]);
+
   const stateOptions = useMemo(() => getStateOptions(values.country), [values.country]);
   const cityOptions = useMemo(() => getCityOptions(values.country, values.state), [values.country, values.state]);
   const postalLabel = postalLabelFor(values.country);

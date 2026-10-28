@@ -65,7 +65,7 @@ const MainLayout = ({ children, title }: MainLayoutProps) => {
       <label
         htmlFor="sidebar-toggle"
         aria-label="Close menu"
-        className="fixed inset-0 z-30 hidden bg-brand-navy/40 backdrop-blur-sm peer-checked:block lg:hidden"
+        className="fixed inset-0 z-30 hidden bg-brand-navy/40 dark:bg-brand-navy/15 backdrop-blur-sm peer-checked:block lg:hidden"
       />
 
       <MainSidebar
