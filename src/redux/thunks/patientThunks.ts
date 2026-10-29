@@ -1,11 +1,15 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { PaginatedResult } from "@/types/api";
 import type {
+  ChangePatientStatusPayload,
+  CompleteOwnPatientProfilePayload,
   CreateEmergencyContactPayload,
   CreatePatientPayload,
+  PatientDetail,
   PatientListQuery,
   PatientStats,
   PatientSummary,
+  UpdatePatientPayload,
 } from "@/types/patient";
 import { patientService } from "@/redux/services/patientService";
 import type { PatientsState } from "@/redux/slices/patientsSlice";
@@ -100,4 +104,64 @@ export const createPatient = createAsyncThunk<
   },
   // Blocks double submits while a save is in flight.
   { condition: (_, { getState }) => getState().patients.create.status !== "pending" },
+);
+
+export const updatePatient = createAsyncThunk<
+  PatientDetail,
+  { patientId: string; payload: UpdatePatientPayload },
+  PatientThunkConfig
+>(
+  "patients/update",
+  async ({ patientId, payload }, { rejectWithValue }) => {
+    try {
+      return await patientService.updatePatient(patientId, payload);
+    } catch (error) {
+      return rejectWithValue(toRequestError(error));
+    }
+  },
+);
+
+export const changePatientStatus = createAsyncThunk<
+  PatientDetail,
+  { patientId: string; payload: ChangePatientStatusPayload },
+  PatientThunkConfig
+>(
+  "patients/changeStatus",
+  async ({ patientId, payload }, { rejectWithValue }) => {
+    try {
+      return await patientService.changePatientStatus(patientId, payload);
+    } catch (error) {
+      return rejectWithValue(toRequestError(error));
+    }
+  },
+);
+
+export const invitePatientToPortal = createAsyncThunk<
+  PatientDetail,
+  { patientId: string },
+  PatientThunkConfig
+>(
+  "patients/inviteToPortal",
+  async ({ patientId }, { rejectWithValue }) => {
+    try {
+      return await patientService.invitePatientToPortal(patientId);
+    } catch (error) {
+      return rejectWithValue(toRequestError(error));
+    }
+  },
+);
+
+export const completeOwnProfile = createAsyncThunk<
+  PatientDetail,
+  CompleteOwnPatientProfilePayload,
+  PatientThunkConfig
+>(
+  "patients/completeOwnProfile",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await patientService.completeOwnProfile(payload);
+    } catch (error) {
+      return rejectWithValue(toRequestError(error));
+    }
+  },
 );

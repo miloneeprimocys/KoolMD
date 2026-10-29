@@ -2,12 +2,21 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { PaginationMeta, RequestStatus } from "@/types/api";
 import type {
   AdministrativeGender,
+  PatientDetail,
   PatientListQuery,
   PatientStats,
   PatientStatus,
   PatientSummary,
 } from "@/types/patient";
-import { createPatient, fetchPatients, fetchPatientStats } from "@/redux/thunks/patientThunks";
+import {
+  changePatientStatus,
+  completeOwnProfile,
+  createPatient,
+  fetchPatients,
+  fetchPatientStats,
+  invitePatientToPortal,
+  updatePatient,
+} from "@/redux/thunks/patientThunks";
 import { toQueryKey, type RequestError } from "@/redux/thunks/thunkHelpers";
 import { logoutUser } from "@/redux/thunks/authThunks";
 import { sessionExpired } from "./authSlice";
@@ -38,6 +47,23 @@ export interface PatientsState {
     status: RequestStatus;
     error: RequestError | null;
   };
+  update: {
+    status: RequestStatus;
+    error: RequestError | null;
+  };
+  statusChange: {
+    status: RequestStatus;
+    error: RequestError | null;
+  };
+  portalInvitation: {
+    status: RequestStatus;
+    error: RequestError | null;
+  };
+  ownProfile: {
+    status: RequestStatus;
+    error: RequestError | null;
+    data: PatientDetail | null;
+  };
 }
 
 const initialQuery: PatientListQuery = {
@@ -64,6 +90,10 @@ const initialState: PatientsState = {
   },
   stats: { data: null, status: "idle", error: null, fetchedAt: null },
   create: { status: "idle", error: null },
+  update: { status: "idle", error: null },
+  statusChange: { status: "idle", error: null },
+  portalInvitation: { status: "idle", error: null },
+  ownProfile: { status: "idle", error: null, data: null },
 };
 
 const patientsSlice = createSlice({
@@ -88,6 +118,18 @@ const patientsSlice = createSlice({
     },
     resetCreatePatientRequest(state) {
       state.create = initialState.create;
+    },
+    resetUpdatePatientRequest(state) {
+      state.update = initialState.update;
+    },
+    resetStatusChangeRequest(state) {
+      state.statusChange = initialState.statusChange;
+    },
+    resetPortalInvitationRequest(state) {
+      state.portalInvitation = initialState.portalInvitation;
+    },
+    resetOwnProfileRequest(state) {
+      state.ownProfile = initialState.ownProfile;
     },
   },
   extraReducers: (builder) => {
@@ -135,7 +177,52 @@ const patientsSlice = createSlice({
         state.stats.fetchedAt = null;
       })
       .addCase(createPatient.rejected, (state, action) => {
-        state.create = { status: "failed", error: action.payload ?? null };
+        state.create.status = "failed";
+        state.create.error = action.payload ?? null;
+      })
+
+      .addCase(updatePatient.pending, (state) => {
+        state.update = { status: "pending", error: null };
+      })
+      .addCase(updatePatient.fulfilled, (state) => {
+        state.update = { status: "succeeded", error: null };
+        state.list.fetchedAt = null;
+      })
+      .addCase(updatePatient.rejected, (state, action) => {
+        state.update = { status: "failed", error: action.payload ?? null };
+      })
+
+      .addCase(changePatientStatus.pending, (state) => {
+        state.statusChange = { status: "pending", error: null };
+      })
+      .addCase(changePatientStatus.fulfilled, (state) => {
+        state.statusChange = { status: "succeeded", error: null };
+        state.list.fetchedAt = null;
+        state.stats.fetchedAt = null;
+      })
+      .addCase(changePatientStatus.rejected, (state, action) => {
+        state.statusChange = { status: "failed", error: action.payload ?? null };
+      })
+
+      .addCase(invitePatientToPortal.pending, (state) => {
+        state.portalInvitation = { status: "pending", error: null };
+      })
+      .addCase(invitePatientToPortal.fulfilled, (state) => {
+        state.portalInvitation = { status: "succeeded", error: null };
+        state.list.fetchedAt = null;
+      })
+      .addCase(invitePatientToPortal.rejected, (state, action) => {
+        state.portalInvitation = { status: "failed", error: action.payload ?? null };
+      })
+
+      .addCase(completeOwnProfile.pending, (state) => {
+        state.ownProfile = { status: "pending", error: null, data: null };
+      })
+      .addCase(completeOwnProfile.fulfilled, (state, action) => {
+        state.ownProfile = { status: "succeeded", error: null, data: action.payload };
+      })
+      .addCase(completeOwnProfile.rejected, (state, action) => {
+        state.ownProfile = { status: "failed", error: action.payload ?? null, data: null };
       })
 
       // Patient data is PHI — never keep it in memory after sign-out.
@@ -150,6 +237,10 @@ export const {
   setPatientGenderFilter,
   setPatientPage,
   resetCreatePatientRequest,
+  resetUpdatePatientRequest,
+  resetStatusChangeRequest,
+  resetPortalInvitationRequest,
+  resetOwnProfileRequest,
 } = patientsSlice.actions;
 
 export default patientsSlice.reducer;

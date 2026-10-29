@@ -14,6 +14,7 @@ import { setPendingVerificationEmail } from "@/redux/slices/authSlice";
 import AuthCard from "./AuthCard";
 import SubmitButtonContent from "./SubmitButtonContent";
 import { compactErrors, validateEmail } from "./authValidation";
+import { DEMO_ACCOUNTS, DemoAccount } from "./demoAccounts";
 
 type LoginField = "email" | "password";
 type LoginErrors = Partial<Record<LoginField, string>>;
@@ -50,6 +51,14 @@ const LoginForm = () => {
     if (Object.keys(validationErrors).length) return;
 
     dispatch(loginUser({ email: email.trim(), password }));
+  };
+
+  /** Demo accounts (development only): fill the form and sign in with one click. */
+  const handleDemoLogin = (account: DemoAccount) => {
+    setEmail(account.email);
+    setPassword(account.password);
+    setTouchedFields({});
+    dispatch(loginUser({ email: account.email, password: account.password }));
   };
 
   /** Unverified account: email a fresh code (the old one has likely expired) and open the OTP screen. */
@@ -182,6 +191,27 @@ const LoginForm = () => {
         <SignupSocialButton provider="google" />
         <SignupSocialButton provider="apple" />
       </div>
+
+      {/* ---------- Demo accounts (development only, see demoAccounts.ts) ---------- */}
+      {DEMO_ACCOUNTS.length > 0 && (
+        <div className="mt-5 rounded-xl border border-dashed border-border p-3">
+          <p className="text-center text-xs font-medium text-body">Demo login</p>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {DEMO_ACCOUNTS.map((account) => (
+              <button
+                key={account.role}
+                type="button"
+                onClick={() => handleDemoLogin(account)}
+                disabled={loginRequest.isPending}
+                title={account.email}
+                className="cursor-pointer rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-heading transition-colors duration-200 hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {account.role}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ---------- Register link ---------- */}
       <p className="mt-6 text-center text-xs text-body">

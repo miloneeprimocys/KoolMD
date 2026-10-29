@@ -1,30 +1,27 @@
 "use client";
 
-import RadioCheckButtonh from "@/components/RadioCheckButtonh";
-import React, { useMemo, useRef, useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { ImagePlus, User, Camera, RefreshCw } from "lucide-react";
+import React, { useMemo, useEffect } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { User } from "lucide-react";
 import { parsePhoneNumberFromString, CountryCode } from "libphonenumber-js";
 
-import SignupField, { FieldError } from "@/components/SignupField";
+import SignupField from "@/components/SignupField";
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
 import AddButton from "@/components/Addbutton";
-import AddInternalButton from "@/components/AddInternalButton";
 import ImportButton from "@/components/ImportButton";
 import Breadcrumb from "@/components/Breadcrumb";
 import DatePicker from "@/components/Datepicker";
 import SuccessToast from "@/components/SuccessToast";
 import ErrorToast from "@/components/ErrorToast";
-import TogglableSwitch from "@/components/Togglableswitch";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
-import { selectCreatePatientRequest } from "@/redux/selectors/patientSelectors";
-import { createPatient } from "@/redux/thunks/patientThunks";
-import type { AdministrativeGender, CreatePatientPayload } from "@/types/patient";
+import { selectCreatePatientRequest, selectPatientDetail, selectUpdatePatientRequest } from "@/redux/selectors/patientSelectors";
+import { createPatient, updatePatient } from "@/redux/thunks/patientThunks";
+import { fetchPatientDetail } from "@/redux/thunks/patientDetailThunks";
+import type { AdministrativeGender, CreatePatientPayload, UpdatePatientPayload } from "@/types/patient";
 
 import {
   COUNTRY_OPTIONS,
   DEFAULT_COUNTRY,
-  FlagIcon,
   PhoneField,
   getCityOptions,
   getStateOptions,
@@ -39,24 +36,6 @@ const GENDERS: DropdownOption[] = [
   { value: "FEMALE", label: "Female" },
   { value: "OTHER", label: "Other" },
   { value: "UNKNOWN", label: "Prefer not to say" },
-];
-
-const MARITAL: DropdownOption[] = [
-  { value: "Single", label: "Single" },
-  { value: "Married", label: "Married" },
-  { value: "Divorced", label: "Divorced" },
-  { value: "Widowed", label: "Widowed" },
-];
-
-const BLOOD: DropdownOption[] = [
-  { value: "A+", label: "A+" },
-  { value: "A-", label: "A-" },
-  { value: "B+", label: "B+" },
-  { value: "B-", label: "B-" },
-  { value: "AB+", label: "AB+" },
-  { value: "AB-", label: "AB-" },
-  { value: "O+", label: "O+" },
-  { value: "O-", label: "O-" },
 ];
 
 /** Values are BCP 47 tags, as the backend expects. */
@@ -87,13 +66,6 @@ const FORM_FIELD_BY_API_FIELD: Record<string, keyof FormValues> = {
   postalCode: "zip",
   countryCode: "country",
 };
-
-const ROLES = [
-  { id: "patient", label: "Patient", desc: "Can book appointments, access records and communicate with providers.", checked: true },
-  { id: "practitioner", label: "Practitioner / MD", desc: "Can manage calendar, patient charts, prescriptions and consultations.", checked: false },
-  { id: "receptionist", label: "Receptionist / Staff", desc: "Can manage booking, check ins, communications and billing.", checked: false },
-  { id: "admin", label: "Administrator", desc: "Full access to manage platform records and settings.", checked: false },
-];
 
 /* ---------- Shared styles ---------- */
 const checkboxCls =
@@ -129,14 +101,12 @@ const SectionHeader = ({
 interface FormValues {
   firstName: string;
   lastName: string;
+  middleName: string;
   dob: string;
   gender: string;
   phoneCountry: string;
   phone: string;
   email: string;
-  patientId: string;
-  marital: string;
-  blood: string;
   language: string;
   emergencyName: string;
   emergencyPhoneCountry: string;
@@ -147,6 +117,11 @@ interface FormValues {
   state: string;
   city: string;
   zip: string;
+  preferredName: string;
+  genderIdentity: string;
+  preferredContactMethod: string;
+  allowEmailNotifications: string | boolean;
+  allowSmsNotifications: string | boolean;
 }
 
 type FormErrors = Partial<Record<keyof FormValues, string>>;
@@ -158,18 +133,20 @@ const AddPatient = () => {
   const isEditMode = pathname === "/edit-patient";
   const dispatch = useAppDispatch();
   const createPatientRequest = useAppSelector(selectCreatePatientRequest);
-  const isSaving = createPatientRequest.status === "pending";
+  const updatePatientRequest = useAppSelector(selectUpdatePatientRequest);
+  const isSaving = createPatientRequest.status === "pending" || updatePatientRequest.status === "pending";
+  const searchParams = useSearchParams();
+  const patientId = searchParams.get("id");
+  const patientDetail = useAppSelector(selectPatientDetail);
   const [values, setValues] = React.useState<FormValues>({
     firstName: "",
     lastName: "",
+    middleName: "",
     dob: "",
     gender: "",
     phoneCountry: DEFAULT_COUNTRY,
     phone: "",
     email: "",
-    patientId: "",
-    marital: "",
-    blood: "",
     language: "",
     emergencyName: "",
     emergencyPhoneCountry: DEFAULT_COUNTRY,
@@ -180,13 +157,16 @@ const AddPatient = () => {
     state: "",
     city: "",
     zip: "",
+    preferredName: "",
+    genderIdentity: "",
+    preferredContactMethod: "",
+    allowEmailNotifications: false,
+    allowSmsNotifications: false,
   });
 
   const [errors, setErrors] = React.useState<FormErrors>({});
   const [submitted, setSubmitted] = React.useState(false);
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isInitialized, setIsInitialized] = React.useState(false);
   const [toast, setToast] = React.useState<{
     type: "success" | "error" | null;
     title: string;
@@ -198,47 +178,44 @@ const AddPatient = () => {
     message: "",
   });
 
-  /* ---------- Profile photo handling ---------- */
+  /* ---------- Load patient data in edit mode ---------- */
   useEffect(() => {
-    if (photo) {
-      const objectUrl = URL.createObjectURL(photo);
-      setPhotoPreview(objectUrl);
-      return () => URL.revokeObjectURL(objectUrl);
-    } else {
-      setPhotoPreview(null);
+    if (isEditMode && patientId && !isInitialized) {
+      dispatch(fetchPatientDetail(patientId));
     }
-  }, [photo]);
+  }, [dispatch, isEditMode, patientId, isInitialized]);
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(file.type)) {
-      setToast({
-        type: "error",
-        title: "Invalid File Type",
-        message: "Please select a JPG, PNG, or WebP image file.",
+  useEffect(() => {
+    if (isEditMode && patientDetail.patient && patientDetail.patientId === patientId && !isInitialized) {
+      const patient = patientDetail.patient;
+      setValues({
+        firstName: patient.firstName || "",
+        lastName: patient.lastName || "",
+        middleName: patient.middleName || "",
+        dob: patient.dateOfBirth || "",
+        gender: patient.administrativeGender || "",
+        phoneCountry: DEFAULT_COUNTRY,
+        phone: patient.phoneNumber || "",
+        email: patient.email || "",
+        language: patient.preferredLanguage || "",
+        emergencyName: "",
+        emergencyPhoneCountry: DEFAULT_COUNTRY,
+        emergencyPhone: "",
+        address1: patient.addressLine1 || "",
+        address2: patient.addressLine2 || "",
+        country: patient.countryCode || DEFAULT_COUNTRY,
+        state: patient.stateCode || "",
+        city: patient.city || "",
+        zip: patient.postalCode || "",
+        preferredName: patient.preferredName || "",
+        genderIdentity: patient.genderIdentity || "",
+        preferredContactMethod: patient.preferredContactMethod || "",
+        allowEmailNotifications: patient.allowEmailNotifications,
+        allowSmsNotifications: patient.allowSmsNotifications,
       });
-      return;
+      setIsInitialized(true);
     }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setToast({
-        type: "error",
-        title: "File Size Exceeded",
-        message: "Profile image must be less than 5MB.",
-      });
-      return;
-    }
-
-    setPhoto(file);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleRemovePhoto = () => {
-    setPhoto(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+  }, [isEditMode, patientDetail, patientId, isInitialized]);
 
   /* ---------- Dependent dropdown options ---------- */
   const stateOptions: DropdownOption[] = useMemo(
@@ -258,7 +235,7 @@ const AddPatient = () => {
     if (submitted) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  const setField = (field: keyof FormValues, value: string) => {
+  const setField = (field: keyof FormValues, value: string | boolean) => {
     setValues((prev) => ({ ...prev, [field]: value }));
     clearError(field);
   };
@@ -335,9 +312,11 @@ const AddPatient = () => {
   const buildCreatePatientPayload = (confirmNotDuplicate: boolean): CreatePatientPayload => {
     const isUsAddress = values.country === US_COUNTRY_CODE;
     const optional = (value: string) => value.trim() || undefined;
+    const toBool = (val: string | boolean): boolean => val === true || val === "true";
     return {
       firstName: values.firstName.trim(),
       lastName: values.lastName.trim(),
+      middleName: values.middleName.trim() || undefined,
       dateOfBirth: values.dob,
       administrativeGender: values.gender as AdministrativeGender,
       phoneNumber: toE164(values.phone, values.phoneCountry) || undefined,
@@ -350,6 +329,39 @@ const AddPatient = () => {
       postalCode: isUsAddress ? optional(values.zip) : undefined,
       countryCode: values.country || undefined,
       confirmNotDuplicate: confirmNotDuplicate || undefined,
+      preferredName: values.preferredName.trim() || undefined,
+      genderIdentity: values.genderIdentity.trim() || undefined,
+      preferredContactMethod: (values.preferredContactMethod as any) || undefined,
+      allowEmailNotifications: toBool(values.allowEmailNotifications),
+      allowSmsNotifications: toBool(values.allowSmsNotifications),
+    };
+  };
+
+  /** Form values → `PATCH /patients/:id` body. */
+  const buildUpdatePatientPayload = (): UpdatePatientPayload => {
+    const isUsAddress = values.country === US_COUNTRY_CODE;
+    const optional = (value: string) => value.trim() || undefined;
+    const toBool = (val: string | boolean): boolean => val === true || val === "true";
+    return {
+      firstName: values.firstName.trim(),
+      lastName: values.lastName.trim(),
+      middleName: values.middleName.trim() || null,
+      dateOfBirth: values.dob,
+      administrativeGender: values.gender as AdministrativeGender,
+      phoneNumber: toE164(values.phone, values.phoneCountry) || null,
+      email: optional(values.email) || null,
+      preferredLanguage: values.language || undefined,
+      addressLine1: optional(values.address1) || null,
+      addressLine2: optional(values.address2) || null,
+      city: optional(values.city) || null,
+      stateCode: isUsAddress ? values.state || null : null,
+      postalCode: isUsAddress ? optional(values.zip) || null : null,
+      countryCode: values.country || undefined,
+      preferredName: values.preferredName.trim() || null,
+      genderIdentity: values.genderIdentity.trim() || null,
+      preferredContactMethod: (values.preferredContactMethod as any) || undefined,
+      allowEmailNotifications: toBool(values.allowEmailNotifications),
+      allowSmsNotifications: toBool(values.allowSmsNotifications),
     };
   };
 
@@ -360,61 +372,96 @@ const AddPatient = () => {
   };
 
   const savePatient = async (confirmNotDuplicate = false) => {
-    const emergencyPhone = values.emergencyPhone
-      ? toE164(values.emergencyPhone, values.emergencyPhoneCountry)
-      : "";
-    const saveResult = await dispatch(
-      createPatient({
-        patient: buildCreatePatientPayload(confirmNotDuplicate),
-        emergencyContact:
-          values.emergencyName.trim() && emergencyPhone
-            ? { fullName: values.emergencyName.trim(), relationship: "OTHER", phoneNumber: emergencyPhone }
-            : undefined,
-      }),
-    );
+    if (isEditMode && !patientId) {
+      setToast({ type: "error", title: "Error", message: "Patient ID is required for editing." });
+      return;
+    }
 
-    if (createPatient.fulfilled.match(saveResult)) {
-      const { emergencyContactError } = saveResult.payload;
-      if (emergencyContactError) {
-        // Patient exists now — stay here so the user sees what was not saved.
-        setToast({
-          type: "error",
-          title: "Patient saved, emergency contact not saved",
-          message: emergencyContactError.message,
-        });
+    let saveResult;
+    if (isEditMode) {
+      saveResult = await dispatch(updatePatient({ patientId, payload: buildUpdatePatientPayload() }));
+    } else {
+      const emergencyPhone = values.emergencyPhone
+        ? toE164(values.emergencyPhone, values.emergencyPhoneCountry)
+        : "";
+      saveResult = await dispatch(
+        createPatient({
+          patient: buildCreatePatientPayload(confirmNotDuplicate),
+          emergencyContact:
+            values.emergencyName.trim() && emergencyPhone
+              ? { fullName: values.emergencyName.trim(), relationship: "OTHER", phoneNumber: emergencyPhone }
+              : undefined,
+        }),
+      );
+    }
+
+    if (isEditMode) {
+      if (updatePatient.fulfilled.match(saveResult)) {
+        setToast({ type: "success", title: "Success", message: "Patient updated successfully." });
+        router.push(`/view-patient?id=${encodeURIComponent(patientId)}`);
         return;
       }
-      router.push("/patients");
-      return;
-    }
+      if (updatePatient.rejected.match(saveResult)) {
+        const requestError = saveResult.payload;
+        if (requestError) {
+          const serverFieldErrors: FormErrors = {};
+          for (const [apiField, message] of Object.entries(requestError.fieldErrors ?? {})) {
+            const formField = FORM_FIELD_BY_API_FIELD[apiField];
+            if (formField) serverFieldErrors[formField] = message;
+          }
+          if (Object.keys(serverFieldErrors).length) {
+            setErrors(serverFieldErrors);
+            scrollToField(Object.keys(serverFieldErrors)[0]);
+          }
+          setToast({ type: "error", title: "Could not save patient", message: requestError.message });
+        }
+        return;
+      }
+    } else {
+      if (createPatient.fulfilled.match(saveResult)) {
+        const { emergencyContactError } = saveResult.payload;
+        if (emergencyContactError) {
+          setToast({
+            type: "error",
+            title: "Patient saved, emergency contact not saved",
+            message: emergencyContactError.message,
+          });
+          return;
+        }
+        router.push("/patients");
+        return;
+      }
+      if (createPatient.rejected.match(saveResult)) {
+        const requestError = saveResult.payload;
+        if (!requestError) return;
 
-    const requestError = saveResult.payload;
-    if (!requestError) return; // skipped: a save is already in progress
+        if (requestError.errorCode === "POSSIBLE_DUPLICATE_PATIENT") {
+          setToast({
+            type: "error",
+            title: "Possible duplicate patient",
+            message: "A patient with the same name and date of birth already exists.",
+            action: { label: "Save anyway", onClick: () => savePatient(true) },
+          });
+          return;
+        }
 
-    if (requestError.errorCode === "POSSIBLE_DUPLICATE_PATIENT") {
-      setToast({
-        type: "error",
-        title: "Possible duplicate patient",
-        message: "A patient with the same name and date of birth already exists.",
-        action: { label: "Save anyway", onClick: () => savePatient(true) },
-      });
-      return;
+        const serverFieldErrors: FormErrors = {};
+        for (const [apiField, message] of Object.entries(requestError.fieldErrors ?? {})) {
+          const formField = FORM_FIELD_BY_API_FIELD[apiField];
+          if (formField) serverFieldErrors[formField] = message;
+        }
+        if (Object.keys(serverFieldErrors).length) {
+          setErrors(serverFieldErrors);
+          scrollToField(Object.keys(serverFieldErrors)[0]);
+        }
+        setToast({ type: "error", title: "Could not save patient", message: requestError.message });
+        return;
+      }
     }
-
-    const serverFieldErrors: FormErrors = {};
-    for (const [apiField, message] of Object.entries(requestError.fieldErrors ?? {})) {
-      const formField = FORM_FIELD_BY_API_FIELD[apiField];
-      if (formField) serverFieldErrors[formField] = message;
-    }
-    if (Object.keys(serverFieldErrors).length) {
-      setErrors(serverFieldErrors);
-      scrollToField(Object.keys(serverFieldErrors)[0]);
-    }
-    setToast({ type: "error", title: "Could not save patient", message: requestError.message });
   };
 
   const submitForm = () => {
-    if (createPatientRequest.status === "pending") return;
+    if (isSaving) return;
     setSubmitted(true);
     const errs = validate(values);
     setErrors(errs);
@@ -436,6 +483,13 @@ const AddPatient = () => {
     e.preventDefault();
     submitForm();
   };
+
+  // Reset initialization when navigating away from edit mode
+  useEffect(() => {
+    if (!isEditMode && isInitialized) {
+      setIsInitialized(false);
+    }
+  }, [isEditMode, isInitialized]);
 
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-4 sm:space-y-5">
@@ -570,30 +624,28 @@ const AddPatient = () => {
             />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <SignupField
-                name="patientId"
-                label={<>Patient ID<Opt /></>}
-                placeholder="Auto-generated if left blank"
-                value={values.patientId}
-                onChange={(e) => setField("patientId", e.target.value)}
-                error={errors.patientId}
+                name="middleName"
+                label="Middle Name"
+                placeholder="Enter middle name"
+                value={values.middleName}
+                onChange={(e) => setField("middleName", e.target.value)}
+                error={errors.middleName}
               />
-              <SignupDropdown
-                name="marital"
-                label="Marital Status"
-                placeholder="Select marital status"
-                options={MARITAL}
-                value={values.marital}
-                onChange={(v) => setField("marital", v)}
-                error={errors.marital}
+              <SignupField
+                name="preferredName"
+                label="Preferred Name"
+                placeholder="Enter preferred name"
+                value={values.preferredName}
+                onChange={(e) => setField("preferredName", e.target.value)}
+                error={errors.preferredName}
               />
-              <SignupDropdown
-                name="blood"
-                label="Blood Type"
-                placeholder="Select blood type"
-                options={BLOOD}
-                value={values.blood}
-                onChange={(v) => setField("blood", v)}
-                error={errors.blood}
+              <SignupField
+                name="genderIdentity"
+                label="Gender Identity"
+                placeholder="Enter gender identity"
+                value={values.genderIdentity}
+                onChange={(e) => setField("genderIdentity", e.target.value)}
+                error={errors.genderIdentity}
               />
               <SignupDropdown
                 name="language"
@@ -604,26 +656,30 @@ const AddPatient = () => {
                 onChange={(v) => setField("language", v)}
                 error={errors.language}
               />
-              <SignupField
-                name="emergencyName"
-                label="Emergency Contact Name"
-                placeholder="Enter contact name"
-                value={values.emergencyName}
-                onChange={(e) => setField("emergencyName", e.target.value)}
-                error={errors.emergencyName}
-              />
-              <PhoneField
-                name="emergencyPhone"
-                label="Emergency Contact Number"
-                placeholder="Enter phone number"
-                value={values.emergencyPhone}
-                onChange={(v) => setField("emergencyPhone", v)}
-                countryCode={values.emergencyPhoneCountry}
-                onCountryChange={(iso) =>
-                  setField("emergencyPhoneCountry", iso)
-                }
-                error={errors.emergencyPhone}
-              />
+              {!isEditMode && (
+                <>
+                  <SignupField
+                    name="emergencyName"
+                    label="Emergency Contact Name"
+                    placeholder="Enter contact name"
+                    value={values.emergencyName}
+                    onChange={(e) => setField("emergencyName", e.target.value)}
+                    error={errors.emergencyName}
+                  />
+                  <PhoneField
+                    name="emergencyPhone"
+                    label="Emergency Contact Number"
+                    placeholder="Enter phone number"
+                    value={values.emergencyPhone}
+                    onChange={(v) => setField("emergencyPhone", v)}
+                    countryCode={values.emergencyPhoneCountry}
+                    onCountryChange={(iso) =>
+                      setField("emergencyPhoneCountry", iso)
+                    }
+                    error={errors.emergencyPhone}
+                  />
+                </>
+              )}
             </div>
           </section>
 
@@ -647,7 +703,7 @@ const AddPatient = () => {
               />
               <SignupField
                 name="address2"
-                label={<>Address Line 2<Opt /></>}
+                label="Address Line 2"
                 placeholder="Enter address line 2"
                 value={values.address2}
                 onChange={(e) => setField("address2", e.target.value)}
@@ -707,148 +763,53 @@ const AddPatient = () => {
               />
             </div>
           </section>
+
+          <hr className="my-6 border-divider" />
+
+          {/* 4. Communication preferences */}
+          <section>
+            <SectionHeader
+              step={4}
+              title="Communication Preferences"
+              subtitle="How the patient prefers to be contacted."
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={values.allowEmailNotifications === true || values.allowEmailNotifications === "true"}
+                  onChange={(e) => setField("allowEmailNotifications", e.target.checked)}
+                  className={checkboxCls}
+                />
+                <span className="text-sm text-heading">Allow email notifications</span>
+              </label>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={values.allowSmsNotifications === true || values.allowSmsNotifications === "true"}
+                  onChange={(e) => setField("allowSmsNotifications", e.target.checked)}
+                  className={checkboxCls}
+                />
+                <span className="text-sm text-heading">Allow SMS notifications</span>
+              </label>
+            </div>
+          </section>
         </form>
 
         {/* ================= RIGHT: SIDEBAR ================= */}
         <aside className="space-y-4 sm:space-y-5">
-          {/* Profile photo */}
+          {/* Profile placeholder */}
           <section className={cardCls}>
-            <h3 className="text-sm font-semibold text-heading">Profile Photo</h3>
-            
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png, image/jpeg, image/jpg, image/webp"
-              onChange={handlePhotoSelect}
-              className="hidden"
-              id="patient-photo-upload"
-            />
-
-            <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              {/* Avatar circle / Image preview */}
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="group relative flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-border bg-shape-sky/40 text-body transition-all duration-200 hover:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 sm:h-28 sm:w-28"
-                title={photoPreview ? "Click to change photo" : "Click to upload photo"}
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }
-                }}
-              >
-                {photoPreview ? (
-                  <>
-                    <img
-                      src={photoPreview}
-                      alt="Patient avatar preview"
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    {/* Hover overlay with camera icon */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <Camera className="h-5 w-5 text-white" />
-                      <span className="mt-0.5 text-[10px] font-medium text-white">Change</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <User className="h-10 w-10 text-body transition-transform duration-200 group-hover:scale-105" strokeWidth={1.5} />
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/25 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <Camera className="h-5 w-5 text-white" />
-                      <span className="mt-0.5 text-[10px] font-medium text-white">Upload</span>
-                    </div>
-                  </>
-                )}
+            <h3 className="text-sm font-semibold text-heading">Profile</h3>
+            <div className="mt-4 flex items-center gap-4">
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-2 border-border bg-shape-sky/40 text-body sm:h-28 sm:w-28">
+                <User className="h-10 w-10 text-body" strokeWidth={1.5} />
               </div>
-
-              {/* Action buttons and format info */}
-              <div className="flex flex-col gap-1.5">
-                {photoPreview ? (
-                  <div className="flex items-center gap-3 text-xs font-medium">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="cursor-pointer text-primary transition-colors hover:text-primary-hover hover:underline focus-visible:outline-none"
-                    >
-                      Change Photo
-                    </button>
-                    <span className="text-body/30" aria-hidden="true">•</span>
-                    <button
-                      type="button"
-                      onClick={handleRemovePhoto}
-                      className="cursor-pointer text-danger transition-colors hover:text-danger/80 hover:underline focus-visible:outline-none"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <AddInternalButton
-                    text="Upload Photo"
-                    icon={<ImagePlus className="h-4 w-4" />}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="!h-10"
-                  />
-                )}
-                <p className="text-xs text-body">JPG, PNG up to 5MB</p>
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-heading">Patient Profile</p>
+                <p className="mt-1 text-xs text-body">Complete the form to add or edit patient information.</p>
               </div>
             </div>
-          </section>
-
-          {/* Assign roles */}
-          <section className={cardCls}>
-            <h3 className="text-sm font-semibold text-heading">Assign Role(s)</h3>
-            <p className="mt-1 text-xs text-body">
-              Select which role(s) this user will have access to.
-            </p>
-
-            <div className="mt-4 space-y-4">
-              {ROLES.map((r) => (
-                <label
-                  key={r.id}
-                  htmlFor={`role-${r.id}`}
-                  className="flex cursor-pointer items-start gap-3"
-                >
-                  <RadioCheckButtonh
-                    id={`role-${r.id}`}
-                    type="checkbox"
-                    defaultChecked={r.checked}
-                    className={checkboxCls}
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium text-heading">
-                      {r.label}
-                    </span>
-                    <span className="mt-0.5 block text-xs leading-relaxed text-body">
-                      {r.desc}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
-          </section>
-
-          {/* Status */}
-          <section className={cardCls}>
-            <h3 className="text-sm font-semibold text-heading">Status</h3>
-            <TogglableSwitch
-              id="status"
-              defaultChecked
-              ariaLabel="Active patient status"
-              className="mt-4 items-start"
-              label={
-                <span>
-                  <span className="block text-sm font-medium text-heading">
-                    Active
-                  </span>
-                  <span className="mt-0.5 block text-xs text-body">
-                    Inactive users will not be able to access the platform.
-                  </span>
-                </span>
-              }
-            />
           </section>
         </aside>
       </div>

@@ -18,38 +18,49 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import Tags from "@/components/Tags";
+import Tags, { type TagTone } from "@/components/Tags";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 import EditButton from "@/components/EditButton";
 import { useAppDispatch } from "@/hooks/useAppHooks";
 import { showModal } from "@/redux/slices/dialogslice";
+import type {
+  EmergencyContact,
+  PatientAppointment,
+  PatientDetail,
+  PatientInsurance,
+  PatientStatus,
+} from "@/types/patient";
+import {
+  calculateAgeInYears,
+  formatDateOnly,
+  formatDateTime,
+  formatLanguage,
+  humanizeEnum,
+} from "@/utils/formatters";
 
-/* ---------- Static data (replace with API data later) ---------- */
 const NOT_PROVIDED = "Not provided";
 
-const CONTACT: { icon: LucideIcon; label: string; value: string }[] = [
-  { icon: Phone, label: "Phone Number", value: "+91 1235874691" },
-  { icon: Mail, label: "Email Address", value: "milonee.primocys@gmail.com" },
-  { icon: MapPin, label: "Address", value: NOT_PROVIDED },
-];
+type FieldItem = { icon: LucideIcon; label: string; value: string };
 
-const PERSONAL: { icon: LucideIcon; label: string; value: string }[] = [
-  { icon: CalendarDays, label: "Date of Birth", value: "Jul 11, 2005 (21 years)" },
-  { icon: User, label: "Gender", value: "Female" },
-  { icon: Globe, label: "Preferred Language", value: NOT_PROVIDED },
-  { icon: Heart, label: "Marital Status", value: NOT_PROVIDED },
-];
+const STATUS_TONES: Record<PatientStatus, TagTone> = {
+  ACTIVE: "success",
+  INACTIVE: "danger",
+  DECEASED: "neutral",
+};
 
-const ACCOUNT: { icon: LucideIcon; label: string; value: string }[] = [
-  { icon: Hash, label: "Patient ID", value: "KMD-0000003" },
-  { icon: CalendarDays, label: "Created Date", value: "Oct 6, 2026, 10:30 AM" },
-  { icon: Clock, label: "Last Updated", value: "Oct 6, 2026, 10:30 AM" },
-  { icon: UserCheck, label: "Assigned Provider", value: "Not assigned" },
-];
+const orNotProvided = (value: string | null | undefined) =>
+  value && value.trim() !== "" ? value : NOT_PROVIDED;
 
-const hasProvidedValue = (value: string) =>
-  value.trim() !== "" && value !== NOT_PROVIDED && value !== "Not assigned";
+/** "12 Main St, Apt 4, Austin, TX 78701" — or "Not provided" when no part is set. */
+const formatAddress = (patient: PatientDetail) => {
+  const stateAndZip = [patient.stateCode, patient.postalCode].filter(Boolean).join(" ");
+  return orNotProvided(
+    [patient.addressLine1, patient.addressLine2, patient.city, stateAndZip].filter(Boolean).join(", "),
+  );
+};
+
+const hasProvidedValue = (value: string) => value.trim() !== "" && value !== NOT_PROVIDED;
 
 /* ---------- Small building blocks ---------- */
 const IconBadge = ({
@@ -96,7 +107,7 @@ const Card = ({
   </section>
 );
 
-const isMuted = (v: string) => v === NOT_PROVIDED || v === "Not assigned";
+const isMuted = (v: string) => v === NOT_PROVIDED;
 
 const Field = ({ icon, label, value }: { icon: LucideIcon; label: string; value: string }) => (
   <li className="flex items-center gap-3">
@@ -131,13 +142,69 @@ const EmptyState = ({
   </div>
 );
 
+/** One row of a list card (emergency contact, insurance, appointment). */
+const ListRow = ({
+  title,
+  description,
+  tag,
+}: {
+  title: string;
+  description: string;
+  tag?: React.ReactNode;
+}) => (
+  <li className="flex items-start justify-between gap-3 rounded-xl border border-border/60 px-3.5 py-3">
+    <div className="min-w-0">
+      <p className="break-words text-sm font-semibold text-heading">{title}</p>
+      <p className="mt-0.5 break-words text-xs text-body">{description}</p>
+    </div>
+    {tag}
+  </li>
+);
+
 /* ---------- Component ---------- */
 type Props = {
+  patient: PatientDetail;
+  emergencyContacts: EmergencyContact[];
+  insurances: PatientInsurance[];
+  recentAppointments: PatientAppointment[];
+  /** Set when appointments could not be loaded (the rest of the overview still shows). */
+  recentAppointmentsError: string | null;
   onEdit?: (section: string) => void;
 };
 
-const OverviewPatient = ({ onEdit }: Props) => {
+const OverviewPatient = ({
+  patient,
+  emergencyContacts,
+  insurances,
+  recentAppointments,
+  recentAppointmentsError,
+  onEdit,
+}: Props) => {
   const dispatch = useAppDispatch();
+
+  const contactFields: FieldItem[] = [
+    { icon: Phone, label: "Phone Number", value: orNotProvided(patient.phoneNumber) },
+    { icon: Mail, label: "Email Address", value: orNotProvided(patient.email) },
+    { icon: MapPin, label: "Address", value: formatAddress(patient) },
+  ];
+
+  const personalFields: FieldItem[] = [
+    {
+      icon: CalendarDays,
+      label: "Date of Birth",
+      value: `${formatDateOnly(patient.dateOfBirth)} (${calculateAgeInYears(patient.dateOfBirth)} years)`,
+    },
+    { icon: User, label: "Gender", value: humanizeEnum(patient.administrativeGender) },
+    { icon: Globe, label: "Preferred Language", value: formatLanguage(patient.preferredLanguage) },
+    { icon: Heart, label: "Gender Identity", value: orNotProvided(patient.genderIdentity) },
+  ];
+
+  const accountFields: FieldItem[] = [
+    { icon: Hash, label: "Patient ID", value: patient.medicalRecordNumber },
+    { icon: CalendarDays, label: "Created Date", value: formatDateTime(patient.createdAt) },
+    { icon: Clock, label: "Last Updated", value: formatDateTime(patient.updatedAt) },
+    { icon: UserCheck, label: "Online Account", value: patient.hasPortalAccount ? "Yes" : "No" },
+  ];
 
 
   return (
@@ -151,13 +218,13 @@ const OverviewPatient = ({ onEdit }: Props) => {
           icon={Phone}
           title="Contact Information"
           action={
-            CONTACT.some((item) => hasProvidedValue(item.value)) ? (
+            contactFields.some((item) => hasProvidedValue(item.value)) ? (
               <EditButton section="Contact Information" onEdit={() => dispatch(showModal("EditContactInformation"))} />
             ) : undefined
           }
         >
           <ul className="space-y-4">
-            {CONTACT.map((c) => (
+            {contactFields.map((c) => (
               <Field key={c.label} {...c} />
             ))}
           </ul>
@@ -168,14 +235,29 @@ const OverviewPatient = ({ onEdit }: Props) => {
           icon={Users}
           title="Emergency Contact"
         >
-          <EmptyState
-            icon={Users}
-            title="No emergency contact added"
-            description="Add emergency contact information for this patient."
-            action={
-              <ImportButton text="Add Emergency Contact" icon={<Plus className="h-4 w-4" />} onClick={() => {}} />
-            }
-          />
+          {emergencyContacts.length > 0 ? (
+            <ul className="space-y-2.5">
+              {emergencyContacts.map((contact) => (
+                <ListRow
+                  key={contact.id}
+                  title={contact.fullName}
+                  description={[humanizeEnum(contact.relationship), contact.phoneNumber, contact.email]
+                    .filter(Boolean)
+                    .join(" • ")}
+                  tag={contact.isPrimary ? <Tags text="Primary" tone="success" /> : undefined}
+                />
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              icon={Users}
+              title="No emergency contact added"
+              description="Add emergency contact information for this patient."
+              action={
+                <ImportButton text="Add Emergency Contact" icon={<Plus className="h-4 w-4" />} onClick={() => {}} />
+              }
+            />
+          )}
         </Card>
       </div>
 
@@ -186,13 +268,13 @@ const OverviewPatient = ({ onEdit }: Props) => {
           icon={User}
           title="Personal Information"
           action={
-            PERSONAL.some((item) => hasProvidedValue(item.value)) ? (
+            personalFields.some((item) => hasProvidedValue(item.value)) ? (
               <EditButton section="Personal Information" onEdit={onEdit} />
             ) : undefined
           }
         >
           <ul className="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
-            {PERSONAL.map((p) => (
+            {personalFields.map((p) => (
               <Field key={p.label} {...p} />
             ))}
           </ul>
@@ -203,14 +285,38 @@ const OverviewPatient = ({ onEdit }: Props) => {
           icon={ShieldCheck}
           title="Insurance Information"
         >
-          <EmptyState
-            icon={ShieldCheck}
-            title="No insurance added"
-            description="Add insurance details to manage billing and claims."
-            action={
-              <ImportButton text="Add Insurance Information" icon={<Plus className="h-4 w-4" />} onClick={() => {}} />
-            }
-          />
+          {insurances.length > 0 ? (
+            <ul className="space-y-2.5">
+              {insurances.map((insurance) => (
+                <ListRow
+                  key={insurance.id}
+                  title={[insurance.payerName, insurance.planName].filter(Boolean).join(" — ")}
+                  description={[
+                    `${humanizeEnum(insurance.coveragePriority)} coverage`,
+                    `Member ID ${insurance.memberId}`,
+                    insurance.groupNumber ? `Group ${insurance.groupNumber}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" • ")}
+                  tag={
+                    <Tags
+                      text={humanizeEnum(insurance.status)}
+                      tone={insurance.status === "ACTIVE" ? "success" : "neutral"}
+                    />
+                  }
+                />
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              icon={ShieldCheck}
+              title="No insurance added"
+              description="Add insurance details to manage billing and claims."
+              action={
+                <ImportButton text="Add Insurance Information" icon={<Plus className="h-4 w-4" />} onClick={() => {}} />
+              }
+            />
+          )}
         </Card>
       </div>
 
@@ -220,10 +326,10 @@ const OverviewPatient = ({ onEdit }: Props) => {
           className="flex-1"
           icon={UserCheck}
           title="Account Status"
-          action={<Tags text="Active" tone="success" />}
+          action={<Tags text={humanizeEnum(patient.status)} tone={STATUS_TONES[patient.status]} />}
         >
           <ul className="space-y-4">
-            {ACCOUNT.map((a) => (
+            {accountFields.map((a) => (
               <li key={a.label} className="flex items-center justify-between gap-3">
                 <p className="flex min-w-0 items-center gap-3 text-xs text-body sm:text-sm">
                   <IconBadge icon={a.icon} size="sm" />
@@ -246,12 +352,33 @@ const OverviewPatient = ({ onEdit }: Props) => {
           icon={CalendarDays}
           title="Recent Appointments"
         >
-          <EmptyState
-            icon={CalendarDays}
-            title="No appointments yet"
-            description="This patient does not have any appointments scheduled."
-            action={<AddButton text="Book Appointment" onClick={() => {}} />}
-          />
+          {recentAppointmentsError ? (
+            <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-xs text-body">
+              Appointments could not be loaded: {recentAppointmentsError}
+            </p>
+          ) : recentAppointments.length > 0 ? (
+            <ul className="space-y-2.5">
+              {recentAppointments.map((appointment) => (
+                <ListRow
+                  key={appointment.id}
+                  title={appointment.appointmentType.name}
+                  description={[
+                    formatDateTime(appointment.startsAt, appointment.timeZone),
+                    `Dr. ${appointment.practitioner.firstName} ${appointment.practitioner.lastName}`,
+                    humanizeEnum(appointment.consultationMode),
+                  ].join(" • ")}
+                  tag={<Tags text={humanizeEnum(appointment.status)} tone="neutral" />}
+                />
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              icon={CalendarDays}
+              title="No appointments yet"
+              description="This patient does not have any appointments scheduled."
+              action={<AddButton text="Book Appointment" onClick={() => {}} />}
+            />
+          )}
         </Card>
       </div>
     </div>
