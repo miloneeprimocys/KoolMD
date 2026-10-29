@@ -318,11 +318,7 @@ const router = useRouter();
       onClick={() => router.push("/appointments?tab=calendar/blocktime")}
       className="h-10 whitespace-nowrap px-4"
     />
-    <AddButton
-      text="Holidays"
-      onClick={() => router.push("/appointments?tab=calendar/holidays")}
-      className="h-10 whitespace-nowrap px-4"
-    />
+   
   </div>
 </div>
       </div>
