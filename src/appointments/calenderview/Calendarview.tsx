@@ -4,7 +4,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAppDispatch } from "@/hooks/useAppHooks";
 import { showModal } from "@/redux/slices/dialogslice";
-
+import { useRouter } from "next/navigation";
+import AddButton from "@/components/Addbutton";
 import {
   addDays,
   addMonths,
@@ -142,7 +143,7 @@ const CalendarView = () => {
     const id = setInterval(tick, 60_000);
     return () => clearInterval(id);
   }, []);
-
+const router = useRouter();
   useEffect(() => {
     const rightSection = rightSectionRef.current;
     if (!rightSection) return;
@@ -294,24 +295,36 @@ const CalendarView = () => {
           </button>
         </div>
 
-        <div role="tablist" className="inline-flex rounded-lg border border-border bg-card p-0.5">
-          {(["Day", "Week", "Month"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              role="tab"
-              aria-selected={view === v}
-              onClick={() => setView(v)}
-              className={`h-9 cursor-pointer rounded-md px-4 text-sm font-medium transition-colors ${
-                view === v ? "bg-primary/10 text-primary" : "text-body hover:text-heading"
-              }`}
-            >
-              {v}
-            </button>
-
-              
-          ))}
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+  <div role="tablist" className="inline-flex rounded-lg border border-border bg-card p-0.5">
+    {(["Day", "Week", "Month"] as const).map((v) => (
+      <button
+        key={v}
+        type="button"
+        role="tab"
+        aria-selected={view === v}
+        onClick={() => setView(v)}
+        className={`h-9 cursor-pointer rounded-md px-4 text-sm font-medium transition-colors ${
+          view === v ? "bg-primary/10 text-primary" : "text-body hover:text-heading"
+        }`}
+      >
+        {v}
+      </button>
+    ))}
+  </div>
+  <div className="flex gap-2">
+    <AddButton
+      text="Block Time"
+      onClick={() => router.push("/appointments?tab=calendar/blocktime")}
+      className="h-10 whitespace-nowrap px-4"
+    />
+    <AddButton
+      text="Holidays"
+      onClick={() => router.push("/appointments?tab=calendar/holidays")}
+      className="h-10 whitespace-nowrap px-4"
+    />
+  </div>
+</div>
       </div>
 
 

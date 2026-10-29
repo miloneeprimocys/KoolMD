@@ -44,6 +44,12 @@ export interface DatePickerProps {
   mobilePortalZIndex?: number;
   /** Optional stacking order for the trigger, useful inside sticky table rows. */
   triggerZIndex?: number;
+  /** Show an inline time picker (HH:MM) alongside the calendar */
+  showTime?: boolean;
+  /** Current time value as "HH:MM" */
+  time?: string;
+  /** Called when the time changes */
+  onTimeChange?: (time: string) => void;
 }
 
 /* ---------------------------------------------------------------- */
@@ -117,6 +123,9 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       portalZIndex = 200,
       mobilePortalZIndex,
       triggerZIndex,
+      showTime = false,
+      time = "00:00",
+      onTimeChange,
     },
     ref,
   ) => {
@@ -140,6 +149,27 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
     const inputId = id || name;
     const selected = parseISO(value);
     const today = todayISO();
+
+    /* ---- Time helpers ---- */
+    const [timeParts, setTimeParts] = useState(() => {
+      const [h = "00", m = "00"] = time.split(":");
+      return { h: Number(h), m: Number(m) };
+    });
+    const emitTime = (h: number, m: number) => {
+      onTimeChange?.(`${pad(h)}:${pad(m)}`);
+      setTimeParts({ h, m });
+    };
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+    const minutes = Array.from({ length: 60 }, (_, i) => i);
+    const hourRef = useRef<HTMLDivElement>(null);
+    const minRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+      if (!open || !showTime) return;
+      const ITEM = 36;
+      hourRef.current?.scrollTo({ top: timeParts.h * ITEM, behavior: "instant" });
+      minRef.current?.scrollTo({ top: timeParts.m * ITEM, behavior: "instant" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open]);
 
     const setTriggerRef = (el: HTMLButtonElement | null) => {
       triggerRef.current = el;
@@ -325,12 +355,13 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
       "flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-label transition-colors duration-150 hover:bg-primary/10 hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-label";
 
     /* ---- Calendar panel (shared by desktop popover + mobile modal) ---- */
-    const panel = (
+    const calendarPanel = (
       <div
         role="dialog"
         aria-label="Choose date"
-        className="w-full select-none overflow-hidden rounded-2xl border border-border bg-card p-4 text-heading"
+        className={`select-none overflow-hidden rounded-2xl border border-border bg-card p-4 text-heading ${showTime ? "flex gap-0" : "w-full"}`}
       >
+        <div className={showTime ? "min-w-0 flex-1" : "w-full"}>
         {/* Header */}
         <div className="mb-3 flex items-center justify-between gap-2">
           <button
@@ -489,8 +520,52 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
             Today
           </button>
         </div>
+        </div>
+
+        {/* Time columns */}
+        {showTime && (
+          <div className="ml-3 flex shrink-0 gap-1 border-l border-border pl-3">
+            {/* Hours */}
+            <div className="flex flex-col items-center gap-1">
+              <span className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-body">HH</span>
+              <div ref={hourRef} className="h-[216px] overflow-y-auto scrollbar-none" style={{ scrollbarWidth: "none" }}>
+                {hours.map((h) => (
+                  <button
+                    key={h}
+                    type="button"
+                    onClick={() => emitTime(h, timeParts.m)}
+                    className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-sm transition-colors ${
+                      timeParts.h === h ? "bg-primary font-semibold text-white" : "text-heading hover:bg-primary/10"
+                    }`}
+                  >
+                    {pad(h)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Minutes */}
+            <div className="flex flex-col items-center gap-1">
+              <span className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-body">MM</span>
+              <div ref={minRef} className="h-[216px] overflow-y-auto scrollbar-none" style={{ scrollbarWidth: "none" }}>
+                {minutes.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => emitTime(timeParts.h, m)}
+                    className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-sm transition-colors ${
+                      timeParts.m === m ? "bg-primary font-semibold text-white" : "text-heading hover:bg-primary/10"
+                    }`}
+                  >
+                    {pad(m)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
+    const panel = calendarPanel;
 
     /* ---- Trigger styling (matches SignupField / SignupDropdown) ---- */
     const borderClass = hasError
@@ -531,7 +606,7 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
                 value ? "text-heading" : "text-placeholder"
               }`}
             >
-              {value ? formatDisplay(value) : placeholder}
+              {value ? `${formatDisplay(value)}${showTime ? `  ${time}` : ""}` : placeholder}
             </span>
 
             <span
@@ -560,12 +635,14 @@ const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(
               <div
                 ref={popoverRef}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="fixed z-[200] w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60"
+                className="fixed z-[200] rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60"
                 style={{
                   left: desktopPosition.left,
                   top: desktopPosition.top ?? undefined,
                   bottom: desktopPosition.bottom ?? undefined,
                   zIndex: portalZIndex,
+                  width: showTime ? 480 : 320,
+                  maxWidth: "calc(100vw - 2rem)",
                 }}
               >
                 {panel}

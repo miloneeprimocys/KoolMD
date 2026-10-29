@@ -568,7 +568,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
               }
               className={`
                 ${portalMenu ? "" : "absolute left-0 right-0 z-[100]"}
-                ${portalMenu ? "" : "max-h-64"}
+                ${portalMenu ? "" : "max-h-80"}
                 ${menuScrollable ? "overflow-y-auto" : "overflow-y-visible"} overflow-x-hidden
                 rounded-xl border border-border
                 bg-card

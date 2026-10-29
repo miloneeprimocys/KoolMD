@@ -117,6 +117,11 @@ const SECTIONS: NavSection[] = [
         requiredPermission: PERMISSIONS.ENCOUNTER_READ,
       },
       {
+        label: "FHIR Model",
+        href: "/fhir-model",
+        Icon: ClipboardList,
+      },
+      {
         label: "Prescriptions",
         href: "/prescriptions",
         Icon: Receipt,
@@ -327,6 +332,7 @@ const RELATED_ROUTE_PATHS: Record<string, string[]> = {
   ],
   "/appointments": ["/book-appointment", "/edit-appointment"],
   "/encounters": ["/new-encounter", "/edit-encounter", "/view-encounter"],
+  "/fhir-model": [],
   "/prescriptions": ["/add-prescription", "/edit-prescription", "/view-prescription"],
   "/lab-results": ["/new-laborder", "/new-lab-order"],
   "/questionnaires": ["/edit-questionnaire", "/view-response", "/edit-response", "/add-template"],

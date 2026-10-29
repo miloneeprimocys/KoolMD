@@ -17,7 +17,7 @@ import AddLicense from "@/providers/licensemanagement/addlicense/Addlicense";
 import ViewLicense from "@/providers/licensemanagement/Viewlicense";
 import EditLicense from "@/providers/licensemanagement/Editlicense";
 import AppointmentScheduling from "@/appointments/Appointmentscheduling";
-import BookNewAppointment from "@/appointments/Booknewappointment";
+import BookNewAppointment from "@/appointments/waitingroom/bookappointment/Booknewappointment";
 import Encounters from "@/encounters/Encounters";
 import NewEncounter from "@/encounters/newencounters/Newencounter";
 import ViewEncounters from "@/encounters/viewencounters/Viewencounters";
@@ -26,6 +26,9 @@ import Addprescription from "@/prescriptions/addprescription/Addprescription";
 import ViewPrescriptions from "@/prescriptions/viewprescription/Viewprescriptions";
 import LabResults from "@/labresults/Labresults";
 import NewLabOrder from "@/labresults/newlaborder/Newlaborder";
+import Fhircentered from "@/clinical-records/FhirModel";
+import ViewFhirPatient from "@/clinical-records/lists/fhirpatient/Viewfhirpatient";
+import AddObservation from "@/clinical-records/lists/fhirpatient/Addobservation";
 import Billing from "@/billing/payment/payment-gateway/Billing";
 import ClearinghouseAccounts from "@/billing/clearinghouse/clearingaccount/ClearinghouseAccounts";
 import AddClearinghouseAccount from "@/billing/clearinghouse/clearingaccount/AddClearinghouseAccount";
@@ -191,6 +194,18 @@ export const ROUTES: Record<string, RouteConfig> = {
     access: "protected",
     requiredPermission: PERMISSIONS.APPOINTMENT_READ,
   },
+  "appointments/calendar/blocktime": {
+    component: AppointmentScheduling,
+    title: "Block Time",
+    access: "protected",
+    requiredPermission: PERMISSIONS.APPOINTMENT_READ,
+  },
+  "appointments/calendar/holidays": {
+    component: AppointmentScheduling,
+    title: "Holidays",
+    access: "protected",
+    requiredPermission: PERMISSIONS.APPOINTMENT_READ,
+  },
   "book-appointment": {
     component: BookNewAppointment,
     title: "Book Appointment",
@@ -254,6 +269,21 @@ export const ROUTES: Record<string, RouteConfig> = {
   "lab-results": {
     component: LabResults,
     title: "Lab Results",
+    access: "protected",
+  },
+  "fhir-model": {
+    component: Fhircentered,
+    title: "FHIR Model",
+    access: "protected",
+  },
+  "view-fhir-patient": {
+    component: ViewFhirPatient,
+    title: "View Patient",
+    access: "protected",
+  },
+  "add-observation": {
+    component: AddObservation,
+    title: "Add Observation",
     access: "protected",
   },
   billing: {
