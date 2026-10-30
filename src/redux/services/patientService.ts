@@ -3,6 +3,7 @@ import type {
   ChangePatientStatusPayload,
   CompleteOwnPatientProfilePayload,
   CreateEmergencyContactPayload,
+  CreateInsurancePayload,
   CreatePatientPayload,
   EmergencyContact,
   PatientAppointment,
@@ -11,6 +12,8 @@ import type {
   PatientListQuery,
   PatientStats,
   PatientSummary,
+  UpdateEmergencyContactPayload,
+  UpdateInsurancePayload,
   UpdatePatientPayload,
 } from "@/types/patient";
 import { apiPaginatedRequest, apiRequest, toQueryString } from "./apiClient";
@@ -34,6 +37,45 @@ export const patientService = {
     });
   },
 
+  updateEmergencyContact(
+    patientId: string,
+    contactId: string,
+    payload: UpdateEmergencyContactPayload,
+  ): Promise<EmergencyContact> {
+    return apiRequest<EmergencyContact>(`/patients/${patientId}/emergency-contacts/${contactId}`, {
+      method: "PATCH",
+      body: payload,
+      isAuthenticated: true,
+    });
+  },
+
+  deleteEmergencyContact(patientId: string, contactId: string): Promise<unknown> {
+    return apiRequest<unknown>(`/patients/${patientId}/emergency-contacts/${contactId}`, {
+      method: "DELETE",
+      isAuthenticated: true,
+    });
+  },
+
+  createInsurance(patientId: string, payload: CreateInsurancePayload): Promise<PatientInsurance> {
+    return apiRequest<PatientInsurance>(`/patients/${patientId}/insurances`, {
+      method: "POST",
+      body: payload,
+      isAuthenticated: true,
+    });
+  },
+
+  updateInsurance(
+    patientId: string,
+    insuranceId: string,
+    payload: UpdateInsurancePayload,
+  ): Promise<PatientInsurance> {
+    return apiRequest<PatientInsurance>(`/patients/${patientId}/insurances/${insuranceId}`, {
+      method: "PATCH",
+      body: payload,
+      isAuthenticated: true,
+    });
+  },
+
   listInsurances(patientId: string, signal?: AbortSignal): Promise<PatientInsurance[]> {
     return apiRequest<PatientInsurance[]>(`/patients/${patientId}/insurances`, {
       isAuthenticated: true,
@@ -47,10 +89,26 @@ export const patientService = {
     limit: number,
     signal?: AbortSignal,
   ): Promise<PaginatedResult<PatientAppointment>> {
-    return apiPaginatedRequest<PatientAppointment>(
-      `/appointments${toQueryString({ patientId, page: 1, limit, sortOrder: "desc" })}`,
-      { isAuthenticated: true, signal },
-    );
+    return patientService.listPatientAppointments({ patientId, page: 1, limit, sortOrder: "desc" }, signal);
+  },
+
+  /** `GET /appointments` for one patient; `statuses` is comma-separated, `from`/`to` are ISO times. */
+  listPatientAppointments(
+    query: {
+      patientId: string;
+      page: number;
+      limit: number;
+      sortOrder: "asc" | "desc";
+      statuses?: string;
+      from?: string;
+      to?: string;
+    },
+    signal?: AbortSignal,
+  ): Promise<PaginatedResult<PatientAppointment>> {
+    return apiPaginatedRequest<PatientAppointment>(`/appointments${toQueryString(query)}`, {
+      isAuthenticated: true,
+      signal,
+    });
   },
 
   getPatientStats(): Promise<PatientStats> {

@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer, { sessionExpired } from "./slices/authSlice";
 import patientsReducer from "./slices/patientsSlice";
 import patientDetailReducer from "./slices/patientDetailSlice";
+import patientRecordsReducer from "./slices/patientRecordsSlice";
 import practitionersReducer from "./slices/practitionersSlice";
 import providerDetailReducer from "./slices/providerDetailSlice";
 import dialogReducer from "./slices/dialogslice";
@@ -12,6 +13,7 @@ export const store = configureStore({
     auth: authReducer,
     patients: patientsReducer,
     patientDetail: patientDetailReducer,
+    patientRecords: patientRecordsReducer,
     practitioners: practitionersReducer,
     providerDetail: providerDetailReducer,
     dialog: dialogReducer,

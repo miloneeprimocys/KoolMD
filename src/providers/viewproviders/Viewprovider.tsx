@@ -25,6 +25,7 @@ import {
   uploadProviderDocument,
 } from "@/redux/thunks/providerDetailThunks";
 import { toRequestError } from "@/redux/thunks/thunkHelpers";
+import { saveBlobAsFile } from "@/utils/download";
 import Overview from "./Overview";
 import Licenses, { type LicenseRow } from "./ViewLicenses";
 import Documents, { type DocumentRow } from "./Documents";
@@ -57,16 +58,6 @@ const initials = (name: string) =>
 const toStateCode = (stateLabel: string) => {
   const code = /\(([A-Z]{2})\)$/.exec(stateLabel)?.[1];
   return code && code !== "US" ? code : undefined;
-};
-
-/** Saves a downloaded file through a temporary object URL. */
-const saveBlobAsFile = (blob: Blob, fileName: string) => {
-  const objectUrl = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = objectUrl;
-  anchor.download = fileName;
-  anchor.click();
-  URL.revokeObjectURL(objectUrl);
 };
 
 type ToastState = { type: "success" | "error" | null; title: string; message: string };

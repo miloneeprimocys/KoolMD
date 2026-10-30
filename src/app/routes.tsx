@@ -110,7 +110,7 @@ export const ROUTES: Record<string, RouteConfig> = {
     component: AddPatient,
     title: "Edit Patient",
     access: "protected",
-    requiredPermission: PERMISSIONS.PATIENT_READ,
+    requiredPermission: PERMISSIONS.PATIENT_UPDATE,
   },
   "view-patient": {
     component: ViewPatient,

@@ -1,9 +1,13 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import type {
+  CreateEmergencyContactPayload,
+  CreateInsurancePayload,
   EmergencyContact,
   PatientAppointment,
   PatientDetail,
   PatientInsurance,
+  UpdateEmergencyContactPayload,
+  UpdateInsurancePayload,
 } from "@/types/patient";
 import { patientService } from "@/redux/services/patientService";
 import type { PatientDetailState } from "@/redux/slices/patientDetailSlice";
@@ -71,3 +75,67 @@ export const fetchPatientDetail = createAsyncThunk<
     },
   },
 );
+
+/* ---------- Emergency contacts ---------- */
+
+export type SaveEmergencyContactRequest =
+  | { patientId: string; contactId?: undefined; payload: CreateEmergencyContactPayload }
+  | { patientId: string; contactId: string; payload: UpdateEmergencyContactPayload };
+
+/**
+ * Creates (no `contactId`) or updates a contact, then reloads the list: making one contact primary
+ * unsets the previous one, so the server's list is the only reliable result.
+ */
+export const saveEmergencyContact = createAsyncThunk<
+  EmergencyContact[],
+  SaveEmergencyContactRequest,
+  PatientDetailThunkConfig
+>("patientDetail/saveEmergencyContact", async (request, { rejectWithValue }) => {
+  try {
+    if (request.contactId === undefined) {
+      await patientService.addEmergencyContact(request.patientId, request.payload);
+    } else {
+      await patientService.updateEmergencyContact(request.patientId, request.contactId, request.payload);
+    }
+    return await patientService.listEmergencyContacts(request.patientId);
+  } catch (error) {
+    return rejectWithValue(toRequestError(error));
+  }
+});
+
+export const deleteEmergencyContact = createAsyncThunk<
+  EmergencyContact[],
+  { patientId: string; contactId: string },
+  PatientDetailThunkConfig
+>("patientDetail/deleteEmergencyContact", async ({ patientId, contactId }, { rejectWithValue }) => {
+  try {
+    await patientService.deleteEmergencyContact(patientId, contactId);
+    return await patientService.listEmergencyContacts(patientId);
+  } catch (error) {
+    return rejectWithValue(toRequestError(error));
+  }
+});
+
+/* ---------- Insurance ---------- */
+
+export type SaveInsuranceRequest =
+  | { patientId: string; insuranceId?: undefined; payload: CreateInsurancePayload }
+  | { patientId: string; insuranceId: string; payload: UpdateInsurancePayload };
+
+/** Creates (no `insuranceId`) or updates coverage, then reloads the list (priority order). */
+export const saveInsurance = createAsyncThunk<
+  PatientInsurance[],
+  SaveInsuranceRequest,
+  PatientDetailThunkConfig
+>("patientDetail/saveInsurance", async (request, { rejectWithValue }) => {
+  try {
+    if (request.insuranceId === undefined) {
+      await patientService.createInsurance(request.patientId, request.payload);
+    } else {
+      await patientService.updateInsurance(request.patientId, request.insuranceId, request.payload);
+    }
+    return await patientService.listInsurances(request.patientId);
+  } catch (error) {
+    return rejectWithValue(toRequestError(error));
+  }
+});

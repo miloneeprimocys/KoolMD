@@ -222,6 +222,9 @@ const Patient = () => {
               if (action === "view") {
                 router.push(`/view-patient?id=${patient.id}`);
               }
+              if (action === "edit") {
+                router.push(`/edit-patient?id=${encodeURIComponent(patient.id)}`);
+              }
             }}
           />
         </div>

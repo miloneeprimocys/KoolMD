@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, isAnyOf } from "@reduxjs/toolkit";
 import type { RequestStatus } from "@/types/api";
 import type {
   EmergencyContact,
@@ -6,7 +6,17 @@ import type {
   PatientDetail,
   PatientInsurance,
 } from "@/types/patient";
-import { fetchPatientDetail } from "@/redux/thunks/patientDetailThunks";
+import {
+  deleteEmergencyContact,
+  fetchPatientDetail,
+  saveEmergencyContact,
+  saveInsurance,
+} from "@/redux/thunks/patientDetailThunks";
+import {
+  changePatientStatus,
+  invitePatientToPortal,
+  updatePatient,
+} from "@/redux/thunks/patientThunks";
 import type { RequestError } from "@/redux/thunks/thunkHelpers";
 import { logoutUser } from "@/redux/thunks/authThunks";
 import { sessionExpired } from "./authSlice";
@@ -80,9 +90,33 @@ const patientDetailSlice = createSlice({
         state.detail.error = action.payload ?? null;
       })
 
+      .addCase(saveInsurance.fulfilled, (state, action) => {
+        if (state.detail.patientId === action.meta.arg.patientId) {
+          state.detail.insurances = action.payload;
+        }
+      })
+
       // Patient data is PHI — never keep it in memory after sign-out.
       .addCase(logoutUser.fulfilled, () => initialState)
-      .addCase(sessionExpired, () => initialState);
+      .addCase(sessionExpired, () => initialState)
+
+      // Profile changes return the saved patient: show it at once instead of the cached copy.
+      .addMatcher(
+        isAnyOf(updatePatient.fulfilled, changePatientStatus.fulfilled, invitePatientToPortal.fulfilled),
+        (state, action) => {
+          if (state.detail.patientId === action.meta.arg.patientId) {
+            state.detail.patient = action.payload;
+          }
+        },
+      )
+      .addMatcher(
+        isAnyOf(saveEmergencyContact.fulfilled, deleteEmergencyContact.fulfilled),
+        (state, action) => {
+          if (state.detail.patientId === action.meta.arg.patientId) {
+            state.detail.emergencyContacts = action.payload;
+          }
+        },
+      );
   },
 });
 

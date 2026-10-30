@@ -3,7 +3,6 @@
 import React, { useMemo, useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { User } from "lucide-react";
-import { parsePhoneNumberFromString, CountryCode } from "libphonenumber-js";
 
 import SignupField from "@/components/SignupField";
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
@@ -17,7 +16,13 @@ import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import { selectCreatePatientRequest, selectPatientDetail, selectUpdatePatientRequest } from "@/redux/selectors/patientSelectors";
 import { createPatient, updatePatient } from "@/redux/thunks/patientThunks";
 import { fetchPatientDetail } from "@/redux/thunks/patientDetailThunks";
-import type { AdministrativeGender, CreatePatientPayload, UpdatePatientPayload } from "@/types/patient";
+import type {
+  AdministrativeGender,
+  ContactMethod,
+  CreatePatientPayload,
+  UpdatePatientPayload,
+} from "@/types/patient";
+import { fromE164, toE164 } from "@/utils/phone";
 
 import {
   COUNTRY_OPTIONS,
@@ -47,6 +52,13 @@ const LANGUAGES: DropdownOption[] = [
   { value: "hi", label: "Hindi" },
 ];
 
+const CONTACT_METHODS: DropdownOption[] = [
+  { value: "EMAIL", label: "Email" },
+  { value: "SMS", label: "Text message" },
+  { value: "PHONE", label: "Phone call" },
+  { value: "PORTAL", label: "Patient portal" },
+];
+
 /** Backend address rules (USPS state code, ZIP) apply to US addresses only. */
 const US_COUNTRY_CODE = "US";
 
@@ -74,7 +86,6 @@ const cardCls = "rounded-2xl border border-border bg-card p-4 sm:p-5";
 
 /* ---------- Small helpers ---------- */
 const Req = () => <span className="text-danger"> *</span>;
-const Opt = () => <span className="font-normal text-body"> (Optional)</span>;
 
 /* Numbered section header */
 const SectionHeader = ({
@@ -119,7 +130,8 @@ interface FormValues {
   zip: string;
   preferredName: string;
   genderIdentity: string;
-  preferredContactMethod: string;
+  /** "" until chosen. */
+  preferredContactMethod: ContactMethod | "";
   allowEmailNotifications: string | boolean;
   allowSmsNotifications: string | boolean;
 }
@@ -164,9 +176,12 @@ const AddPatient = () => {
     allowSmsNotifications: false,
   });
 
+  const patientDisplayName = `${values.firstName || "Patient"} ${values.lastName || ""}`.trim();
+
   const [errors, setErrors] = React.useState<FormErrors>({});
   const [submitted, setSubmitted] = React.useState(false);
-  const [isInitialized, setIsInitialized] = React.useState(false);
+  /** Patient whose saved values fill the form (edit mode); re-filled when another patient opens. */
+  const [prefilledPatientId, setPrefilledPatientId] = React.useState<string | null>(null);
   const [toast, setToast] = React.useState<{
     type: "success" | "error" | null;
     title: string;
@@ -180,42 +195,47 @@ const AddPatient = () => {
 
   /* ---------- Load patient data in edit mode ---------- */
   useEffect(() => {
-    if (isEditMode && patientId && !isInitialized) {
-      dispatch(fetchPatientDetail(patientId));
-    }
-  }, [dispatch, isEditMode, patientId, isInitialized]);
+    if (isEditMode && patientId) dispatch(fetchPatientDetail(patientId));
+  }, [dispatch, isEditMode, patientId]);
 
-  useEffect(() => {
-    if (isEditMode && patientDetail.patient && patientDetail.patientId === patientId && !isInitialized) {
-      const patient = patientDetail.patient;
-      setValues({
-        firstName: patient.firstName || "",
-        lastName: patient.lastName || "",
-        middleName: patient.middleName || "",
-        dob: patient.dateOfBirth || "",
-        gender: patient.administrativeGender || "",
-        phoneCountry: DEFAULT_COUNTRY,
-        phone: patient.phoneNumber || "",
-        email: patient.email || "",
-        language: patient.preferredLanguage || "",
-        emergencyName: "",
-        emergencyPhoneCountry: DEFAULT_COUNTRY,
-        emergencyPhone: "",
-        address1: patient.addressLine1 || "",
-        address2: patient.addressLine2 || "",
-        country: patient.countryCode || DEFAULT_COUNTRY,
-        state: patient.stateCode || "",
-        city: patient.city || "",
-        zip: patient.postalCode || "",
-        preferredName: patient.preferredName || "",
-        genderIdentity: patient.genderIdentity || "",
-        preferredContactMethod: patient.preferredContactMethod || "",
-        allowEmailNotifications: patient.allowEmailNotifications,
-        allowSmsNotifications: patient.allowSmsNotifications,
-      });
-      setIsInitialized(true);
-    }
-  }, [isEditMode, patientDetail, patientId, isInitialized]);
+  // Fill the form once the patient has loaded. Done while rendering (not in an effect) so the
+  // form never shows empty values for a frame: https://react.dev/learn/you-might-not-need-an-effect
+  if (
+    isEditMode &&
+    patientId &&
+    prefilledPatientId !== patientId &&
+    patientDetail.patient &&
+    patientDetail.patientId === patientId
+  ) {
+    const patient = patientDetail.patient;
+    const phone = fromE164(patient.phoneNumber, DEFAULT_COUNTRY);
+    setValues({
+      firstName: patient.firstName || "",
+      lastName: patient.lastName || "",
+      middleName: patient.middleName || "",
+      dob: patient.dateOfBirth || "",
+      gender: patient.administrativeGender || "",
+      phoneCountry: phone.countryIso,
+      phone: phone.nationalNumber,
+      email: patient.email || "",
+      language: patient.preferredLanguage || "",
+      emergencyName: "",
+      emergencyPhoneCountry: DEFAULT_COUNTRY,
+      emergencyPhone: "",
+      address1: patient.addressLine1 || "",
+      address2: patient.addressLine2 || "",
+      country: patient.countryCode || DEFAULT_COUNTRY,
+      state: patient.stateCode || "",
+      city: patient.city || "",
+      zip: patient.postalCode || "",
+      preferredName: patient.preferredName || "",
+      genderIdentity: patient.genderIdentity || "",
+      preferredContactMethod: patient.preferredContactMethod || "",
+      allowEmailNotifications: patient.allowEmailNotifications,
+      allowSmsNotifications: patient.allowSmsNotifications,
+    });
+    setPrefilledPatientId(patientId);
+  }
 
   /* ---------- Dependent dropdown options ---------- */
   const stateOptions: DropdownOption[] = useMemo(
@@ -305,9 +325,6 @@ const AddPatient = () => {
     return errs;
   };
 
-  const toE164 = (national: string, iso: string) =>
-    parsePhoneNumberFromString(national, iso as CountryCode)?.number ?? "";
-
   /** Form values → `POST /patients` body (empty optional fields are left out). */
   const buildCreatePatientPayload = (confirmNotDuplicate: boolean): CreatePatientPayload => {
     const isUsAddress = values.country === US_COUNTRY_CODE;
@@ -331,7 +348,7 @@ const AddPatient = () => {
       confirmNotDuplicate: confirmNotDuplicate || undefined,
       preferredName: values.preferredName.trim() || undefined,
       genderIdentity: values.genderIdentity.trim() || undefined,
-      preferredContactMethod: (values.preferredContactMethod as any) || undefined,
+      preferredContactMethod: values.preferredContactMethod || undefined,
       allowEmailNotifications: toBool(values.allowEmailNotifications),
       allowSmsNotifications: toBool(values.allowSmsNotifications),
     };
@@ -359,7 +376,7 @@ const AddPatient = () => {
       countryCode: values.country || undefined,
       preferredName: values.preferredName.trim() || null,
       genderIdentity: values.genderIdentity.trim() || null,
-      preferredContactMethod: (values.preferredContactMethod as any) || undefined,
+      preferredContactMethod: values.preferredContactMethod || undefined,
       allowEmailNotifications: toBool(values.allowEmailNotifications),
       allowSmsNotifications: toBool(values.allowSmsNotifications),
     };
@@ -372,14 +389,18 @@ const AddPatient = () => {
   };
 
   const savePatient = async (confirmNotDuplicate = false) => {
-    if (isEditMode && !patientId) {
+    // Narrowed once here so the edit branches below get a non-null id.
+    const editedPatientId = isEditMode ? patientId : null;
+    if (isEditMode && !editedPatientId) {
       setToast({ type: "error", title: "Error", message: "Patient ID is required for editing." });
       return;
     }
 
     let saveResult;
-    if (isEditMode) {
-      saveResult = await dispatch(updatePatient({ patientId, payload: buildUpdatePatientPayload() }));
+    if (editedPatientId) {
+      saveResult = await dispatch(
+        updatePatient({ patientId: editedPatientId, payload: buildUpdatePatientPayload() }),
+      );
     } else {
       const emergencyPhone = values.emergencyPhone
         ? toE164(values.emergencyPhone, values.emergencyPhoneCountry)
@@ -395,10 +416,10 @@ const AddPatient = () => {
       );
     }
 
-    if (isEditMode) {
+    if (editedPatientId) {
       if (updatePatient.fulfilled.match(saveResult)) {
         setToast({ type: "success", title: "Success", message: "Patient updated successfully." });
-        router.push(`/view-patient?id=${encodeURIComponent(patientId)}`);
+        router.push(`/view-patient?id=${encodeURIComponent(editedPatientId)}`);
         return;
       }
       if (updatePatient.rejected.match(saveResult)) {
@@ -484,13 +505,6 @@ const AddPatient = () => {
     submitForm();
   };
 
-  // Reset initialization when navigating away from edit mode
-  useEffect(() => {
-    if (!isEditMode && isInitialized) {
-      setIsInitialized(false);
-    }
-  }, [isEditMode, isInitialized]);
-
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-4 sm:space-y-5">
       {/* Success and Error Toasts */}
@@ -521,7 +535,7 @@ const AddPatient = () => {
             {isEditMode ? "Edit Patient" : "Add Patient"}
           </h2>
           <p className="mt-0.5 text-sm text-body">
-            Create a new patient record in the system.
+            {isEditMode ? "Update patient details and communication preferences." : "Create a new patient record in the system."}
           </p>
         </div>
 
@@ -544,11 +558,7 @@ const AddPatient = () => {
 
       <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px]">
         {/* ================= LEFT: FORM ================= */}
-        <form
-          className={`${cardCls} min-w-0 sm:p-6`}
-          onSubmit={handleSubmit}
-          noValidate
-        >
+        <form className={`${cardCls} min-w-0 sm:p-6`} onSubmit={handleSubmit} noValidate>
           {/* 1. Basic information */}
           <section>
             <SectionHeader
@@ -673,9 +683,7 @@ const AddPatient = () => {
                     value={values.emergencyPhone}
                     onChange={(v) => setField("emergencyPhone", v)}
                     countryCode={values.emergencyPhoneCountry}
-                    onCountryChange={(iso) =>
-                      setField("emergencyPhoneCountry", iso)
-                    }
+                    onCountryChange={(iso) => setField("emergencyPhoneCountry", iso)}
                     error={errors.emergencyPhone}
                   />
                 </>
@@ -724,9 +732,7 @@ const AddPatient = () => {
                 key={`state-${values.country}`}
                 name="state"
                 label="State"
-                placeholder={
-                  stateOptions.length ? "Select state" : "No states available"
-                }
+                placeholder={stateOptions.length ? "Select state" : "No states available"}
                 options={stateOptions}
                 value={values.state}
                 onChange={handleStateChange}
@@ -747,10 +753,7 @@ const AddPatient = () => {
                 options={cityOptions}
                 value={values.city}
                 onChange={(v) => setField("city", v)}
-                disabled={
-                  cityOptions.length === 0 ||
-                  (stateOptions.length > 0 && !values.state)
-                }
+                disabled={cityOptions.length === 0 || (stateOptions.length > 0 && !values.state)}
                 error={errors.city}
               />
               <SignupField
@@ -798,19 +801,68 @@ const AddPatient = () => {
 
         {/* ================= RIGHT: SIDEBAR ================= */}
         <aside className="space-y-4 sm:space-y-5">
-          {/* Profile placeholder */}
           <section className={cardCls}>
             <h3 className="text-sm font-semibold text-heading">Profile</h3>
             <div className="mt-4 flex items-center gap-4">
-              <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-2 border-border bg-shape-sky/40 text-body sm:h-28 sm:w-28">
-                <User className="h-10 w-10 text-body" strokeWidth={1.5} />
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-border bg-shape-sky/40 text-body sm:h-24 sm:w-24">
+                <User className="h-9 w-9 text-body" strokeWidth={1.5} />
               </div>
-              <div className="flex flex-col">
-                <p className="text-sm font-medium text-heading">Patient Profile</p>
-                <p className="mt-1 text-xs text-body">Complete the form to add or edit patient information.</p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-heading">
+                  {patientDisplayName || "Patient profile"}
+                </p>
+                <p className="mt-1 text-xs text-body">
+                  {isEditMode ? "Profile update ready" : "Complete the form to add a patient"}
+                </p>
               </div>
             </div>
           </section>
+
+          {isEditMode && (
+            <section className={cardCls}>
+              <h3 className="text-sm font-semibold text-heading">Profile update</h3>
+              <div className="mt-4 grid gap-4">
+                <SignupDropdown
+                  name="preferredContactMethod"
+                  label="Preferred contact method"
+                  placeholder="Select contact method"
+                  options={CONTACT_METHODS}
+                  value={values.preferredContactMethod}
+                  onChange={(v) => setField("preferredContactMethod", v)}
+                  error={errors.preferredContactMethod}
+                />
+
+                <div className="flex flex-col gap-3">
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={values.allowEmailNotifications === true || values.allowEmailNotifications === "true"}
+                      onChange={(e) => setField("allowEmailNotifications", e.target.checked)}
+                      className={checkboxCls}
+                    />
+                    <span className="text-sm text-heading">Allow email notifications</span>
+                  </label>
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={values.allowSmsNotifications === true || values.allowSmsNotifications === "true"}
+                      onChange={(e) => setField("allowSmsNotifications", e.target.checked)}
+                      className={checkboxCls}
+                    />
+                    <span className="text-sm text-heading">Allow SMS notifications</span>
+                  </label>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={submitForm}
+                  className="mt-2 block w-full rounded bg-primary px-4 py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+                >
+                  Save profile
+                </button>
+              </div>
+            </section>
+          )}
         </aside>
       </div>
     </div>

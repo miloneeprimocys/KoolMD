@@ -281,6 +281,10 @@ interface ModalShellProps {
   width?: number;
   /** Tailwind z-index class for the overlay (default z-[300]) */
   zIndexClass?: string;
+  /** While saving: the submit button is disabled and shows "Saving…" (blocks double submits). */
+  isSubmitting?: boolean;
+  /** Save failure shown above the footer (e.g. the API error message). */
+  errorMessage?: string | null;
   children: ReactNode;
 }
 
@@ -296,6 +300,8 @@ const ModalShell = ({
   footer,
   width = 680,
   zIndexClass = "z-[300]",
+  isSubmitting = false,
+  errorMessage,
   children,
 }: ModalShellProps) => {
   const [mounted, setMounted] = useState(false);
@@ -362,6 +368,15 @@ const ModalShell = ({
           {/* Body */}
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto hide-scrollbar">{children}</div>
 
+          {errorMessage && (
+            <p
+              role="alert"
+              className="mt-4 shrink-0 rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger"
+            >
+              {errorMessage}
+            </p>
+          )}
+
           {/* Footer */}
           {footer ? (
             <div className="mt-6 shrink-0">{footer}</div>
@@ -370,7 +385,12 @@ const ModalShell = ({
             submitText && (
               <div className="mt-6 flex shrink-0 items-center justify-center gap-3 sm:justify-end">
                 <ImportButton text={cancelText} icon={null} onClick={onClose} />
-                <AddButton text={submitText} icon={null} onClick={onSubmit} />
+                <AddButton
+                  text={isSubmitting ? "Saving…" : submitText}
+                  icon={null}
+                  onClick={onSubmit}
+                  disabled={isSubmitting}
+                />
               </div>
             )
           )}

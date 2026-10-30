@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   Clock,
@@ -9,9 +10,11 @@ import {
   Heart,
   Mail,
   MapPin,
+  Pencil,
   Phone,
   Plus,
   ShieldCheck,
+  Trash2,
   User,
   UserCheck,
   Users,
@@ -22,8 +25,15 @@ import Tags, { type TagTone } from "@/components/Tags";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 import EditButton from "@/components/EditButton";
+import DeleteDialog from "@/components/Deletedialog";
+import IconAction from "@/components/IconAction";
+import { PERMISSIONS } from "@/auth/permissions";
 import { useAppDispatch } from "@/hooks/useAppHooks";
+import { usePermission } from "@/hooks/usePermission";
 import { showModal } from "@/redux/slices/dialogslice";
+import { deleteEmergencyContact } from "@/redux/thunks/patientDetailThunks";
+import EmergencyContactModal from "./EmergencyContactModal";
+import InsuranceModal from "./InsuranceModal";
 import type {
   EmergencyContact,
   PatientAppointment,
@@ -59,8 +69,6 @@ const formatAddress = (patient: PatientDetail) => {
     [patient.addressLine1, patient.addressLine2, patient.city, stateAndZip].filter(Boolean).join(", "),
   );
 };
-
-const hasProvidedValue = (value: string) => value.trim() !== "" && value !== NOT_PROVIDED;
 
 /* ---------- Small building blocks ---------- */
 const IconBadge = ({
@@ -147,19 +155,30 @@ const ListRow = ({
   title,
   description,
   tag,
+  actions,
 }: {
   title: string;
   description: string;
   tag?: React.ReactNode;
+  actions?: React.ReactNode;
 }) => (
   <li className="flex items-start justify-between gap-3 rounded-xl border border-border/60 px-3.5 py-3">
     <div className="min-w-0">
       <p className="break-words text-sm font-semibold text-heading">{title}</p>
       <p className="mt-0.5 break-words text-xs text-body">{description}</p>
     </div>
-    {tag}
+    <div className="flex shrink-0 items-center gap-1">
+      {tag}
+      {actions}
+    </div>
   </li>
 );
+
+/** Which list editor is open: `null` item = add a new one. */
+type OpenEditor =
+  | { kind: "emergencyContact"; item: EmergencyContact | null }
+  | { kind: "insurance"; item: PatientInsurance | null }
+  | null;
 
 /* ---------- Component ---------- */
 type Props = {
@@ -169,7 +188,6 @@ type Props = {
   recentAppointments: PatientAppointment[];
   /** Set when appointments could not be loaded (the rest of the overview still shows). */
   recentAppointmentsError: string | null;
-  onEdit?: (section: string) => void;
 };
 
 const OverviewPatient = ({
@@ -178,9 +196,31 @@ const OverviewPatient = ({
   insurances,
   recentAppointments,
   recentAppointmentsError,
-  onEdit,
 }: Props) => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const canUpdatePatient = usePermission(PERMISSIONS.PATIENT_UPDATE);
+  const [openEditor, setOpenEditor] = useState<OpenEditor>(null);
+  const [contactToDelete, setContactToDelete] = useState<EmergencyContact | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const editPatient = () => router.push(`/edit-patient?id=${encodeURIComponent(patient.id)}`);
+
+  const confirmDeleteContact = async () => {
+    if (!contactToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    const result = await dispatch(
+      deleteEmergencyContact({ patientId: patient.id, contactId: contactToDelete.id }),
+    );
+    setIsDeleting(false);
+    if (deleteEmergencyContact.fulfilled.match(result)) {
+      setContactToDelete(null);
+    } else {
+      setDeleteError(result.payload?.message ?? "The contact could not be removed.");
+    }
+  };
 
   const contactFields: FieldItem[] = [
     { icon: Phone, label: "Phone Number", value: orNotProvided(patient.phoneNumber) },
@@ -218,7 +258,7 @@ const OverviewPatient = ({
           icon={Phone}
           title="Contact Information"
           action={
-            contactFields.some((item) => hasProvidedValue(item.value)) ? (
+            canUpdatePatient ? (
               <EditButton section="Contact Information" onEdit={() => dispatch(showModal("EditContactInformation"))} />
             ) : undefined
           }
@@ -234,6 +274,15 @@ const OverviewPatient = ({
           className="flex-1"
           icon={Users}
           title="Emergency Contact"
+          action={
+            canUpdatePatient && emergencyContacts.length > 0 ? (
+              <EditButton
+                section="Emergency Contact"
+                label="Add"
+                onEdit={() => setOpenEditor({ kind: "emergencyContact", item: null })}
+              />
+            ) : undefined
+          }
         >
           {emergencyContacts.length > 0 ? (
             <ul className="space-y-2.5">
@@ -245,6 +294,26 @@ const OverviewPatient = ({
                     .filter(Boolean)
                     .join(" • ")}
                   tag={contact.isPrimary ? <Tags text="Primary" tone="success" /> : undefined}
+                  actions={
+                    canUpdatePatient && (
+                      <>
+                        <IconAction
+                          icon={Pencil}
+                          label={`Edit ${contact.fullName}`}
+                          onClick={() => setOpenEditor({ kind: "emergencyContact", item: contact })}
+                        />
+                        <IconAction
+                          icon={Trash2}
+                          tone="danger"
+                          label={`Remove ${contact.fullName}`}
+                          onClick={() => {
+                            setDeleteError(null);
+                            setContactToDelete(contact);
+                          }}
+                        />
+                      </>
+                    )
+                  }
                 />
               ))}
             </ul>
@@ -254,7 +323,13 @@ const OverviewPatient = ({
               title="No emergency contact added"
               description="Add emergency contact information for this patient."
               action={
-                <ImportButton text="Add Emergency Contact" icon={<Plus className="h-4 w-4" />} onClick={() => {}} />
+                canUpdatePatient && (
+                  <ImportButton
+                    text="Add Emergency Contact"
+                    icon={<Plus className="h-4 w-4" />}
+                    onClick={() => setOpenEditor({ kind: "emergencyContact", item: null })}
+                  />
+                )
               }
             />
           )}
@@ -268,9 +343,7 @@ const OverviewPatient = ({
           icon={User}
           title="Personal Information"
           action={
-            personalFields.some((item) => hasProvidedValue(item.value)) ? (
-              <EditButton section="Personal Information" onEdit={onEdit} />
-            ) : undefined
+            canUpdatePatient ? <EditButton section="Personal Information" onEdit={editPatient} /> : undefined
           }
         >
           <ul className="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
@@ -284,6 +357,15 @@ const OverviewPatient = ({
           className="flex-1"
           icon={ShieldCheck}
           title="Insurance Information"
+          action={
+            canUpdatePatient && insurances.length > 0 ? (
+              <EditButton
+                section="Insurance"
+                label="Add"
+                onEdit={() => setOpenEditor({ kind: "insurance", item: null })}
+              />
+            ) : undefined
+          }
         >
           {insurances.length > 0 ? (
             <ul className="space-y-2.5">
@@ -304,6 +386,15 @@ const OverviewPatient = ({
                       tone={insurance.status === "ACTIVE" ? "success" : "neutral"}
                     />
                   }
+                  actions={
+                    canUpdatePatient && (
+                      <IconAction
+                        icon={Pencil}
+                        label={`Edit ${insurance.payerName}`}
+                        onClick={() => setOpenEditor({ kind: "insurance", item: insurance })}
+                      />
+                    )
+                  }
                 />
               ))}
             </ul>
@@ -313,7 +404,13 @@ const OverviewPatient = ({
               title="No insurance added"
               description="Add insurance details to manage billing and claims."
               action={
-                <ImportButton text="Add Insurance Information" icon={<Plus className="h-4 w-4" />} onClick={() => {}} />
+                canUpdatePatient && (
+                  <ImportButton
+                    text="Add Insurance Information"
+                    icon={<Plus className="h-4 w-4" />}
+                    onClick={() => setOpenEditor({ kind: "insurance", item: null })}
+                  />
+                )
               }
             />
           )}
@@ -376,12 +473,43 @@ const OverviewPatient = ({
               icon={CalendarDays}
               title="No appointments yet"
               description="This patient does not have any appointments scheduled."
-              action={<AddButton text="Book Appointment" onClick={() => {}} />}
+              action={<AddButton text="Book Appointment" onClick={() => router.push("/book-appointment")} />}
             />
           )}
         </Card>
       </div>
     </div>
+
+    {/* ---- Editors (mounted only while open, so each opening starts from current data) ---- */}
+    {openEditor?.kind === "emergencyContact" && (
+      <EmergencyContactModal
+        key={openEditor.item?.id ?? "new"}
+        patientId={patient.id}
+        contact={openEditor.item}
+        isFirstContact={emergencyContacts.length === 0}
+        onClose={() => setOpenEditor(null)}
+      />
+    )}
+    {openEditor?.kind === "insurance" && (
+      <InsuranceModal
+        key={openEditor.item?.id ?? "new"}
+        patientId={patient.id}
+        insurance={openEditor.item}
+        onClose={() => setOpenEditor(null)}
+      />
+    )}
+    <DeleteDialog
+      open={contactToDelete !== null}
+      onClose={() => !isDeleting && setContactToDelete(null)}
+      onConfirm={confirmDeleteContact}
+      title="Remove emergency contact?"
+      description={
+        deleteError ?? `${contactToDelete?.fullName ?? "This contact"} will be removed from this patient.`
+      }
+      confirmText="Remove"
+      loadingText="Removing…"
+      loading={isDeleting}
+    />
 
     {/* ---- Row 2: full-width HIPAA banner ---- */}
     {/* <div className="flex items-start gap-3 rounded-[8px] border border-primary/20 bg-primary/5 dark:bg-primary/20 p-4 sm:p-5">
