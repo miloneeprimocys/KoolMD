@@ -8,11 +8,13 @@ import {
   Globe,
   Hash,
   Heart,
+  Info,
   Mail,
   MapPin,
   Pencil,
   Phone,
   Plus,
+  Send,
   ShieldCheck,
   Trash2,
   User,
@@ -27,13 +29,17 @@ import ImportButton from "@/components/ImportButton";
 import EditButton from "@/components/EditButton";
 import DeleteDialog from "@/components/Deletedialog";
 import IconAction from "@/components/IconAction";
+import SuccessToast from "@/components/SuccessToast";
+import ErrorToast from "@/components/ErrorToast";
 import { PERMISSIONS } from "@/auth/permissions";
 import { useAppDispatch } from "@/hooks/useAppHooks";
 import { usePermission } from "@/hooks/usePermission";
 import { showModal } from "@/redux/slices/dialogslice";
 import { deleteEmergencyContact } from "@/redux/thunks/patientDetailThunks";
+import { invitePatientToPortal } from "@/redux/thunks/patientThunks";
 import EmergencyContactModal from "./EmergencyContactModal";
 import InsuranceModal from "./InsuranceModal";
+import PatientStatusModal from "./PatientStatusModal";
 import type {
   EmergencyContact,
   PatientAppointment,
@@ -200,7 +206,12 @@ const OverviewPatient = ({
   const dispatch = useAppDispatch();
   const router = useRouter();
   const canUpdatePatient = usePermission(PERMISSIONS.PATIENT_UPDATE);
+  const canManageStatus = usePermission(PERMISSIONS.PATIENT_MANAGE_STATUS);
+  const canCreatePatient = usePermission(PERMISSIONS.PATIENT_CREATE);
   const [openEditor, setOpenEditor] = useState<OpenEditor>(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
+  const [inviteResult, setInviteResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [contactToDelete, setContactToDelete] = useState<EmergencyContact | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -244,7 +255,25 @@ const OverviewPatient = ({
     { icon: CalendarDays, label: "Created Date", value: formatDateTime(patient.createdAt) },
     { icon: Clock, label: "Last Updated", value: formatDateTime(patient.updatedAt) },
     { icon: UserCheck, label: "Online Account", value: patient.hasPortalAccount ? "Yes" : "No" },
+    ...(patient.deceasedAt
+      ? [{ icon: CalendarDays, label: "Date of Death", value: formatDateOnly(patient.deceasedAt.slice(0, 10)) }]
+      : []),
+    ...(patient.status !== "ACTIVE" && patient.statusReason
+      ? [{ icon: Info, label: "Status Reason", value: patient.statusReason }]
+      : []),
   ];
+
+  const canInvite = canCreatePatient && !patient.hasPortalAccount && patient.status === "ACTIVE";
+  const invite = async () => {
+    setIsInviting(true);
+    const result = await dispatch(invitePatientToPortal({ patientId: patient.id }));
+    setIsInviting(false);
+    setInviteResult(
+      invitePatientToPortal.fulfilled.match(result)
+        ? { type: "success", message: `An invitation was emailed to ${patient.email}.` }
+        : { type: "error", message: result.payload?.message ?? "The invitation could not be sent." },
+    );
+  };
 
 
   return (
@@ -442,6 +471,24 @@ const OverviewPatient = ({
               </li>
             ))}
           </ul>
+          {(canManageStatus || canInvite) && (
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-divider pt-4">
+              {canManageStatus && (
+                <ImportButton text="Change Status" icon={null} onClick={() => setIsStatusModalOpen(true)} />
+              )}
+              {canInvite && (
+                <ImportButton
+                  text={isInviting ? "Sending…" : "Invite to Portal"}
+                  icon={<Send className="h-4 w-4" />}
+                  disabled={isInviting || !patient.email}
+                  onClick={invite}
+                />
+              )}
+            </div>
+          )}
+          {canInvite && !patient.email && (
+            <p className="mt-2 text-xs text-body">Add an email address to invite this patient online.</p>
+          )}
         </Card>
 
         <Card
@@ -479,6 +526,22 @@ const OverviewPatient = ({
         </Card>
       </div>
     </div>
+
+    <SuccessToast
+      isOpen={inviteResult?.type === "success"}
+      onClose={() => setInviteResult(null)}
+      title="Invitation sent"
+      message={inviteResult?.message}
+    />
+    <ErrorToast
+      isOpen={inviteResult?.type === "error"}
+      onClose={() => setInviteResult(null)}
+      title="Invitation failed"
+      message={inviteResult?.message}
+    />
+    {isStatusModalOpen && (
+      <PatientStatusModal patient={patient} onClose={() => setIsStatusModalOpen(false)} />
+    )}
 
     {/* ---- Editors (mounted only while open, so each opening starts from current data) ---- */}
     {openEditor?.kind === "emergencyContact" && (

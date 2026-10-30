@@ -1,13 +1,11 @@
 "use client";
 
-import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Ban, UserCheck, UserPlus, Users } from "lucide-react";
 
 import StatCards, { type StatItem } from "@/components/Statcards";
 import AddButton from "@/components/Addbutton";
-import ImportButton from "@/components/ImportButton";
 import SearchAndFilter from "@/components/Searchandfilter";
 import Table from "@/components/Table";
 import TableStatus from "@/components/TableStatus";
@@ -18,8 +16,10 @@ import Tags, { type TagTone } from "@/components/Tags";
 import Actions from "@/components/Actions";
 import Pagination from "@/components/Pagination";
 import Breadcrumb from "@/components/Breadcrumb";
+import { PERMISSIONS } from "@/auth/permissions";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { usePermission } from "@/hooks/usePermission";
 import {
   selectPatientList,
   selectPatientListQuery,
@@ -62,9 +62,6 @@ const STATUS_TONES: Record<PatientStatus, TagTone> = {
 /** Backend search needs at least 2 characters. */
 const MIN_SEARCH_LENGTH = 2;
 
-const checkboxCls =
-  "h-4 w-4 cursor-pointer rounded border-border accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
-
 const getPatientFullName = (patient: PatientSummary) =>
   [patient.firstName, patient.middleName, patient.lastName].filter(Boolean).join(" ");
 
@@ -78,7 +75,8 @@ const Patient = () => {
 
   const [searchInput, setSearchInput] = useState(listQuery.search);
   const debouncedSearch = useDebouncedValue(searchInput.trim());
-  const [selectedPatientIds, setSelectedPatientIds] = useState<Set<string>>(new Set());
+  const canCreatePatient = usePermission(PERMISSIONS.PATIENT_CREATE);
+  const canUpdatePatient = usePermission(PERMISSIONS.PATIENT_UPDATE);
 
   /* Typing settles → push the search into the store (too-short terms mean "no search"). */
   useEffect(() => {
@@ -139,43 +137,7 @@ const Patient = () => {
     ];
   }, [patientStats.data]);
 
-  /* ---------- Selection (current page only) ---------- */
-  const selectedOnPageCount = patients.filter((patient) => selectedPatientIds.has(patient.id)).length;
-  const allSelected = patients.length > 0 && selectedOnPageCount === patients.length;
-  const someSelected = selectedOnPageCount > 0 && !allSelected;
-
-  const togglePatientSelection = (patientId: string) => {
-    setSelectedPatientIds((previous) => {
-      const next = new Set(previous);
-      if (next.has(patientId)) next.delete(patientId);
-      else next.add(patientId);
-      return next;
-    });
-  };
-
-  const toggleSelectAll = () => {
-    setSelectedPatientIds(allSelected ? new Set() : new Set(patients.map((patient) => patient.id)));
-  };
-
-  /* Columns — the select column carries the header checkbox */
   const columns: TableColumn[] = [
-    {
-      key: "select",
-      label: "",
-      className: "w-10",
-      header: (
-        <RadioCheckButtonh
-          type="checkbox"
-          checked={allSelected}
-          ref={(checkboxElement) => {
-            if (checkboxElement) checkboxElement.indeterminate = someSelected;
-          }}
-          onChange={toggleSelectAll}
-          aria-label="Select all"
-          className={checkboxCls}
-        />
-      ),
-    },
     { key: "patient", label: "Patient" },
     { key: "patientId", label: "Patient ID" },
     { key: "dob", label: "Date of Birth" },
@@ -193,15 +155,6 @@ const Patient = () => {
     const fullName = getPatientFullName(patient);
     const genderLabel = humanizeEnum(patient.administrativeGender);
     return {
-      select: (
-        <RadioCheckButtonh
-          type="checkbox"
-          checked={selectedPatientIds.has(patient.id)}
-          onChange={() => togglePatientSelection(patient.id)}
-          aria-label={`Select ${fullName}`}
-          className={checkboxCls}
-        />
-      ),
       patient: (
         <Name
           name={fullName}
@@ -218,9 +171,10 @@ const Patient = () => {
       actions: (
         <div className="flex w-full items-center justify-center">
           <Actions
+            actions={canUpdatePatient ? ["view", "edit"] : ["view"]}
             onAction={(action) => {
               if (action === "view") {
-                router.push(`/view-patient?id=${patient.id}`);
+                router.push(`/view-patient?id=${encodeURIComponent(patient.id)}`);
               }
               if (action === "edit") {
                 router.push(`/edit-patient?id=${encodeURIComponent(patient.id)}`);
@@ -269,14 +223,15 @@ const Patient = () => {
           <p className="mt-0.5 text-sm text-body">Manage patient records, registration and profiles.</p>
         </div>
 
-        {/* Buttons — side by side on phones, no wrapping */}
+        {/* Bulk import is not offered: the API has no import endpoint yet. */}
         <div className="flex flex-row gap-2">
-          <ImportButton className="shrink-0 whitespace-nowrap" />
-          <AddButton
-            text="Add Patient"
-            onClick={() => router.push("/add-patient")}
-            className="shrink-0 whitespace-nowrap"
-          />
+          {canCreatePatient && (
+            <AddButton
+              text="Add Patient"
+              onClick={() => router.push("/add-patient")}
+              className="shrink-0 whitespace-nowrap"
+            />
+          )}
         </div>
       </div>
 
