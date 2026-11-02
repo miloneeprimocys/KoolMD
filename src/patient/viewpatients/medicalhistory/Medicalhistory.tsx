@@ -1,21 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Activity,
+  Ban,
   Briefcase,
   Cigarette,
-  Droplet,
   Dumbbell,
+  ExternalLink,
   FileText,
-  Globe,
   Heart,
   HeartPulse,
-  Info,
+  Pencil,
   Plus,
   Ruler,
   Scale,
   Scissors,
+  Stethoscope,
   Syringe,
   Users,
   Utensils,
@@ -24,353 +26,373 @@ import {
 } from "lucide-react";
 
 import Table from "@/components/Table";
-import { type TableColumn } from "@/components/Tableheader";
+import TableStatus from "@/components/TableStatus";
 import Content from "@/components/Content";
-import Tags from "@/components/Tags";
-import Actions from "@/components/Actions";
+import Tags, { type TagTone } from "@/components/Tags";
 import ImportButton from "@/components/ImportButton";
 import EditButton from "@/components/EditButton";
-import { useAppDispatch } from "@/hooks/useAppHooks";
-import { showModal, type ModalKey } from "@/redux/slices/dialogslice";
+import IconAction from "@/components/IconAction";
+import ReasonModal from "@/components/ReasonModal";
+import { PERMISSIONS } from "@/auth/permissions";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
+import { usePermission } from "@/hooks/usePermission";
+import { selectPatientMedicalHistory } from "@/redux/selectors/patientSelectors";
+import {
+  changeMedicalHistory,
+  fetchMedicalHistory,
+  type HistoryListSection,
+} from "@/redux/thunks/patientRecordsThunks";
+import type {
+  FamilyHistoryEntry,
+  PatientCondition,
+  PatientImmunization,
+  PatientMedicalHistory,
+  SurgicalHistoryEntry,
+} from "@/types/patient";
+import { formatDateOnly, formatDateTime, humanizeEnum } from "@/utils/formatters";
+import { ACTIONS_COL, col, ScrollArea, SectionCard } from "../sectionLayout";
+import ConditionModal from "./ConditionModal";
+import FamilyHistoryModal from "./FamilyHistoryModal";
+import ImmunizationModal from "./ImmunizationModal";
+import LifestyleModal, { ALCOHOL_LABELS, EXERCISE_LABELS, TOBACCO_LABELS } from "./LifestyleModal";
+import SurgeryModal from "./SurgeryModal";
 
-/* ---------------------------------------------------------------- */
-/*  Shared helpers (also imported by Medications.tsx / Allergies.tsx) */
-/* ---------------------------------------------------------------- */
-export const TONES = {
-  red:    "bg-danger/40 text-danger",
-  violet: "bg-violet/40 text-violet",
-  blue:   "bg-primary/20 dark:bg-primary/30 text-primary",
-  green:  "bg-success/40 text-success",
-  orange: "bg-warning/40 text-warning",
-  pink:   "bg-pink/40 text-pink",
-  primary: "bg-primary/40 text-primary",
-  success: "bg-success/40 text-success",
-  warning: "bg-warning/40 text-warning",
-} as const;
-export type Tone = keyof typeof TONES;
+/** LOINC codes of the vitals shown in the lifestyle card. */
+const LOINC = { height: "8302-2", weight: "29463-7", bmi: "39156-5" } as const;
 
-export const DENSE = "!px-3";
-
-export const ACTIONS_COL: TableColumn = {
-  key: "actions",
-  label: "Actions",
-  className: DENSE,
-  width: 72,
-  header: <div className="flex w-full items-center justify-center">Actions</div>,
+const CONDITION_TONES: Record<PatientCondition["clinicalStatus"], TagTone> = {
+  ACTIVE: "danger",
+  RESOLVED: "success",
+  INACTIVE: "neutral",
 };
 
-export const kebab = (
-  <div className="flex w-full items-center justify-center">
-    <Actions onAction={() => {}} />
-  </div>
+const dateOrDash = (date: string | null) => (date ? formatDateOnly(date) : "—");
+const textOrDash = (text: string | null) => text ?? "—";
+const isError = (status: string) => status === "ENTERED_IN_ERROR";
+const errorTag = <Tags text="Entered in error" tone="neutral" />;
+
+/** Which editor is open on the tab; `null` item = add a new one. */
+type OpenEditor =
+  | { kind: "condition"; item: PatientCondition | null }
+  | { kind: "surgery"; item: SurgicalHistoryEntry | null }
+  | { kind: "family"; item: FamilyHistoryEntry | null }
+  | { kind: "immunization"; item: PatientImmunization | null }
+  | { kind: "lifestyle" }
+  | { kind: "enteredInError"; section: Exclude<HistoryListSection, "conditions">; entryId: string; label: string }
+  | null;
+
+const AddAction = ({ text, onClick }: { text: string; onClick: () => void }) => (
+  <ImportButton className="text-primary" text={text} icon={<Plus className="h-4 w-4" />} onClick={onClick} />
 );
 
-/**
- * Fixed-height card.
- * Body is `flex-1 min-h-0` so the inner scroll region can shrink and scroll.
- */
-export const SectionCard = ({
-  icon: Icon,
-  tone,
-  title,
-  subtitle,
-  action,
-  children,
-  className = "",
-}: {
-  icon: LucideIcon;
-  tone: Tone;
-  title: string;
-  subtitle?: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <section
-    className={`flex h-[380px] min-w-0 flex-col rounded-[8px] border border-border/40 bg-card ${className}`}
-  >
-    <header className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5 sm:py-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${TONES[tone]}`}>
-          <Icon className="h-5 w-5" />
-        </span>
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-heading sm:text-base">{title}</h3>
-          {subtitle && <p className="mt-0.5 text-xs text-body">{subtitle}</p>}
-        </div>
-      </div>
-      {action}
-    </header>
-    {/* min-h-0 so the child scroll area can shrink */}
-    <div className="flex min-h-0 flex-1 flex-col px-4 pb-4 sm:px-5 sm:pb-5">
-      {children}
-    </div>
-  </section>
-);
-
-/**
- * Scrollable body region:
- *  - Fills the remaining card height
- *  - Custom scrollbar via `.hide-scrollbar` class
- *  - Table header (thead) stays fixed via sticky positioning
- */
-export const ScrollArea = ({ children }: { children: React.ReactNode }) => (
-  <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto">
-    <div
-      className="
-        [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10
-        [&_thead]:bg-card
-        [&_table]:w-full
-      "
-    >
-      {children}
-    </div>
-  </div>
-);
-
-/**
- * "+ Add …" button. Pass `modal` to open a modal registered in dialogSlice
- * (rendered globally by DialogsContainer).
- */
-const AddAction = ({ text, modal }: { text: string; modal?: ModalKey }) => {
-  const dispatch = useAppDispatch();
-  return (
-    <ImportButton
-      className="text-primary"
-      text={text}
-      icon={<Plus className="h-4 w-4" />}
-      onClick={() => {
-        if (modal) dispatch(showModal(modal));
-      }}
-    />
-  );
-};
-
-/* ---------------------------------------------------------------- */
-/*  Static data                                                     */
-/* ---------------------------------------------------------------- */
-const col = (key: string, label: string): TableColumn => ({ key, label, className: DENSE });
-
-const CONDITIONS = [
-  { name: "Asthma", date: "Mar 15, 2018", status: "Ongoing", notes: "Mild intermittent asthma" },
-  { name: "Allergic Rhinitis", date: "May 2, 2020", status: "Ongoing", notes: "Seasonal allergies" },
-  { name: "Eczema", date: "Jan 10, 2021", status: "Resolved", notes: "Resolved with treatment" },
-];
-
-const SURGERIES = [
-  { name: "Tonsillectomy", date: "Jun 12, 2010", reason: "Recurrent infection", notes: "No complications" },
-  { name: "Appendectomy", date: "Aug 5, 2022", reason: "Appendicitis", notes: "Recovered well" },
-  { name: "Knee Arthroscopy", date: "Sep 20,2023", reason: "Meniscus tear", notes: "Physical therapy recommended"},
-];
-
-const FAMILY = [
-  { name: "Diabetes", relation: "Father", notes: "Type 2 diabetes" },
-  { name: "Hypertension", relation: "Mother", notes: "On medication" },
-  { name: "Asthma", relation: "Sibling", notes: "Childhood asthma" },
-];
-
-const IMMUNIZATIONS = [
-  { name: "COVID-19", date: "May 15, 2021", dose: "2nd Dose", notes: "Pfizer" },
-  { name: "Influenza", date: "Oct 10, 2024", dose: "1 Dose", notes: "Seasonal" },
-  { name: "MMR", date: "Mar 5, 2006", dose: "1 Dose", notes: "Childhood" },
-  { name: "Hepatitis B", date: "Mar 5, 2006", dose: "1 Dose", notes: "Childhood" },
-];
-
-const NOTES = [
-  { date: "Oct 6, 2026", provider: "Dr. Sarah Lee", note: "Patient reports no new symptoms. Continue current treatment." },
-  { date: "Aug 14, 2026", provider: "Dr. James Wilson", note: "Follow-up visit. Asthma well controlled." },
-  { date: "May 22, 2026", provider: "Dr. Emily Davis", note: "Allergy symptoms improved." },
-];
-
-const LIFESTYLE_LEFT: { icon: LucideIcon; label: string; value: string }[] = [
-  { icon: Cigarette, label: "Smoking Status", value: "Non-smoker" },
-  { icon: Wine, label: "Alcohol Use", value: "Does not drink" },
-  { icon: Dumbbell, label: "Exercise", value: "3–4 times per week" },
-  { icon: Utensils, label: "Diet", value: "Vegetarian" },
-  { icon: Briefcase, label: "Occupation", value: "Student" },
-  { icon: Heart, label: "Marital Status", value: "Single" },
-];
-
-const LIFESTYLE_RIGHT: { icon: LucideIcon; label: string; value: string; info?: boolean }[] = [
-  { icon: Ruler, label: "Height", value: "165 cm" },
-  { icon: Scale, label: "Weight", value: "58 kg" },
-  { icon: Activity, label: "BMI", value: "21.3 (Normal)", info: true },
-  { icon: Droplet, label: "Blood Type", value: "B+" },
-  { icon: Globe, label: "Preferred Language", value: "Not provided" },
-];
-/* ---------------------------------------------------------------- */
-/*  Small pieces                                                    */
-/* ---------------------------------------------------------------- */
-const LifestyleRow = ({
-  icon: Icon,
-  label,
-  value,
-  info,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-  info?: boolean;
-}) => (
+const LifestyleRow = ({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) => (
   <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3">
     <p className="flex min-w-0 items-center gap-2.5 text-xs text-body sm:text-sm">
       <Icon className="h-4 w-4 shrink-0" />
       <span className="truncate">{label}</span>
     </p>
-    <p className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-heading">
-      <span className="truncate">{value}</span>
-      {info && <Info className="h-3.5 w-3.5 shrink-0 text-primary" />}
+    <p
+      className={`min-w-0 truncate text-sm ${value === "Not recorded" ? "text-body" : "font-medium text-heading"}`}
+      title={value}
+    >
+      {value}
     </p>
   </div>
 );
 
-/* ---------------------------------------------------------------- */
-/*  Component                                                       */
-/* ---------------------------------------------------------------- */
-const MedicalHistory = () => {
+const MedicalHistory = ({ patientId }: { patientId: string }) => {
   const dispatch = useAppDispatch();
-  const conditionRows = CONDITIONS.map((c) => ({
-    name: <Content title={c.name} truncate />,
-    date: <Content title={c.date} truncate />,
-    status: <Tags text={c.status} tone={c.status === "Resolved" ? "success" : "danger"} />,
-    notes: <Content title={c.notes} truncate />,
-    actions: kebab,
+  const router = useRouter();
+  const record = useAppSelector(selectPatientMedicalHistory);
+  const canWriteConditions = usePermission(PERMISSIONS.CONDITION_WRITE);
+  const canWriteHistory = usePermission(PERMISSIONS.MEDICAL_HISTORY_WRITE);
+  const canReadEncounters = usePermission(PERMISSIONS.ENCOUNTER_READ);
+  const [openEditor, setOpenEditor] = useState<OpenEditor>(null);
+
+  useEffect(() => {
+    dispatch(fetchMedicalHistory(patientId));
+  }, [dispatch, patientId]);
+
+  const data: PatientMedicalHistory | null = record.patientId === patientId ? record.data : null;
+
+  if (!data) {
+    const failed = record.patientId === patientId && record.status === "failed";
+    return (
+      <div className="rounded-[14px] border border-border bg-card">
+        {failed ? (
+          <TableStatus
+            variant="error"
+            message={record.error?.message}
+            onRetry={() => dispatch(fetchMedicalHistory(patientId))}
+          />
+        ) : (
+          <TableStatus variant="loading" message="Loading medical history…" />
+        )}
+      </div>
+    );
+  }
+
+  /** Edit + "entered in error" buttons for a history entry the viewer may change. */
+  const entryActions = (
+    entryId: string,
+    status: string,
+    label: string,
+    section: Exclude<HistoryListSection, "conditions">,
+    onEdit: () => void,
+  ) =>
+    canWriteHistory && !isError(status) ? (
+      <div className="flex w-full items-center justify-center gap-1">
+        <IconAction icon={Pencil} label={`Edit ${label}`} onClick={onEdit} />
+        <IconAction
+          icon={Ban}
+          tone="danger"
+          label={`Mark ${label} as entered in error`}
+          onClick={() => setOpenEditor({ kind: "enteredInError", section, entryId, label })}
+        />
+      </div>
+    ) : null;
+
+  const table = (columns: ReturnType<typeof col>[], rows: Record<string, React.ReactNode>[], empty: string, withActions: boolean) =>
+    rows.length === 0 ? (
+      <TableStatus variant="empty" message={empty} />
+    ) : (
+      <ScrollArea>
+        <Table columns={withActions ? [...columns, ACTIONS_COL] : columns} rows={rows} />
+      </ScrollArea>
+    );
+
+  /* ---------- Rows ---------- */
+  const conditionRows = data.conditions.map((condition) => ({
+    name: <Content title={condition.display} description={condition.code} truncate />,
+    date: <Content title={dateOrDash(condition.onsetDate)} truncate />,
+    status:
+      condition.verificationStatus === "ENTERED_IN_ERROR" ? (
+        errorTag
+      ) : (
+        <Tags text={humanizeEnum(condition.clinicalStatus)} tone={CONDITION_TONES[condition.clinicalStatus]} />
+      ),
+    notes: <Content title={textOrDash(condition.note)} truncate />,
+    actions: (
+      <div className="flex w-full items-center justify-center">
+        <IconAction
+          icon={Pencil}
+          label={`Update ${condition.display}`}
+          onClick={() => setOpenEditor({ kind: "condition", item: condition })}
+        />
+      </div>
+    ),
   }));
 
-  const surgeryRows = SURGERIES.map((s) => ({
-    name: <Content title={s.name} truncate />,
-    date: <Content title={s.date} truncate />,
-    reason: <Content title={s.reason} truncate />,
-    notes: <Content title={s.notes} truncate />,
-    actions: kebab,
+  const surgeryRows = data.surgicalHistory.map((entry) => ({
+    name: <Content title={entry.procedureName} description={entry.facilityName ?? undefined} truncate />,
+    date: <Content title={dateOrDash(entry.performedDate)} truncate />,
+    reason: isError(entry.status) ? errorTag : <Content title={textOrDash(entry.reason)} truncate />,
+    notes: <Content title={textOrDash(isError(entry.status) ? entry.statusReason : entry.note)} truncate />,
+    actions: entryActions(entry.id, entry.status, entry.procedureName, "surgicalHistory", () =>
+      setOpenEditor({ kind: "surgery", item: entry }),
+    ),
   }));
 
-  const familyRows = FAMILY.map((f) => ({
-    name: <Content title={f.name} truncate />,
-    relation: <Content title={f.relation} truncate />,
-    notes: <Content title={f.notes} truncate />,
-    actions: kebab,
+  const familyRows = data.familyHistory.map((entry) => ({
+    name: <Content title={entry.conditionName} truncate />,
+    relation: (
+      <Content
+        title={humanizeEnum(entry.relationship)}
+        description={entry.relationDetails ?? undefined}
+        truncate
+      />
+    ),
+    age: isError(entry.status) ? errorTag : <Content title={entry.onsetAge?.toString() ?? "—"} truncate />,
+    notes: <Content title={textOrDash(isError(entry.status) ? entry.statusReason : entry.note)} truncate />,
+    actions: entryActions(entry.id, entry.status, entry.conditionName, "familyHistory", () =>
+      setOpenEditor({ kind: "family", item: entry }),
+    ),
   }));
 
-  const immunizationRows = IMMUNIZATIONS.map((i) => ({
-    name: <Content title={i.name} truncate />,
-    date: <Content title={i.date} truncate />,
-    dose: <Content title={i.dose} truncate />,
-    notes: <Content title={i.notes} truncate />,
-    actions: kebab,
+  const immunizationRows = data.immunizations.map((immunization) => ({
+    name: (
+      <Content title={immunization.vaccineName} description={immunization.manufacturer ?? undefined} truncate />
+    ),
+    date: <Content title={formatDateOnly(immunization.administeredDate)} truncate />,
+    dose: isError(immunization.status) ? (
+      errorTag
+    ) : immunization.status === "NOT_DONE" ? (
+      <Tags text="Not given" tone="warning" />
+    ) : (
+      <Content title={textOrDash(immunization.doseLabel)} truncate />
+    ),
+    notes: (
+      <Content
+        title={textOrDash(immunization.status === "COMPLETED" ? immunization.note : immunization.statusReason)}
+        truncate
+      />
+    ),
+    actions: entryActions(immunization.id, immunization.status, immunization.vaccineName, "immunizations", () =>
+      setOpenEditor({ kind: "immunization", item: immunization }),
+    ),
   }));
 
-  const noteRows = NOTES.map((n) => ({
-    date: <Content title={n.date} truncate />,
-    provider: <Content title={n.provider} truncate />,
-    note: <Content title={n.note} />,
-    actions: kebab,
+  const visitRows = (data.recentEncounters ?? []).map((encounter) => ({
+    date: <Content title={formatDateTime(encounter.startedAt)} truncate />,
+    provider: (
+      <Content title={`Dr. ${encounter.practitioner.firstName} ${encounter.practitioner.lastName}`} truncate />
+    ),
+    status: (
+      <Tags
+        text={encounter.isLocked ? "Signed" : humanizeEnum(encounter.status)}
+        tone={encounter.isLocked ? "success" : encounter.status === "IN_PROGRESS" ? "warning" : "neutral"}
+      />
+    ),
+    actions: (
+      <div className="flex w-full items-center justify-center">
+        <IconAction
+          icon={ExternalLink}
+          label="Open visit"
+          onClick={() => router.push(`/view-encounter?id=${encodeURIComponent(encounter.id)}`)}
+        />
+      </div>
+    ),
   }));
+
+  /* ---------- Lifestyle ---------- */
+  const social = data.socialHistory;
+  const vital = (code: string) => data.latestVitals?.find((reading) => reading.code === code);
+  const vitalText = (code: string) => {
+    const reading = vital(code);
+    return reading?.value != null ? `${reading.value} ${reading.unit ?? ""}`.trim() : "Not recorded";
+  };
+  const notRecorded = (text: string | null | undefined) => text ?? "Not recorded";
+  const lifestyleLeft = [
+    { icon: Cigarette, label: "Tobacco", value: social ? TOBACCO_LABELS[social.tobaccoUse] : "Not recorded" },
+    { icon: Wine, label: "Alcohol", value: social ? ALCOHOL_LABELS[social.alcoholUse] : "Not recorded" },
+    {
+      icon: Dumbbell,
+      label: "Exercise",
+      value: social?.exerciseFrequency ? EXERCISE_LABELS[social.exerciseFrequency] : "Not recorded",
+    },
+    { icon: Utensils, label: "Diet", value: notRecorded(social?.diet) },
+    { icon: Briefcase, label: "Occupation", value: notRecorded(social?.occupation) },
+  ];
+  const lifestyleRight = [
+    { icon: Heart, label: "Marital Status", value: social?.maritalStatus ? humanizeEnum(social.maritalStatus) : "Not recorded" },
+    { icon: Ruler, label: "Height", value: vitalText(LOINC.height) },
+    { icon: Scale, label: "Weight", value: vitalText(LOINC.weight) },
+    { icon: Activity, label: "BMI", value: vitalText(LOINC.bmi) },
+  ];
+
+  /* ---------- Entered in error ---------- */
+  const markEnteredInError = async (
+    section: Exclude<HistoryListSection, "conditions">,
+    entryId: string,
+    reason: string,
+  ): Promise<string | null> => {
+    const result = await dispatch(
+      changeMedicalHistory({ patientId, kind: "enteredInError", section, entryId, reason }),
+    );
+    return changeMedicalHistory.fulfilled.match(result)
+      ? null
+      : (result.payload?.message ?? "The entry could not be updated.");
+  };
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-2">
-      {/* Left column */}
       <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
         <SectionCard
           icon={HeartPulse}
           tone="red"
           title="Medical Conditions"
-          action={<AddAction text="Add Condition" modal="AddMedicalCondition" />}
+          subtitle="Problem list (ICD-10-CM)."
+          action={
+            canWriteConditions ? (
+              <AddAction text="Add Condition" onClick={() => setOpenEditor({ kind: "condition", item: null })} />
+            ) : undefined
+          }
         >
-          <ScrollArea>
-            <Table
-              columns={[
-                col("name", "Condition"),
-                col("date", "Diagnosis Date"),
-                col("status", "Status"),
-                col("notes", "Notes"),
-                ACTIONS_COL,
-              ]}
-              rows={conditionRows}
-            />
-          </ScrollArea>
+          {table(
+            [col("name", "Condition"), col("date", "Onset"), col("status", "Status"), col("notes", "Notes")],
+            conditionRows,
+            "No conditions on the problem list.",
+            canWriteConditions,
+          )}
         </SectionCard>
 
         <SectionCard
           icon={Users}
           tone="blue"
           title="Family History"
-          action={<AddAction text="Add Family History" modal="AddFamilyHistory" />}
+          action={
+            canWriteHistory ? (
+              <AddAction text="Add Family History" onClick={() => setOpenEditor({ kind: "family", item: null })} />
+            ) : undefined
+          }
         >
-          <ScrollArea>
-            <Table
-              columns={[col("name", "Condition"), col("relation", "Relation"), col("notes", "Notes"), ACTIONS_COL]}
-              rows={familyRows}
-            />
-          </ScrollArea>
+          {table(
+            [col("name", "Condition"), col("relation", "Relative"), col("age", "Age at Diagnosis"), col("notes", "Notes")],
+            familyRows,
+            "No family history recorded.",
+            canWriteHistory,
+          )}
         </SectionCard>
 
         <SectionCard
           icon={Syringe}
           tone="violet"
           title="Immunization History"
-          action={<AddAction text="Add Immunization" modal="AddImmunization" />}
+          action={
+            canWriteHistory ? (
+              <AddAction text="Add Immunization" onClick={() => setOpenEditor({ kind: "immunization", item: null })} />
+            ) : undefined
+          }
         >
-          <ScrollArea>
-            <Table
-              columns={[
-                col("name", "Vaccine"),
-                col("date", "Date"),
-                col("dose", "Dose"),
-                col("notes", "Notes"),
-                ACTIONS_COL,
-              ]}
-              rows={immunizationRows}
-            />
-          </ScrollArea>
+          {table(
+            [col("name", "Vaccine"), col("date", "Date"), col("dose", "Dose"), col("notes", "Notes")],
+            immunizationRows,
+            "No immunizations recorded.",
+            canWriteHistory,
+          )}
         </SectionCard>
       </div>
-      
-      {/* Right column */}
+
       <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
         <SectionCard
           icon={Scissors}
           tone="violet"
           title="Surgical History"
-          action={<AddAction text="Add Surgery" modal="AddSurgery" />}
+          action={
+            canWriteHistory ? (
+              <AddAction text="Add Surgery" onClick={() => setOpenEditor({ kind: "surgery", item: null })} />
+            ) : undefined
+          }
         >
-          <ScrollArea>
-            <Table
-              columns={[
-                col("name", "Procedure"),
-                col("date", "Date"),
-                col("reason", "Reason"),
-                col("notes", "Notes"),
-                ACTIONS_COL,
-              ]}
-              rows={surgeryRows}
-            />
-          </ScrollArea>
+          {table(
+            [col("name", "Procedure"), col("date", "Date"), col("reason", "Reason"), col("notes", "Notes")],
+            surgeryRows,
+            "No surgeries recorded.",
+            canWriteHistory,
+          )}
         </SectionCard>
 
         <SectionCard
           icon={FileText}
           tone="blue"
           title="Lifestyle & Social History"
+          subtitle={social ? `Updated ${formatDateTime(social.updatedAt)}` : undefined}
           action={
-            [...LIFESTYLE_LEFT, ...LIFESTYLE_RIGHT].some(
-              (item) => item.value.trim() && item.value !== "Not provided",
-            ) ? (
-              <EditButton section="Lifestyle & Social History" onEdit={() => dispatch(showModal("EditLifestyle"))} />
+            canWriteHistory ? (
+              <EditButton section="Lifestyle & Social History" onEdit={() => setOpenEditor({ kind: "lifestyle" })} />
             ) : undefined
           }
         >
-          {/* own wrapper instead of <ScrollArea>: scrolls on small screens, fills the card on sm+ */}
           <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto">
-            <div className="grid min-h-full grid-cols-1 gap-x-8 sm:grid-cols-2">
-              <div className="grid gap-3.5 sm:grid-rows-6 sm:items-center">
-                {LIFESTYLE_LEFT.map((r) => (
-                  <LifestyleRow key={r.label} {...r} />
+            <div className="grid grid-cols-1 gap-x-8 gap-y-3.5 sm:grid-cols-2">
+              <div className="grid gap-3.5">
+                {lifestyleLeft.map((row) => (
+                  <LifestyleRow key={row.label} {...row} />
                 ))}
               </div>
-              <div className="grid gap-3.5 sm:grid-rows-6 sm:items-center">
-                {LIFESTYLE_RIGHT.map((r) => (
-                  <LifestyleRow key={r.label} {...r} />
+              <div className="grid gap-3.5">
+                {lifestyleRight.map((row) => (
+                  <LifestyleRow key={row.label} {...row} />
                 ))}
               </div>
             </div>
@@ -378,22 +400,70 @@ const MedicalHistory = () => {
         </SectionCard>
 
         <SectionCard
-          icon={FileText}
+          icon={Stethoscope}
           tone="blue"
-          title="Clinical Notes"
-          action={<AddAction text="Add Note" modal="AddClinicalNote" />}
+          title="Visit History"
+          subtitle="Clinical notes are written and signed inside each visit."
         >
-          <ScrollArea>
-            <Table
-              columns={[col("date", "Date"), col("provider", "Provider"), col("note", "Note"), ACTIONS_COL]}
-              rows={noteRows}
-            />
-          </ScrollArea>
+          {data.recentEncounters === null ? (
+            <TableStatus variant="empty" message="Visit history is not available to you." />
+          ) : (
+            table(
+              [col("date", "Date"), col("provider", "Provider"), col("status", "Status")],
+              visitRows,
+              "No visits yet.",
+              canReadEncounters,
+            )
+          )}
         </SectionCard>
       </div>
-    
+
+      {openEditor?.kind === "condition" && (
+        <ConditionModal
+          key={openEditor.item?.id ?? "new"}
+          patientId={patientId}
+          condition={openEditor.item}
+          onClose={() => setOpenEditor(null)}
+        />
+      )}
+      {openEditor?.kind === "surgery" && (
+        <SurgeryModal
+          key={openEditor.item?.id ?? "new"}
+          patientId={patientId}
+          entry={openEditor.item}
+          onClose={() => setOpenEditor(null)}
+        />
+      )}
+      {openEditor?.kind === "family" && (
+        <FamilyHistoryModal
+          key={openEditor.item?.id ?? "new"}
+          patientId={patientId}
+          entry={openEditor.item}
+          onClose={() => setOpenEditor(null)}
+        />
+      )}
+      {openEditor?.kind === "immunization" && (
+        <ImmunizationModal
+          key={openEditor.item?.id ?? "new"}
+          patientId={patientId}
+          immunization={openEditor.item}
+          onClose={() => setOpenEditor(null)}
+        />
+      )}
+      {openEditor?.kind === "lifestyle" && (
+        <LifestyleModal patientId={patientId} socialHistory={social} onClose={() => setOpenEditor(null)} />
+      )}
+      {openEditor?.kind === "enteredInError" && (
+        <ReasonModal
+          title="Mark as Entered in Error"
+          subtitle={`${openEditor.label} stays in the record for staff but is hidden from the patient.`}
+          submitText="Mark as Error"
+          reasonLabel="What was wrong"
+          onSubmit={({ reason }) => markEnteredInError(openEditor.section, openEditor.entryId, reason)}
+          onClose={() => setOpenEditor(null)}
+        />
+      )}
     </div>
-    
   );
 };
 

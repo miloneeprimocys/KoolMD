@@ -36,3 +36,34 @@ export function humanizeEnum(value: string): string {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 }
+
+const DATE_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+};
+
+const DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", DATE_TIME_OPTIONS);
+
+/** ISO timestamp → "Oct 6, 2026, 10:30 AM" in the viewer's time zone (or `timeZone` when given). */
+export function formatDateTime(isoTimestamp: string, timeZone?: string): string {
+  const parsedDate = new Date(isoTimestamp);
+  if (Number.isNaN(parsedDate.getTime())) return isoTimestamp;
+  const formatter = timeZone
+    ? new Intl.DateTimeFormat("en-US", { ...DATE_TIME_OPTIONS, timeZone })
+    : DATE_TIME_FORMATTER;
+  return formatter.format(parsedDate);
+}
+
+const LANGUAGE_NAMES = new Intl.DisplayNames(["en"], { type: "language" });
+
+/** BCP 47 tag → "English"; falls back to the tag itself. */
+export function formatLanguage(languageTag: string): string {
+  try {
+    return LANGUAGE_NAMES.of(languageTag) ?? languageTag;
+  } catch {
+    return languageTag;
+  }
+}

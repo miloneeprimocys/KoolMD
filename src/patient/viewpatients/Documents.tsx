@@ -1,138 +1,270 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  Download,
-  Eye,
-  FileImage,
-  FileText,
-  FlaskConical,
-  FolderOpen,
-  MoreVertical,
-  Pill,
-  ShieldCheck,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Archive, Download, FileImage, FileText, FolderOpen, Upload } from "lucide-react";
 
 import Table from "@/components/Table";
+import TableStatus from "@/components/TableStatus";
 import { type TableColumn } from "@/components/Tableheader";
 import Content from "@/components/Content";
 import Tags from "@/components/Tags";
+import AddButton from "@/components/Addbutton";
 import FileDropzone from "@/components/Filedropzone";
-import { DENSE, TONES, type Tone } from "./medicalhistory/Medicalhistory";
-import type { PatientDocumentDetails } from "./Rightsection";
+import SignupDropdown from "@/components/SignupDropdown";
+import IconAction from "@/components/IconAction";
+import ReasonModal from "@/components/ReasonModal";
+import ErrorToast from "@/components/ErrorToast";
+import { PERMISSIONS } from "@/auth/permissions";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
+import { usePermission } from "@/hooks/usePermission";
+import { patientRecordsService } from "@/redux/services/patientRecordsService";
+import { selectPatientDocuments } from "@/redux/selectors/patientSelectors";
+import { changeDocuments, fetchDocuments } from "@/redux/thunks/patientRecordsThunks";
+import { toRequestError } from "@/redux/thunks/thunkHelpers";
+import type { PatientDocument, PatientDocumentCategory } from "@/types/patient";
+import { formatDateTime } from "@/utils/formatters";
+import { formatFileSize, saveBlobAsFile } from "@/utils/download";
+import { ACTIONS_COL, col, SectionCard } from "./sectionLayout";
 
-type DocumentRow = PatientDocumentDetails & {
-  icon: LucideIcon;
-  tone: Tone;
-  uploadedRole: string;
+/** Server upload limit (MAX_UPLOAD_SIZE_MB). */
+const MAX_UPLOAD_MB = 10;
+
+/** Categories the care team may file on a patient's record (API rule). */
+const STAFF_UPLOAD_CATEGORIES: PatientDocumentCategory[] = [
+  "CLINICAL_ATTACHMENT",
+  "LAB_REPORT",
+  "IMAGING",
+  "REFERRAL",
+  "IDENTITY",
+  "INSURANCE_CARD",
+  "OTHER",
+];
+const CATEGORY_LABELS: Record<PatientDocumentCategory, string> = {
+  PATIENT_UPLOAD: "Uploaded by patient",
+  IDENTITY: "ID",
+  INSURANCE_CARD: "Insurance card",
+  OTHER: "Other",
+  CLINICAL_ATTACHMENT: "Clinical",
+  LAB_REPORT: "Lab report",
+  IMAGING: "Imaging",
+  REFERRAL: "Referral",
 };
-
-const DOCUMENTS: DocumentRow[] = [
-  { name: "Insurance_Card.pdf", format: "PDF", icon: FileText, tone: "red", category: "Insurance", uploadedBy: "Admin User", uploadedRole: "245 KB", date: "Oct 6, 2026, 10:30 AM", size: "245 KB", status: "Verified", statusTone: "success", notes: "—" },
-  { name: "Driver_License.jpg", format: "JPG", icon: FileImage, tone: "blue", category: "ID & Demographics", uploadedBy: "Admin User", uploadedRole: "1.2 MB", date: "Oct 3, 2026, 09:15 AM", size: "1.2 MB", status: "Verified", statusTone: "success", notes: "—" },
-  { name: "Consent_Form.pdf", format: "PDF", icon: FileText, tone: "red", category: "Consent Forms", uploadedBy: "Dr. Sarah Lee", uploadedRole: "320 KB", date: "Sep 28, 2026, 02:40 PM", size: "320 KB", status: "Verified", statusTone: "success", notes: "Signed consent form." },
-  { name: "Lab_Report.pdf", format: "PDF", icon: FlaskConical, tone: "orange", category: "Lab Results", uploadedBy: "Dr. James Wilson", uploadedRole: "540 KB", date: "Sep 12, 2026, 11:05 AM", size: "540 KB", status: "Pending", statusTone: "warning", notes: "Awaiting verification." },
-  { name: "Xray_Result.jpg", format: "JPG", icon: FileImage, tone: "blue", category: "Medical Records", uploadedBy: "Dr. Emily Davis", uploadedRole: "1.8 MB", date: "Aug 9, 2026, 09:45 AM", size: "1.8 MB", status: "Verified", statusTone: "success", notes: "—" },
-  { name: "Discharge_Summary.pdf", format: "PDF", icon: FileText, tone: "red", category: "Medical Records", uploadedBy: "Dr. Sarah Lee", uploadedRole: "420 KB", date: "Jul 22, 2026, 01:10 PM", size: "420 KB", status: "Verified", statusTone: "success", notes: "—" },
-  { name: "Vaccination_Record.pdf", format: "PDF", icon: FileText, tone: "blue", category: "Other", uploadedBy: "Admin User", uploadedRole: "310 KB", date: "Jun 10, 2026, 04:30 PM", size: "310 KB", status: "Verified", statusTone: "success", notes: "—" },
+const ALL_CATEGORIES = "";
+const FILTER_OPTIONS = [
+  { value: ALL_CATEGORIES, label: "All categories" },
+  ...(Object.keys(CATEGORY_LABELS) as PatientDocumentCategory[]).map((value) => ({
+    value,
+    label: CATEGORY_LABELS[value],
+  })),
 ];
 
-
-const columns: TableColumn[] = [
-  { key: "name", label: "File Name", className: DENSE },
-  { key: "category", label: "Category", className: DENSE },
-  { key: "date", label: "Date Uploaded", className: DENSE },
-  { key: "uploadedBy", label: "Uploaded By", className: DENSE },
-  { key: "status", label: "Status", className: DENSE },
-  {
-    key: "actions",
-    label: "Actions",
-    className: DENSE,
-    width: 112,
-    header: <div className="flex w-full items-center justify-center">Actions</div>,
-  },
-];
-
-const Documents = ({
-  onViewDocument,
-}: {
-  onViewDocument: (details: PatientDocumentDetails) => void;
-}) => {
-  const [activeCategory, setActiveCategory] = useState("All Documents");
+const Documents = ({ patientId }: { patientId: string }) => {
+  const dispatch = useAppDispatch();
+  const record = useAppSelector(selectPatientDocuments);
+  const canUpdate = usePermission(PERMISSIONS.PATIENT_UPDATE);
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [uploadCategory, setUploadCategory] = useState<PatientDocumentCategory | "">("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const filteredDocuments =
-    activeCategory === "All Documents"
-      ? DOCUMENTS
-      : DOCUMENTS.filter((document) => document.category === activeCategory);
+  const [uploadErrors, setUploadErrors] = useState<{ category?: string; file?: string }>({});
+  const [isUploading, setIsUploading] = useState(false);
+  const [documentToArchive, setDocumentToArchive] = useState<PatientDocument | null>(null);
+  const [toastError, setToastError] = useState<{ title: string; message: string } | null>(null);
 
-  const rows = filteredDocuments.map((document) => ({
-    name: (
-      <div className="flex min-w-0 items-center gap-2.5">
-        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${TONES[document.tone]}`}>
-          <document.icon className="h-4 w-4" />
-        </span>
-        <Content title={document.name} description={document.uploadedRole} truncate />
-      </div>
-    ),
-    category: <Tags text={document.category} tone="info" />,
-    date: <Content title={document.date.split(", ").slice(0, 2).join(", ")} description={document.date.split(", ").slice(2).join(", ")} truncate />,
-    uploadedBy: <Content title={document.uploadedBy} truncate />,
-    status: <Tags text={document.status} tone={document.statusTone} />,
-    actions: (
-      <div className="flex w-full items-center justify-center gap-0.5">
-        <button
-          type="button"
-          aria-label={`View ${document.name}`}
-          title="View"
-          onClick={() => onViewDocument(document)}
-          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-label transition-colors hover:bg-primary/10 hover:text-primary"
-        >
-          <Eye className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          aria-label={`Download ${document.name}`}
-          title="Download"
-          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-label transition-colors hover:bg-primary/10 hover:text-primary"
-        >
-          <Download className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          aria-label={`More actions for ${document.name}`}
-          title="More actions"
-          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-label transition-colors hover:bg-primary/10 hover:text-primary"
-        >
-          <MoreVertical className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    ),
-  }));
+  useEffect(() => {
+    dispatch(fetchDocuments(patientId));
+  }, [dispatch, patientId]);
+
+  const documents = record.patientId === patientId ? record.data : null;
+  const visibleDocuments =
+    documents?.filter((document) => !categoryFilter || document.category === categoryFilter) ?? [];
+
+  const upload = async () => {
+    const errors: typeof uploadErrors = {};
+    if (!uploadCategory) errors.category = "Choose a category.";
+    if (!uploadFile) errors.file = "Choose a file to upload.";
+    setUploadErrors(errors);
+    if (!uploadCategory || !uploadFile) return;
+
+    setIsUploading(true);
+    const result = await dispatch(
+      changeDocuments({ patientId, kind: "upload", category: uploadCategory, file: uploadFile }),
+    );
+    setIsUploading(false);
+    if (changeDocuments.fulfilled.match(result)) {
+      setUploadFile(null);
+      setUploadCategory("");
+    } else {
+      setToastError({
+        title: "Upload failed",
+        message: result.payload?.message ?? "The file could not be uploaded.",
+      });
+    }
+  };
+
+  const download = async (document: PatientDocument) => {
+    try {
+      const { blob, fileName } = await patientRecordsService.downloadDocument(patientId, document.id);
+      saveBlobAsFile(blob, fileName ?? document.originalFileName);
+    } catch (error) {
+      setToastError({ title: "Download failed", message: toRequestError(error).message });
+    }
+  };
+
+  const archive = async (document: PatientDocument, reason: string): Promise<string | null> => {
+    const result = await dispatch(
+      changeDocuments({ patientId, kind: "archive", documentId: document.id, reason }),
+    );
+    return changeDocuments.fulfilled.match(result)
+      ? null
+      : (result.payload?.message ?? "The document could not be archived.");
+  };
+
+  const columns: TableColumn[] = [
+    col("name", "File"),
+    col("category", "Category"),
+    col("date", "Uploaded"),
+    col("source", "Source"),
+    { ...ACTIONS_COL, width: 96 },
+  ];
+
+  const rows = visibleDocuments.map((document) => {
+    const Icon = document.contentType.startsWith("image/") ? FileImage : FileText;
+    return {
+      name: (
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Icon className="h-4 w-4" />
+          </span>
+          <Content title={document.originalFileName} description={formatFileSize(document.sizeBytes)} truncate />
+        </div>
+      ),
+      category: <Tags text={CATEGORY_LABELS[document.category]} tone="info" />,
+      date: <Content title={formatDateTime(document.createdAt)} truncate />,
+      source: <Content title={document.isUploadedByPatient ? "Patient" : "Care team"} truncate />,
+      actions: (
+        <div className="flex w-full items-center justify-center gap-1">
+          <IconAction
+            icon={Download}
+            label={`Download ${document.originalFileName}`}
+            onClick={() => download(document)}
+          />
+          {canUpdate && (
+            <IconAction
+              icon={Archive}
+              tone="danger"
+              label={`Archive ${document.originalFileName}`}
+              onClick={() => setDocumentToArchive(document)}
+            />
+          )}
+        </div>
+      ),
+    };
+  });
+
+  const renderTable = () => {
+    if (record.patientId === patientId && record.status === "failed" && !documents) {
+      return (
+        <TableStatus
+          variant="error"
+          message={record.error?.message}
+          onRetry={() => dispatch(fetchDocuments(patientId))}
+        />
+      );
+    }
+    if (!documents) return <TableStatus variant="loading" message="Loading documents…" />;
+    if (rows.length === 0) {
+      return (
+        <TableStatus
+          variant="empty"
+          message={categoryFilter ? "No documents in this category." : "No documents yet."}
+        />
+      );
+    }
+    return <Table columns={columns} rows={rows} bordered={false} />;
+  };
 
   return (
     <div className="space-y-4 sm:space-y-5">
-    
-      <FileDropzone
-        title="your document here"
-        file={uploadFile}
-        onChange={setUploadFile}
-        selectedFileClassName="mx-auto max-w-2xl"
+      <ErrorToast
+        isOpen={toastError !== null}
+        onClose={() => setToastError(null)}
+        title={toastError?.title}
+        message={toastError?.message}
       />
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <Table columns={columns} rows={rows} bordered={false} />
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-divider px-4 py-3 text-xs text-body">
-          <span>Showing 1 to {filteredDocuments.length} of 12 documents</span>
-          <div className="flex items-center gap-2">
-            <button type="button" aria-label="Previous page" className="rounded-md px-2 py-1 text-body hover:bg-primary/10">‹</button>
-            <span className="rounded-md bg-primary/10 px-2.5 py-1 font-medium text-primary">1</span>
-            <span className="px-1">2</span>
-            <button type="button" aria-label="Next page" className="rounded-md px-2 py-1 text-body hover:bg-primary/10">›</button>
+      {canUpdate && (
+        <SectionCard
+          className="!h-auto"
+          icon={Upload}
+          tone="blue"
+          title="Upload Document"
+          subtitle={`PDF, JPG or PNG, up to ${MAX_UPLOAD_MB} MB.`}
+        >
+          <div className="grid gap-4 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)_auto] md:items-start">
+            <SignupDropdown
+              name="uploadCategory"
+              label="Category"
+              placeholder="Select category"
+              options={STAFF_UPLOAD_CATEGORIES.map((value) => ({ value, label: CATEGORY_LABELS[value] }))}
+              value={uploadCategory}
+              onChange={(value) => {
+                setUploadCategory(value as PatientDocumentCategory);
+                setUploadErrors((previous) => ({ ...previous, category: undefined }));
+              }}
+              error={uploadErrors.category}
+            />
+            <FileDropzone
+              title="your document here"
+              file={uploadFile}
+              onChange={(file) => {
+                setUploadFile(file);
+                setUploadErrors((previous) => ({ ...previous, file: undefined }));
+              }}
+              error={uploadErrors.file}
+              maxSizeMB={MAX_UPLOAD_MB}
+              compact
+            />
+            <AddButton
+              text={isUploading ? "Uploading…" : "Upload"}
+              icon={null}
+              onClick={upload}
+              disabled={isUploading}
+              className="md:mt-7"
+            />
           </div>
-        </div>
-      </div>
+        </SectionCard>
+      )}
+
+      <SectionCard
+        className="!h-auto"
+        icon={FolderOpen}
+        tone="violet"
+        title="Documents"
+        subtitle="Archived documents are kept for retention but no longer listed."
+        action={
+          <div className="w-48">
+            <SignupDropdown
+              name="categoryFilter"
+              options={FILTER_OPTIONS}
+              value={categoryFilter}
+              onChange={setCategoryFilter}
+            />
+          </div>
+        }
+      >
+        <div className="overflow-hidden rounded-xl border border-border">{renderTable()}</div>
+      </SectionCard>
+
+      {documentToArchive && (
+        <ReasonModal
+          title="Archive Document"
+          subtitle={`${documentToArchive.originalFileName} will be hidden from the list but kept for retention.`}
+          submitText="Archive"
+          reasonLabel="Reason for archiving"
+          onSubmit={({ reason }) => archive(documentToArchive, reason)}
+          onClose={() => setDocumentToArchive(null)}
+        />
+      )}
     </div>
   );
 };

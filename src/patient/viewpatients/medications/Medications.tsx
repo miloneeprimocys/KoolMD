@@ -1,241 +1,257 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { CircleX, Clock, Pencil, Pill, Search, Trash2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Ban, CircleStop, Clock, Pencil, Pill } from "lucide-react";
 
 import Table from "@/components/Table";
+import TableStatus from "@/components/TableStatus";
 import { type TableColumn } from "@/components/Tableheader";
 import Content from "@/components/Content";
-import Tags from "@/components/Tags";
+import Tags, { type TagTone } from "@/components/Tags";
 import AddButton from "@/components/Addbutton";
-import Actions from "@/components/Actions";
-import { useAppDispatch } from "@/hooks/useAppHooks";
-import {
-  showModal,
-  showViewMedication,
-  showEditMedication,
-  showDeleteMedication,
-  showMarkInactiveMedication,
-} from "@/redux/slices/dialogslice";
-import {
-  ACTIONS_COL,
-  DENSE,
-  ScrollArea,
-  SectionCard,
-  TONES,
-  kebab,
-  type Tone,
-} from "../medicalhistory/Medicalhistory";
-import type { Medication } from "./ViewMedication";
+import IconAction from "@/components/IconAction";
+import ReasonModal from "@/components/ReasonModal";
+import { todayISO } from "@/components/Modalshell";
+import { PERMISSIONS } from "@/auth/permissions";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
+import { usePermission } from "@/hooks/usePermission";
+import { selectPatientMedications } from "@/redux/selectors/patientSelectors";
+import { changeMedication, fetchMedications } from "@/redux/thunks/patientRecordsThunks";
+import type { MedicationStatement, MedicationStatementStatus } from "@/types/patient";
+import { formatDateOnly, humanizeEnum } from "@/utils/formatters";
+import { ACTIONS_COL, DENSE, ScrollArea, SectionCard } from "../sectionLayout";
+import MedicationModal from "./MedicationModal";
 
-/* ---------- Static data ---------- */
-const CURRENT: Medication[] = [
-  { id: "cur-1", name: "Albuterol Inhaler", condition: "Asthma", type: "Inhaler", dosage: "2 puffs", dosageNote: "90 mcg", frequency: "As needed", frequencyNote: "For wheezing", route: "Inhalation", startDate: "2023-03-15", endDate: "", provider: "Dr. Sarah Lee", providerCode: "KMD-1001", instructions: "Use before exercise", notes: "Use before exercise", status: "Active", tone: "primary" },
-  { id: "cur-2", name: "Cetirizine", condition: "Allergic Rhinitis", type: "Tablet", dosage: "10 mg", dosageNote: "", frequency: "Once daily", frequencyNote: "Morning", route: "Oral", startDate: "2022-05-02", endDate: "", provider: "Dr. James Wilson", providerCode: "KMD-1002", instructions: "For seasonal allergies", notes: "For seasonal allergies", status: "Active", tone: "pink" },
-  { id: "cur-3", name: "Montelukast", condition: "Asthma", type: "Tablet", dosage: "10 mg", dosageNote: "", frequency: "Once daily", frequencyNote: "Night", route: "Oral", startDate: "2023-01-10", endDate: "", provider: "Dr. Emily Davis", providerCode: "KMD-1003", instructions: "Take at bedtime", notes: "Take at bedtime", status: "Active", tone: "success" },
-  { id: "cur-4", name: "Vitamin D3", condition: "Supplement", type: "Tablet", dosage: "1000 IU", dosageNote: "", frequency: "Once daily", frequencyNote: "Morning", route: "Oral", startDate: "2024-02-01", endDate: "", provider: "Dr. Sarah Lee", providerCode: "KMD-1001", instructions: "General health", notes: "General health", status: "Active", tone: "warning" },
-];
+const CURRENT_STATUSES: MedicationStatementStatus[] = ["ACTIVE", "ON_HOLD"];
 
-const PAST: Medication[] = [
-  { id: "past-1", name: "Amoxicillin", condition: "Antibiotic", type: "Capsule", dosage: "500 mg", dosageNote: "", frequency: "3 times daily", frequencyNote: "", route: "Oral", startDate: "2022-08-15", endDate: "2022-08-22", provider: "Dr. Michael Brown", providerCode: "KMD-1004", instructions: "", notes: "", status: "Inactive", tone: "pink" },
-  { id: "past-2", name: "Prednisone", condition: "Steroid", type: "Tablet", dosage: "20 mg", dosageNote: "", frequency: "Once daily", frequencyNote: "", route: "Oral", startDate: "2021-03-01", endDate: "2021-03-07", provider: "Dr. James Wilson", providerCode: "KMD-1002", instructions: "", notes: "", status: "Inactive", tone: "violet" },
-  { id: "past-3", name: "Ibuprofen", condition: "Pain Reliever", type: "Tablet", dosage: "400 mg", dosageNote: "", frequency: "As needed", frequencyNote: "", route: "Oral", startDate: "2021-01-05", endDate: "2021-02-01", provider: "Dr. Emily Davis", providerCode: "KMD-1003", instructions: "", notes: "", status: "Inactive", tone: "primary" },
-];
+const STATUS_TONES: Record<MedicationStatementStatus, TagTone> = {
+  ACTIVE: "success",
+  ON_HOLD: "warning",
+  STOPPED: "danger",
+  COMPLETED: "info",
+  ENTERED_IN_ERROR: "neutral",
+};
+
+const SOURCE_LABELS: Record<MedicationStatement["informationSource"], string> = {
+  PATIENT_REPORTED: "Patient reported",
+  CLINICIAN_RECORDED: "Clinician recorded",
+  PRESCRIPTION: "Prescribed",
+};
 
 const col = (key: string, label: string): TableColumn => ({ key, label, className: DENSE });
+const dateOrDash = (date: string | null) => (date ? formatDateOnly(date) : "—");
 
-const CURRENT_COLUMNS: TableColumn[] = [
-  col("name", "Medication Name"),
-  col("dosage", "Dosage"),
-  col("frequency", "Frequency"),
-  col("start", "Start Date"),
-  col("end", "End Date"),
-  col("provider", "Prescribing Provider"),
-  col("status", "Status"),
-  col("notes", "Notes"),
-  ACTIONS_COL,
-];
+/** What the user is doing to the list right now. */
+type OpenAction =
+  | { kind: "edit"; statement: MedicationStatement | null }
+  | { kind: "stop" | "enteredInError"; statement: MedicationStatement }
+  | null;
 
-const PAST_COLUMNS: TableColumn[] = [
-  col("name", "Medication Name"),
-  col("dosage", "Dosage"),
-  col("frequency", "Frequency"),
-  col("start", "Start Date"),
-  col("end", "End Date"),
-  col("reason", "Reason for Discontinuation"),
-  col("provider", "Prescribing Provider"),
-  ACTIONS_COL,
-];
-
-const NameCell = ({ name, condition, tone }: { name: string; condition: string; tone: Medication["tone"] }) => (
-  <div className="flex min-w-0 items-center gap-3">
-    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${TONES[tone]}`}>
-      <Pill className="h-4 w-4" />
-    </span>
-    <Content title={name} description={condition} truncate />
-  </div>
-);
-
-const MENU_ITEMS = [
-  { key: "view", label: "View Details", Icon: Search, isRedIcon: false },
-  { key: "edit", label: "Edit Medication", Icon: Pencil, isRedIcon: false },
-  { key: "inactive", label: "Mark as Inactive / Stop", Icon: CircleX, isRedIcon: true },
-  { key: "delete", label: "Delete", Icon: Trash2, isRedIcon: false },
-] as const;
-
-/* ---------- Component ---------- */
-const Medications = () => {
+const Medications = ({ patientId }: { patientId: string }) => {
   const dispatch = useAppDispatch();
-  const [currentList, setCurrentList] = useState<Medication[]>(CURRENT);
-  const [pastList, setPastList] = useState<Medication[]>(PAST);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [menuPlacement, setMenuPlacement] = useState<"above" | "below">("below");
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const menuPanelRef = useRef<HTMLDivElement | null>(null);
+  const record = useAppSelector(selectPatientMedications);
+  const canWrite = usePermission(PERMISSIONS.MEDICATION_WRITE);
+  const [openAction, setOpenAction] = useState<OpenAction>(null);
 
-  useLayoutEffect(() => {
-    const trigger = menuRef.current;
-    const menu = menuPanelRef.current;
-    if (!openMenuId || !trigger || !menu) return;
-
-    const triggerRect = trigger.getBoundingClientRect();
-    const menuHeight = menu.getBoundingClientRect().height || 180;
-    const tableContainer = trigger.closest(".table-scrollbar, table, .overflow-y-auto");
-    const containerBottom = tableContainer
-      ? tableContainer.getBoundingClientRect().bottom
-      : window.innerHeight;
-    const spaceBelow = Math.min(window.innerHeight, containerBottom) - triggerRect.bottom;
-    const spaceAbove = triggerRect.top;
-    setMenuPlacement(spaceBelow < menuHeight && spaceAbove > menuHeight ? "above" : "below");
-  }, [openMenuId]);
-
-  /* Close dropdown on outside click or Escape */
   useEffect(() => {
-    if (!openMenuId) return;
-    const onMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpenMenuId(null);
-      }
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpenMenuId(null);
-    };
-    document.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onMouseDown);
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [openMenuId]);
+    dispatch(fetchMedications(patientId));
+  }, [dispatch, patientId]);
 
-  const handleMenu = (key: string, m: Medication) => {
-    setOpenMenuId(null);
-    if (key === "view") {
-      dispatch(showViewMedication(m));
-    } else if (key === "edit") {
-      dispatch(showEditMedication(m));
-    } else if (key === "inactive") {
-      dispatch(showMarkInactiveMedication(m));
-    } else if (key === "delete") {
-      dispatch(showDeleteMedication(m));
+  const statements = record.patientId === patientId ? record.data : null;
+  const current = statements?.filter((statement) => CURRENT_STATUSES.includes(statement.status)) ?? [];
+  const history = statements?.filter((statement) => !CURRENT_STATUSES.includes(statement.status)) ?? [];
+
+  const nameCell = (statement: MedicationStatement) => (
+    <div className="flex min-w-0 items-center gap-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Pill className="h-4 w-4" />
+      </span>
+      <Content
+        title={statement.medicationName}
+        description={SOURCE_LABELS[statement.informationSource]}
+        truncate
+      />
+    </div>
+  );
+
+  const statusTag = (statement: MedicationStatement) => (
+    <Tags text={humanizeEnum(statement.status)} tone={STATUS_TONES[statement.status]} />
+  );
+
+  const rowActions = (statement: MedicationStatement, isCurrent: boolean) => (
+    <div className="flex w-full items-center justify-center gap-1">
+      {statement.status !== "ENTERED_IN_ERROR" && (
+        <>
+          <IconAction
+            icon={Pencil}
+            label={`Edit ${statement.medicationName}`}
+            onClick={() => setOpenAction({ kind: "edit", statement })}
+          />
+          {isCurrent && (
+            <IconAction
+              icon={CircleStop}
+              tone="danger"
+              label={`Stop ${statement.medicationName}`}
+              onClick={() => setOpenAction({ kind: "stop", statement })}
+            />
+          )}
+          <IconAction
+            icon={Ban}
+            tone="danger"
+            label={`Mark ${statement.medicationName} as entered in error`}
+            onClick={() => setOpenAction({ kind: "enteredInError", statement })}
+          />
+        </>
+      )}
+    </div>
+  );
+
+  const currentColumns: TableColumn[] = [
+    col("name", "Medication"),
+    col("dosage", "Dosage & Frequency"),
+    col("start", "Start Date"),
+    col("status", "Status"),
+    col("note", "Note"),
+    ...(canWrite ? [ACTIONS_COL] : []),
+  ];
+  const historyColumns: TableColumn[] = [
+    col("name", "Medication"),
+    col("dosage", "Dosage & Frequency"),
+    col("start", "Start Date"),
+    col("end", "End Date"),
+    col("status", "Status"),
+    col("reason", "Reason"),
+    ...(canWrite ? [ACTIONS_COL] : []),
+  ];
+
+  const currentRows = current.map((statement) => ({
+    name: nameCell(statement),
+    dosage: <Content title={statement.dosageText ?? "—"} truncate />,
+    start: <Content title={dateOrDash(statement.startDate)} truncate />,
+    status: statusTag(statement),
+    note: <Content title={statement.note ?? "—"} truncate />,
+    actions: rowActions(statement, true),
+  }));
+  const historyRows = history.map((statement) => ({
+    name: nameCell(statement),
+    dosage: <Content title={statement.dosageText ?? "—"} truncate />,
+    start: <Content title={dateOrDash(statement.startDate)} truncate />,
+    end: <Content title={dateOrDash(statement.endDate)} truncate />,
+    status: statusTag(statement),
+    reason: <Content title={statement.statusReason ?? "—"} truncate />,
+    actions: rowActions(statement, false),
+  }));
+
+  const renderTable = (
+    columns: TableColumn[],
+    rows: Record<string, React.ReactNode>[],
+    emptyMessage: string,
+  ) => {
+    if (record.patientId === patientId && record.status === "failed" && !statements) {
+      return (
+        <TableStatus
+          variant="error"
+          message={record.error?.message}
+          onRetry={() => dispatch(fetchMedications(patientId))}
+        />
+      );
     }
+    if (!statements) return <TableStatus variant="loading" message="Loading medications…" />;
+    if (rows.length === 0) return <TableStatus variant="empty" message={emptyMessage} />;
+    return (
+      <ScrollArea>
+        <Table columns={columns} rows={rows} />
+      </ScrollArea>
+    );
   };
 
-  const currentRows = currentList.map((m) => ({
-    name: <NameCell name={m.name} condition={m.condition} tone={m.tone} />,
-    dosage: <Content title={m.dosage} description={m.dosageNote} truncate />,
-    frequency: <Content title={m.frequency} description={m.frequencyNote} truncate />,
-    start: <Content title={m.startDate} truncate />,
-    end: <Content title="—" />,
-    provider: <Content title={m.provider} description={m.providerCode} truncate />,
-    status: <Tags text={m.status} tone={m.status === "Active" ? "success" : "neutral"} />,
-    notes: <Content title={m.notes} truncate />,
-    actions: (
-      <div
-        className="relative flex w-full items-center justify-center"
-        ref={openMenuId === m.id ? menuRef : undefined}
+  /** Runs a stop / entered-in-error change; resolves to an error message or null. */
+  const submitReason = async (
+    statement: MedicationStatement,
+    kind: "stop" | "enteredInError",
+    values: { reason: string; date: string },
+  ): Promise<string | null> => {
+    const result = await dispatch(
+      kind === "stop"
+        ? changeMedication({
+            patientId,
+            kind: "stop",
+            statementId: statement.id,
+            reason: values.reason,
+            endDate: values.date || undefined,
+          })
+        : changeMedication({
+            patientId,
+            kind: "enteredInError",
+            statementId: statement.id,
+            reason: values.reason,
+          }),
+    );
+    return changeMedication.fulfilled.match(result)
+      ? null
+      : (result.payload?.message ?? "The change could not be saved.");
+  };
+
+  return (
+    <div className="space-y-4 sm:space-y-5">
+      <SectionCard
+        className="!h-auto max-h-[500px]"
+        icon={Pill}
+        tone="blue"
+        title="Current Medications"
+        subtitle="Medications the patient is currently taking."
+        action={
+          canWrite ? (
+            <AddButton text="Add Medication" onClick={() => setOpenAction({ kind: "edit", statement: null })} />
+          ) : undefined
+        }
       >
-        <Actions
-          actions={["more"]}
-          onAction={() => setOpenMenuId((cur) => (cur === m.id ? null : m.id))}
+        {renderTable(currentColumns, currentRows, "No current medications.")}
+      </SectionCard>
+
+      <SectionCard
+        className="!h-auto max-h-[420px]"
+        icon={Clock}
+        tone="violet"
+        title="Medication History"
+        subtitle="Stopped, completed and corrected entries. Entries are never deleted."
+      >
+        {renderTable(historyColumns, historyRows, "No medication history.")}
+      </SectionCard>
+
+      {openAction?.kind === "edit" && (
+        <MedicationModal
+          key={openAction.statement?.id ?? "new"}
+          patientId={patientId}
+          statement={openAction.statement}
+          onClose={() => setOpenAction(null)}
         />
-        {openMenuId === m.id && (
-          <div
-            ref={menuPanelRef}
-            className={`absolute right-0 z-30 w-56 rounded-xl border border-border bg-card py-1.5 shadow-lg ${
-              menuPlacement === "above" ? "bottom-full mb-1" : "top-full mt-1"
-            }`}
-          >
-            {MENU_ITEMS.map(({ key, label, Icon, isRedIcon }) => {
-              const isDelete = key === "delete";
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleMenu(key, m)}
-                  className={`group flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2 text-left text-sm transition-colors ${
-                    isDelete
-                      ? "text-heading hover:bg-danger/10 hover:text-danger"
-                      : "text-heading hover:bg-primary/5 hover:text-primary"
-                  }`}
-                >
-                  <Icon
-                    className={`h-4 w-4 shrink-0 transition-colors ${
-                      isRedIcon
-                        ? "text-danger"
-                        : isDelete
-                        ? "text-label group-hover:text-danger"
-                        : "text-label group-hover:text-primary"
-                    }`}
-                  />
-                  <span className="truncate">{label}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    ),
-  }));
-
-  const pastRows = pastList.map((m) => ({
-    name: <NameCell name={m.name} condition={m.condition} tone={m.tone} />,
-    dosage: <Content title={m.dosage} description={m.dosageNote} truncate />,
-    frequency: <Content title={m.frequency} description={m.frequencyNote} truncate />,
-    start: <Content title={m.startDate} truncate />,
-    end: <Content title={m.endDate} truncate />,
-    reason: <Content title={m.endDate ? "Completed" : "—"} truncate />,
-    provider: <Content title={m.provider} description={m.providerCode} truncate />,
-    actions: kebab,
-  }));
-return (
-  <div className="space-y-4 sm:space-y-5">
-    <SectionCard
-      className="!h-[500px]"
-      icon={Pill}
-      tone="blue"
-      title="Current Medications"
-      subtitle="Medications the patient is currently taking."
-      action={<AddButton text="Add Medication" onClick={() => dispatch(showModal("AddMedication"))} />}
-    >
-      <ScrollArea>
-        <Table columns={CURRENT_COLUMNS} rows={currentRows} />
-      </ScrollArea>
-    </SectionCard>
-
-    <SectionCard
-      className="!h-[420px]"
-      icon={Clock}
-      tone="violet"
-      title="Past Medications"
-      subtitle="Medications the patient no longer takes."
-    >
-      <ScrollArea>
-        <Table columns={PAST_COLUMNS} rows={pastRows} />
-      </ScrollArea>
-    </SectionCard>
-  </div>
-);
+      )}
+      {openAction?.kind === "stop" && (
+        <ReasonModal
+          title="Stop Medication"
+          subtitle={openAction.statement.medicationName}
+          submitText="Stop Medication"
+          reasonLabel="Reason for stopping"
+          dateLabel="End Date"
+          minDate={openAction.statement.startDate || undefined}
+          maxDate={todayISO()}
+          onSubmit={(values) => submitReason(openAction.statement, "stop", values)}
+          onClose={() => setOpenAction(null)}
+        />
+      )}
+      {openAction?.kind === "enteredInError" && (
+        <ReasonModal
+          title="Mark as Entered in Error"
+          subtitle={`${openAction.statement.medicationName} will stay in the history, marked as an error.`}
+          submitText="Mark as Error"
+          reasonLabel="What was wrong"
+          onSubmit={(values) => submitReason(openAction.statement, "enteredInError", values)}
+          onClose={() => setOpenAction(null)}
+        />
+      )}
+    </div>
+  );
 };
 
 export default Medications;

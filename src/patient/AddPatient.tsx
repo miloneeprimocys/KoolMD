@@ -1,30 +1,38 @@
 "use client";
 
-import RadioCheckButtonh from "@/components/RadioCheckButtonh";
-import React, { useMemo, useRef, useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { ImagePlus, User, Camera, RefreshCw } from "lucide-react";
-import { parsePhoneNumberFromString, CountryCode } from "libphonenumber-js";
+import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { User } from "lucide-react";
 
-import SignupField, { FieldError } from "@/components/SignupField";
+import SignupField from "@/components/SignupField";
 import SignupDropdown, { DropdownOption } from "@/components/SignupDropdown";
 import AddButton from "@/components/Addbutton";
-import AddInternalButton from "@/components/AddInternalButton";
 import ImportButton from "@/components/ImportButton";
 import Breadcrumb from "@/components/Breadcrumb";
 import DatePicker from "@/components/Datepicker";
-import SuccessToast from "@/components/SuccessToast";
 import ErrorToast from "@/components/ErrorToast";
-import TogglableSwitch from "@/components/Togglableswitch";
+import TableStatus from "@/components/TableStatus";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
-import { selectCreatePatientRequest } from "@/redux/selectors/patientSelectors";
-import { createPatient } from "@/redux/thunks/patientThunks";
-import type { AdministrativeGender, CreatePatientPayload } from "@/types/patient";
-
+import {
+  selectCreatePatientRequest,
+  selectPatientDetail,
+  selectUpdatePatientRequest,
+} from "@/redux/selectors/patientSelectors";
+import { createPatient, updatePatient } from "@/redux/thunks/patientThunks";
+import { fetchPatientDetail } from "@/redux/thunks/patientDetailThunks";
+import type { RequestError } from "@/redux/thunks/thunkHelpers";
+import type {
+  AdministrativeGender,
+  ContactMethod,
+  CreatePatientPayload,
+  PatientDetail,
+  UpdatePatientPayload,
+} from "@/types/patient";
+import { fromE164, toE164 } from "@/utils/phone";
 import {
   COUNTRY_OPTIONS,
   DEFAULT_COUNTRY,
-  FlagIcon,
   PhoneField,
   getCityOptions,
   getStateOptions,
@@ -32,31 +40,13 @@ import {
   validatePhone,
 } from "../providers/Shared";
 
-/* ---------- Static data ---------- */
+/* ---------- Options ---------- */
 /** Values are the backend `AdministrativeGender` enum. */
 const GENDERS: DropdownOption[] = [
   { value: "MALE", label: "Male" },
   { value: "FEMALE", label: "Female" },
   { value: "OTHER", label: "Other" },
   { value: "UNKNOWN", label: "Prefer not to say" },
-];
-
-const MARITAL: DropdownOption[] = [
-  { value: "Single", label: "Single" },
-  { value: "Married", label: "Married" },
-  { value: "Divorced", label: "Divorced" },
-  { value: "Widowed", label: "Widowed" },
-];
-
-const BLOOD: DropdownOption[] = [
-  { value: "A+", label: "A+" },
-  { value: "A-", label: "A-" },
-  { value: "B+", label: "B+" },
-  { value: "B-", label: "B-" },
-  { value: "AB+", label: "AB+" },
-  { value: "AB-", label: "AB-" },
-  { value: "O+", label: "O+" },
-  { value: "O-", label: "O-" },
 ];
 
 /** Values are BCP 47 tags, as the backend expects. */
@@ -68,15 +58,114 @@ const LANGUAGES: DropdownOption[] = [
   { value: "hi", label: "Hindi" },
 ];
 
+/** "" lets the server pick (email if given, else phone, else portal). */
+const CONTACT_METHODS: DropdownOption[] = [
+  { value: "", label: "Automatic" },
+  { value: "EMAIL", label: "Email" },
+  { value: "SMS", label: "Text message" },
+  { value: "PHONE", label: "Phone call" },
+  { value: "PORTAL", label: "Patient portal" },
+];
+
 /** Backend address rules (USPS state code, ZIP) apply to US addresses only. */
 const US_COUNTRY_CODE = "US";
+const NAME_MAX_LENGTH = 100;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const US_ZIP_PATTERN = /^\d{5}(-\d{4})?$/;
+
+/* ---------- Form model ---------- */
+interface FormValues {
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  preferredName: string;
+  dob: string;
+  gender: AdministrativeGender | "";
+  genderIdentity: string;
+  phoneCountry: string;
+  phone: string;
+  email: string;
+  language: string;
+  emergencyName: string;
+  emergencyPhoneCountry: string;
+  emergencyPhone: string;
+  address1: string;
+  address2: string;
+  country: string;
+  state: string;
+  city: string;
+  zip: string;
+  preferredContactMethod: ContactMethod | "";
+  allowEmailNotifications: boolean;
+  allowSmsNotifications: boolean;
+}
+
+type FormErrors = Partial<Record<keyof FormValues, string>>;
+
+/** Same defaults as the API: email notifications on, SMS off until a phone is confirmed. */
+const EMPTY_FORM: FormValues = {
+  firstName: "",
+  middleName: "",
+  lastName: "",
+  preferredName: "",
+  dob: "",
+  gender: "",
+  genderIdentity: "",
+  phoneCountry: DEFAULT_COUNTRY,
+  phone: "",
+  email: "",
+  language: "",
+  emergencyName: "",
+  emergencyPhoneCountry: DEFAULT_COUNTRY,
+  emergencyPhone: "",
+  address1: "",
+  address2: "",
+  country: DEFAULT_COUNTRY,
+  state: "",
+  city: "",
+  zip: "",
+  preferredContactMethod: "",
+  allowEmailNotifications: true,
+  allowSmsNotifications: false,
+};
+
+/** Saved patient → form values (phone split back into country + national number). */
+const toFormValues = (patient: PatientDetail): FormValues => {
+  const phone = fromE164(patient.phoneNumber, patient.countryCode || DEFAULT_COUNTRY);
+  return {
+    ...EMPTY_FORM,
+    firstName: patient.firstName,
+    middleName: patient.middleName ?? "",
+    lastName: patient.lastName,
+    preferredName: patient.preferredName ?? "",
+    dob: patient.dateOfBirth,
+    gender: patient.administrativeGender,
+    genderIdentity: patient.genderIdentity ?? "",
+    phoneCountry: phone.countryIso,
+    phone: phone.nationalNumber,
+    email: patient.email ?? "",
+    language: patient.preferredLanguage,
+    address1: patient.addressLine1 ?? "",
+    address2: patient.addressLine2 ?? "",
+    country: patient.countryCode || DEFAULT_COUNTRY,
+    state: patient.stateCode ?? "",
+    city: patient.city ?? "",
+    zip: patient.postalCode ?? "",
+    preferredContactMethod: patient.preferredContactMethod,
+    allowEmailNotifications: patient.allowEmailNotifications,
+    allowSmsNotifications: patient.allowSmsNotifications,
+  };
+};
 
 /** Backend validation field → form field, so server errors show under the right input. */
 const FORM_FIELD_BY_API_FIELD: Record<string, keyof FormValues> = {
   firstName: "firstName",
+  middleName: "middleName",
   lastName: "lastName",
+  preferredName: "preferredName",
   dateOfBirth: "dob",
   administrativeGender: "gender",
+  genderIdentity: "genderIdentity",
   phoneNumber: "phone",
   email: "email",
   preferredLanguage: "language",
@@ -86,34 +175,65 @@ const FORM_FIELD_BY_API_FIELD: Record<string, keyof FormValues> = {
   stateCode: "state",
   postalCode: "zip",
   countryCode: "country",
+  preferredContactMethod: "preferredContactMethod",
 };
 
-const ROLES = [
-  { id: "patient", label: "Patient", desc: "Can book appointments, access records and communicate with providers.", checked: true },
-  { id: "practitioner", label: "Practitioner / MD", desc: "Can manage calendar, patient charts, prescriptions and consultations.", checked: false },
-  { id: "receptionist", label: "Receptionist / Staff", desc: "Can manage booking, check ins, communications and billing.", checked: false },
-  { id: "admin", label: "Administrator", desc: "Full access to manage platform records and settings.", checked: false },
-];
+const todayISO = () => {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+};
 
-/* ---------- Shared styles ---------- */
+/** Client checks mirror the API rules; the server stays the authority (its errors map back). */
+const validate = (values: FormValues, isEditMode: boolean): FormErrors => {
+  const errors: FormErrors = {};
+  if (!values.firstName.trim()) errors.firstName = "First name is required.";
+  if (!values.lastName.trim()) errors.lastName = "Last name is required.";
+  if (!values.dob) errors.dob = "Date of birth is required.";
+  else if (values.dob > todayISO()) errors.dob = "Date of birth cannot be in the future.";
+  if (!values.gender) errors.gender = "Gender is required.";
+
+  const hasPhone = values.phone.trim() !== "";
+  const hasEmail = values.email.trim() !== "";
+  const phoneError = validatePhone(values.phone, values.phoneCountry, false);
+  if (phoneError) errors.phone = phoneError;
+  if (hasEmail && !EMAIL_PATTERN.test(values.email.trim())) errors.email = "Enter a valid email address.";
+  if (!hasPhone && !hasEmail) errors.phone = "Enter a phone number or an email address.";
+
+  // Contact preferences must be reachable (same rule as the API).
+  if (values.preferredContactMethod === "EMAIL" && !hasEmail) {
+    errors.email = "Email is required when the preferred contact method is email.";
+  }
+  if ((values.preferredContactMethod === "SMS" || values.preferredContactMethod === "PHONE") && !hasPhone) {
+    errors.phone = "Phone number is required for this contact method.";
+  }
+  if (values.allowSmsNotifications && !hasPhone) {
+    errors.phone = "Phone number is required to allow SMS notifications.";
+  }
+
+  if (!isEditMode) {
+    const hasEmergencyName = values.emergencyName.trim() !== "";
+    const hasEmergencyPhone = values.emergencyPhone.trim() !== "";
+    if (hasEmergencyName && !hasEmergencyPhone) errors.emergencyPhone = "Enter the contact's phone number.";
+    if (hasEmergencyPhone && !hasEmergencyName) errors.emergencyName = "Enter the contact's name.";
+    const emergencyPhoneError = validatePhone(values.emergencyPhone, values.emergencyPhoneCountry, false);
+    if (emergencyPhoneError) errors.emergencyPhone = emergencyPhoneError;
+  }
+
+  if (!values.country) errors.country = "Country is required.";
+  if (values.country === US_COUNTRY_CODE && values.zip.trim() && !US_ZIP_PATTERN.test(values.zip.trim())) {
+    errors.zip = "Enter a 5-digit ZIP code (or ZIP+4).";
+  }
+  return errors;
+};
+
+/* ---------- Small pieces ---------- */
+const cardCls = "rounded-2xl border border-border bg-card p-4 sm:p-5";
 const checkboxCls =
   "mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-border accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
-const cardCls = "rounded-2xl border border-border bg-card p-4 sm:p-5";
 
-/* ---------- Small helpers ---------- */
 const Req = () => <span className="text-danger"> *</span>;
-const Opt = () => <span className="font-normal text-body"> (Optional)</span>;
 
-/* Numbered section header */
-const SectionHeader = ({
-  step,
-  title,
-  subtitle,
-}: {
-  step: number;
-  title: string;
-  subtitle: string;
-}) => (
+const SectionHeader = ({ step, title, subtitle }: { step: number; title: string; subtitle: string }) => (
   <div className="mb-4 flex items-center gap-3">
     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
       {step}
@@ -125,424 +245,324 @@ const SectionHeader = ({
   </div>
 );
 
-/* ---------- Validation types ---------- */
-interface FormValues {
-  firstName: string;
-  lastName: string;
-  dob: string;
-  gender: string;
-  phoneCountry: string;
-  phone: string;
-  email: string;
-  patientId: string;
-  marital: string;
-  blood: string;
-  language: string;
-  emergencyName: string;
-  emergencyPhoneCountry: string;
-  emergencyPhone: string;
-  address1: string;
-  address2: string;
-  country: string;
-  state: string;
-  city: string;
-  zip: string;
-}
-
-type FormErrors = Partial<Record<keyof FormValues, string>>;
-
 /* ---------- Page ---------- */
 const AddPatient = () => {
   const router = useRouter();
-  const pathname = usePathname();
-  const isEditMode = pathname === "/edit-patient";
   const dispatch = useAppDispatch();
-  const createPatientRequest = useAppSelector(selectCreatePatientRequest);
-  const isSaving = createPatientRequest.status === "pending";
-  const [values, setValues] = React.useState<FormValues>({
-    firstName: "",
-    lastName: "",
-    dob: "",
-    gender: "",
-    phoneCountry: DEFAULT_COUNTRY,
-    phone: "",
-    email: "",
-    patientId: "",
-    marital: "",
-    blood: "",
-    language: "",
-    emergencyName: "",
-    emergencyPhoneCountry: DEFAULT_COUNTRY,
-    emergencyPhone: "",
-    address1: "",
-    address2: "",
-    country: DEFAULT_COUNTRY,
-    state: "",
-    city: "",
-    zip: "",
-  });
+  const isEditMode = usePathname() === "/edit-patient";
+  const patientId = useSearchParams().get("id");
+  const createRequest = useAppSelector(selectCreatePatientRequest);
+  const updateRequest = useAppSelector(selectUpdatePatientRequest);
+  const patientDetail = useAppSelector(selectPatientDetail);
+  const isSaving = createRequest.status === "pending" || updateRequest.status === "pending";
 
-  const [errors, setErrors] = React.useState<FormErrors>({});
-  const [submitted, setSubmitted] = React.useState(false);
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [toast, setToast] = React.useState<{
-    type: "success" | "error" | null;
+  const [values, setValues] = useState<FormValues>(EMPTY_FORM);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [toast, setToast] = useState<{
     title: string;
     message: string;
     action?: { label: string; onClick: () => void };
-  }>({
-    type: null,
-    title: "",
-    message: "",
-  });
+  } | null>(null);
+  /** Patient whose saved values fill the form (edit mode); re-filled when another patient opens. */
+  const [prefilledPatientId, setPrefilledPatientId] = useState<string | null>(null);
 
-  /* ---------- Profile photo handling ---------- */
   useEffect(() => {
-    if (photo) {
-      const objectUrl = URL.createObjectURL(photo);
-      setPhotoPreview(objectUrl);
-      return () => URL.revokeObjectURL(objectUrl);
-    } else {
-      setPhotoPreview(null);
-    }
-  }, [photo]);
+    if (isEditMode && patientId) dispatch(fetchPatientDetail(patientId));
+  }, [dispatch, isEditMode, patientId]);
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Fill the form while rendering (not in an effect) so it never shows empty values for a frame.
+  const loadedPatient =
+    isEditMode && patientId && patientDetail.patientId === patientId ? patientDetail.patient : null;
+  if (loadedPatient && prefilledPatientId !== loadedPatient.id) {
+    setPrefilledPatientId(loadedPatient.id);
+    setValues(toFormValues(loadedPatient));
+    setErrors({});
+  }
 
-    if (!["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(file.type)) {
-      setToast({
-        type: "error",
-        title: "Invalid File Type",
-        message: "Please select a JPG, PNG, or WebP image file.",
-      });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setToast({
-        type: "error",
-        title: "File Size Exceeded",
-        message: "Profile image must be less than 5MB.",
-      });
-      return;
-    }
-
-    setPhoto(file);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleRemovePhoto = () => {
-    setPhoto(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  /* ---------- Dependent dropdown options ---------- */
-  const stateOptions: DropdownOption[] = useMemo(
-    () => getStateOptions(values.country),
-    [values.country],
-  );
-
-  const cityOptions: DropdownOption[] = useMemo(
+  const stateOptions = useMemo(() => getStateOptions(values.country), [values.country]);
+  const cityOptions = useMemo(
     () => getCityOptions(values.country, values.state),
     [values.country, values.state],
   );
-
+  const isUsAddress = values.country === US_COUNTRY_CODE;
   const postalLabel = postalLabelFor(values.country);
 
-  /* ---------- Field setters ---------- */
-  const clearError = (field: keyof FormValues) => {
-    if (submitted) setErrors((prev) => ({ ...prev, [field]: undefined }));
-  };
+  /* ---------- Edit mode: wait for the patient before showing the form ---------- */
+  if (isEditMode) {
+    const pageState = (content: React.ReactNode) => (
+      <div className="mx-auto w-full max-w-[1600px] space-y-4">
+        <Breadcrumb items={[{ label: "Patients", href: "/patients" }, { label: "Edit Patient" }]} />
+        <div className="rounded-[14px] border border-border bg-card">{content}</div>
+      </div>
+    );
+    if (!patientId) {
+      return pageState(<TableStatus variant="empty" message="No patient selected. Open a patient from the list." />);
+    }
+    if (!loadedPatient) {
+      if (patientDetail.patientId === patientId && patientDetail.status === "failed") {
+        return pageState(
+          <div>
+            <TableStatus
+              variant="error"
+              message={patientDetail.error?.message}
+              onRetry={() => dispatch(fetchPatientDetail(patientId))}
+            />
+            <p className="pb-6 text-center text-sm">
+              <Link href="/patients" className="font-semibold text-link hover:underline">
+                Back to Patients
+              </Link>
+            </p>
+          </div>,
+        );
+      }
+      return pageState(<TableStatus variant="loading" message="Loading patient…" />);
+    }
+  }
 
-  const setField = (field: keyof FormValues, value: string) => {
-    setValues((prev) => ({ ...prev, [field]: value }));
-    clearError(field);
+  /* ---------- Field setters ---------- */
+  const setField = <K extends keyof FormValues>(field: K, value: FormValues[K]) => {
+    setValues((previous) => ({ ...previous, [field]: value }));
+    setErrors((previous) => ({ ...previous, [field]: undefined }));
   };
 
   const handleCountryChange = (iso: string) => {
-    setValues((prev) => ({
-      ...prev,
-      country: iso,
-      state: "",
-      city: "",
-      zip: "",
-      phoneCountry: iso,
-      emergencyPhoneCountry: iso,
-    }));
-    clearError("country");
-    clearError("state");
-    clearError("city");
-    clearError("zip");
+    setValues((previous) => ({ ...previous, country: iso, state: "", city: "", zip: "" }));
+    setErrors((previous) => ({ ...previous, country: undefined, state: undefined, city: undefined, zip: undefined }));
   };
 
   const handleStateChange = (iso: string) => {
-    setValues((prev) => ({ ...prev, state: iso, city: "" }));
-    clearError("state");
-    clearError("city");
+    setValues((previous) => ({ ...previous, state: iso, city: "" }));
+    setErrors((previous) => ({ ...previous, state: undefined, city: undefined }));
   };
 
-  /* ---------- Validation ---------- */
-  const validate = (vals: FormValues): FormErrors => {
-    const errs: FormErrors = {};
+  /* ---------- Payloads ---------- */
+  const optional = (value: string) => value.trim() || undefined;
 
-    if (!vals.firstName.trim()) errs.firstName = "First name is required.";
-    else if (vals.firstName.trim().length < 2)
-      errs.firstName = "First name must be at least 2 characters.";
+  /** `POST /patients`: empty optional fields are left out. */
+  const buildCreatePayload = (confirmNotDuplicate: boolean): CreatePatientPayload => ({
+    firstName: values.firstName.trim(),
+    lastName: values.lastName.trim(),
+    middleName: optional(values.middleName),
+    preferredName: optional(values.preferredName),
+    dateOfBirth: values.dob,
+    administrativeGender: values.gender as AdministrativeGender,
+    genderIdentity: optional(values.genderIdentity),
+    phoneNumber: toE164(values.phone, values.phoneCountry) || undefined,
+    email: optional(values.email),
+    preferredLanguage: values.language || undefined,
+    addressLine1: optional(values.address1),
+    addressLine2: optional(values.address2),
+    city: optional(values.city),
+    stateCode: isUsAddress ? values.state || undefined : undefined,
+    postalCode: isUsAddress ? optional(values.zip) : undefined,
+    countryCode: values.country,
+    preferredContactMethod: values.preferredContactMethod || undefined,
+    allowEmailNotifications: values.allowEmailNotifications,
+    allowSmsNotifications: values.allowSmsNotifications,
+    ...(confirmNotDuplicate ? { confirmNotDuplicate: true } : {}),
+  });
 
-    if (!vals.lastName.trim()) errs.lastName = "Last name is required.";
-    else if (vals.lastName.trim().length < 2)
-      errs.lastName = "Last name must be at least 2 characters.";
+  /** `PATCH /patients/:id`: cleared optional fields are sent as null so they are removed. */
+  const buildUpdatePayload = (): UpdatePatientPayload => ({
+    firstName: values.firstName.trim(),
+    lastName: values.lastName.trim(),
+    middleName: optional(values.middleName) ?? null,
+    preferredName: optional(values.preferredName) ?? null,
+    dateOfBirth: values.dob,
+    administrativeGender: values.gender as AdministrativeGender,
+    genderIdentity: optional(values.genderIdentity) ?? null,
+    phoneNumber: toE164(values.phone, values.phoneCountry) || null,
+    email: optional(values.email) ?? null,
+    preferredLanguage: values.language || undefined,
+    addressLine1: optional(values.address1) ?? null,
+    addressLine2: optional(values.address2) ?? null,
+    city: optional(values.city) ?? null,
+    stateCode: isUsAddress ? values.state || null : null,
+    postalCode: isUsAddress ? (optional(values.zip) ?? null) : null,
+    countryCode: values.country,
+    preferredContactMethod: values.preferredContactMethod || undefined,
+    allowEmailNotifications: values.allowEmailNotifications,
+    allowSmsNotifications: values.allowSmsNotifications,
+  });
 
-    if (!vals.dob.trim()) errs.dob = "Date of birth is required.";
-    if (!vals.gender) errs.gender = "Gender is required.";
+  /* ---------- Save ---------- */
+  const scrollToField = (field: string) => {
+    const element = document.getElementById(field);
+    element?.scrollIntoView({ behavior: "smooth", block: "center" });
+    element?.focus?.();
+  };
 
-    // Use shared phone validator
-    const phoneErr = validatePhone(vals.phone, vals.phoneCountry, true);
-    if (phoneErr) errs.phone = phoneErr;
+  /** Shows the server's per-field messages under the matching inputs. */
+  const showServerError = (requestError: RequestError) => {
+    const serverErrors: FormErrors = {};
+    for (const [apiField, message] of Object.entries(requestError.fieldErrors ?? {})) {
+      const formField = FORM_FIELD_BY_API_FIELD[apiField];
+      if (formField) serverErrors[formField] = message;
+    }
+    if (Object.keys(serverErrors).length) {
+      setErrors(serverErrors);
+      scrollToField(Object.keys(serverErrors)[0]);
+    }
+    setToast({ title: "Could not save patient", message: requestError.message });
+  };
 
-    if (!vals.email.trim()) errs.email = "Email address is required.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.email.trim()))
-      errs.email = "Enter a valid email address.";
-
-    const altPhoneErr = validatePhone(
-      vals.emergencyPhone,
-      vals.emergencyPhoneCountry,
-      false,
-    );
-    if (altPhoneErr) errs.emergencyPhone = altPhoneErr;
-
-    if (!vals.country) errs.country = "Country is required.";
-
-    if (vals.zip.trim() && vals.country) {
-      const zip = vals.zip.trim();
-      const label = postalLabelFor(vals.country);
-      // basic format check — full postcode validation is done in Shared.validateAddress
-      if (!/^[A-Za-z0-9\s-]{3,10}$/.test(zip))
-        errs.zip = `Enter a valid ${label.toLowerCase()}.`;
+  const save = async (confirmNotDuplicate = false) => {
+    if (isEditMode && loadedPatient) {
+      const result = await dispatch(updatePatient({ patientId: loadedPatient.id, payload: buildUpdatePayload() }));
+      if (updatePatient.fulfilled.match(result)) {
+        router.push(`/view-patient?id=${encodeURIComponent(loadedPatient.id)}`);
+      } else if (result.payload) {
+        showServerError(result.payload);
+      }
+      return;
     }
 
-    return errs;
-  };
-
-  const toE164 = (national: string, iso: string) =>
-    parsePhoneNumberFromString(national, iso as CountryCode)?.number ?? "";
-
-  /** Form values → `POST /patients` body (empty optional fields are left out). */
-  const buildCreatePatientPayload = (confirmNotDuplicate: boolean): CreatePatientPayload => {
-    const isUsAddress = values.country === US_COUNTRY_CODE;
-    const optional = (value: string) => value.trim() || undefined;
-    return {
-      firstName: values.firstName.trim(),
-      lastName: values.lastName.trim(),
-      dateOfBirth: values.dob,
-      administrativeGender: values.gender as AdministrativeGender,
-      phoneNumber: toE164(values.phone, values.phoneCountry) || undefined,
-      email: optional(values.email),
-      preferredLanguage: values.language || undefined,
-      addressLine1: optional(values.address1),
-      addressLine2: optional(values.address2),
-      city: optional(values.city),
-      stateCode: isUsAddress ? values.state || undefined : undefined,
-      postalCode: isUsAddress ? optional(values.zip) : undefined,
-      countryCode: values.country || undefined,
-      confirmNotDuplicate: confirmNotDuplicate || undefined,
-    };
-  };
-
-  const scrollToField = (field: string) => {
-    const fieldElement = document.getElementById(field);
-    fieldElement?.scrollIntoView({ behavior: "smooth", block: "center" });
-    fieldElement?.focus?.();
-  };
-
-  const savePatient = async (confirmNotDuplicate = false) => {
-    const emergencyPhone = values.emergencyPhone
-      ? toE164(values.emergencyPhone, values.emergencyPhoneCountry)
-      : "";
-    const saveResult = await dispatch(
+    const emergencyPhone = toE164(values.emergencyPhone, values.emergencyPhoneCountry);
+    const result = await dispatch(
       createPatient({
-        patient: buildCreatePatientPayload(confirmNotDuplicate),
+        patient: buildCreatePayload(confirmNotDuplicate),
         emergencyContact:
           values.emergencyName.trim() && emergencyPhone
             ? { fullName: values.emergencyName.trim(), relationship: "OTHER", phoneNumber: emergencyPhone }
             : undefined,
       }),
     );
-
-    if (createPatient.fulfilled.match(saveResult)) {
-      const { emergencyContactError } = saveResult.payload;
-      if (emergencyContactError) {
-        // Patient exists now — stay here so the user sees what was not saved.
-        setToast({
-          type: "error",
-          title: "Patient saved, emergency contact not saved",
-          message: emergencyContactError.message,
-        });
-        return;
-      }
-      router.push("/patients");
+    if (createPatient.fulfilled.match(result)) {
+      // Always leave the form once the patient exists (staying would let a second click create a
+      // duplicate). If the emergency contact failed, the patient page shows "Add Emergency Contact".
+      router.push(`/view-patient?id=${encodeURIComponent(result.payload.patient.id)}`);
       return;
     }
-
-    const requestError = saveResult.payload;
-    if (!requestError) return; // skipped: a save is already in progress
-
+    const requestError = result.payload;
+    if (!requestError) return;
     if (requestError.errorCode === "POSSIBLE_DUPLICATE_PATIENT") {
       setToast({
-        type: "error",
         title: "Possible duplicate patient",
         message: "A patient with the same name and date of birth already exists.",
-        action: { label: "Save anyway", onClick: () => savePatient(true) },
+        action: { label: "Save anyway", onClick: () => save(true) },
       });
       return;
     }
-
-    const serverFieldErrors: FormErrors = {};
-    for (const [apiField, message] of Object.entries(requestError.fieldErrors ?? {})) {
-      const formField = FORM_FIELD_BY_API_FIELD[apiField];
-      if (formField) serverFieldErrors[formField] = message;
-    }
-    if (Object.keys(serverFieldErrors).length) {
-      setErrors(serverFieldErrors);
-      scrollToField(Object.keys(serverFieldErrors)[0]);
-    }
-    setToast({ type: "error", title: "Could not save patient", message: requestError.message });
+    showServerError(requestError);
   };
 
-  const submitForm = () => {
-    if (createPatientRequest.status === "pending") return;
-    setSubmitted(true);
-    const errs = validate(values);
-    setErrors(errs);
-
-    if (Object.keys(errs).length === 0) {
-      savePatient();
-    } else {
-      scrollToField(Object.keys(errs)[0]);
-      const errorCount = Object.keys(errs).length;
+  const submit = (event?: React.FormEvent) => {
+    event?.preventDefault();
+    if (isSaving) return;
+    const validationErrors = validate(values, isEditMode);
+    setErrors(validationErrors);
+    const invalidFields = Object.keys(validationErrors);
+    if (invalidFields.length) {
+      scrollToField(invalidFields[0]);
       setToast({
-        type: "error",
-        title: "Validation Error",
-        message: `Please fill out all required fields (${errorCount} missing or invalid).`,
+        title: "Check the form",
+        message: `${invalidFields.length} field${invalidFields.length > 1 ? "s need" : " needs"} attention.`,
       });
+      return;
     }
+    save();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    submitForm();
-  };
+  const displayName = [values.firstName, values.lastName].filter((part) => part.trim()).join(" ");
+  const title = isEditMode ? "Edit Patient" : "Add Patient";
 
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-4 sm:space-y-5">
-      {/* Success and Error Toasts */}
-      <SuccessToast
-        isOpen={toast.type === "success"}
-        onClose={() => setToast((prev) => ({ ...prev, type: null }))}
-        title={toast.title}
-        message={toast.message}
-      />
       <ErrorToast
-        isOpen={toast.type === "error"}
-        onClose={() => setToast((prev) => ({ ...prev, type: null, action: undefined }))}
-        title={toast.title}
-        message={toast.message}
-        action={toast.action}
+        isOpen={toast !== null}
+        onClose={() => setToast(null)}
+        title={toast?.title}
+        message={toast?.message}
+        action={toast?.action}
       />
       <Breadcrumb
         items={[
+          { label: "Dashboard", href: "/dashboard" },
           { label: "Patients", href: "/patients" },
-          { label: isEditMode ? "Edit Patient" : "Add Patient" },
+          ...(isEditMode && loadedPatient
+            ? [{ label: displayName || "Patient", href: `/view-patient?id=${encodeURIComponent(loadedPatient.id)}` }]
+            : []),
+          { label: title },
         ]}
       />
 
       {/* Title + actions */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-heading sm:text-xl 2xl:text-2xl">
-            {isEditMode ? "Edit Patient" : "Add Patient"}
-          </h2>
+          <h2 className="text-lg font-semibold text-heading sm:text-xl 2xl:text-2xl">{title}</h2>
           <p className="mt-0.5 text-sm text-body">
-            Create a new patient record in the system.
+            {isEditMode ? "Update patient details and communication preferences." : "Create a new patient record."}
           </p>
         </div>
-
         <div className="flex flex-row gap-2">
           <ImportButton
             text="Cancel"
             icon={null}
             className="flex-1 sm:flex-none"
-            onClick={() => router.push("/patients")}
+            onClick={() =>
+              router.push(loadedPatient ? `/view-patient?id=${encodeURIComponent(loadedPatient.id)}` : "/patients")
+            }
           />
           <AddButton
             text={isSaving ? "Saving…" : "Save Patient"}
             icon={null}
             className="flex-1 sm:flex-none"
-            onClick={submitForm}
+            onClick={() => submit()}
             disabled={isSaving}
           />
         </div>
       </div>
 
       <div className="grid items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px]">
-        {/* ================= LEFT: FORM ================= */}
-        <form
-          className={`${cardCls} min-w-0 sm:p-6`}
-          onSubmit={handleSubmit}
-          noValidate
-        >
+        <form className={`${cardCls} min-w-0 sm:p-6`} onSubmit={submit} noValidate>
           {/* 1. Basic information */}
           <section>
-            <SectionHeader
-              step={1}
-              title="Basic Information"
-              subtitle="Enter the patient's personal details."
-            />
+            <SectionHeader step={1} title="Basic Information" subtitle="The patient's personal details." />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <SignupField
                 name="firstName"
                 label={<>First Name<Req /></>}
                 placeholder="Enter first name"
                 value={values.firstName}
-                onChange={(e) => setField("firstName", e.target.value)}
+                onChange={(event) => setField("firstName", event.target.value)}
                 error={errors.firstName}
+                maxLength={NAME_MAX_LENGTH}
+                autoComplete="off"
               />
               <SignupField
                 name="lastName"
                 label={<>Last Name<Req /></>}
                 placeholder="Enter last name"
                 value={values.lastName}
-                onChange={(e) => setField("lastName", e.target.value)}
+                onChange={(event) => setField("lastName", event.target.value)}
                 error={errors.lastName}
+                maxLength={NAME_MAX_LENGTH}
+                autoComplete="off"
               />
               <DatePicker
                 name="dob"
                 label={<>Date of Birth<Req /></>}
                 placeholder="dd-mm-yyyy"
                 value={values.dob}
-                onChange={(v) => setField("dob", v)}
-                maxDate={new Date().toISOString().split("T")[0]}
+                onChange={(value) => setField("dob", value)}
+                maxDate={todayISO()}
                 error={errors.dob}
               />
               <SignupDropdown
                 name="gender"
-                label="Gender *"
+                label={<>Gender<Req /></>}
                 placeholder="Select gender"
                 options={GENDERS}
                 value={values.gender}
-                onChange={(v) => setField("gender", v)}
+                onChange={(value) => setField("gender", value as AdministrativeGender)}
                 error={errors.gender}
               />
               <PhoneField
                 name="phone"
-                label={<>Phone Number<Req /></>}
+                label="Phone Number"
                 placeholder="Enter phone number"
                 value={values.phone}
-                onChange={(v) => setField("phone", v)}
+                onChange={(value) => setField("phone", value)}
                 countryCode={values.phoneCountry}
                 onCountryChange={(iso) => setField("phoneCountry", iso)}
                 error={errors.phone}
@@ -550,11 +570,13 @@ const AddPatient = () => {
               <SignupField
                 name="email"
                 type="email"
-                label={<>Email Address<Req /></>}
+                label="Email Address"
                 placeholder="Enter email address"
                 value={values.email}
-                onChange={(e) => setField("email", e.target.value)}
+                onChange={(event) => setField("email", event.target.value)}
                 error={errors.email}
+                hint={errors.email ? undefined : "A phone number or an email is required."}
+                autoComplete="off"
               />
             </div>
           </section>
@@ -563,37 +585,34 @@ const AddPatient = () => {
 
           {/* 2. Additional information */}
           <section>
-            <SectionHeader
-              step={2}
-              title="Additional Information"
-              subtitle="Additional details to complete the patient profile."
-            />
+            <SectionHeader step={2} title="Additional Information" subtitle="Optional details for the profile." />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <SignupField
-                name="patientId"
-                label={<>Patient ID<Opt /></>}
-                placeholder="Auto-generated if left blank"
-                value={values.patientId}
-                onChange={(e) => setField("patientId", e.target.value)}
-                error={errors.patientId}
+                name="middleName"
+                label="Middle Name"
+                placeholder="Enter middle name"
+                value={values.middleName}
+                onChange={(event) => setField("middleName", event.target.value)}
+                error={errors.middleName}
+                maxLength={NAME_MAX_LENGTH}
               />
-              <SignupDropdown
-                name="marital"
-                label="Marital Status"
-                placeholder="Select marital status"
-                options={MARITAL}
-                value={values.marital}
-                onChange={(v) => setField("marital", v)}
-                error={errors.marital}
+              <SignupField
+                name="preferredName"
+                label="Preferred Name"
+                placeholder="Enter preferred name"
+                value={values.preferredName}
+                onChange={(event) => setField("preferredName", event.target.value)}
+                error={errors.preferredName}
+                maxLength={NAME_MAX_LENGTH}
               />
-              <SignupDropdown
-                name="blood"
-                label="Blood Type"
-                placeholder="Select blood type"
-                options={BLOOD}
-                value={values.blood}
-                onChange={(v) => setField("blood", v)}
-                error={errors.blood}
+              <SignupField
+                name="genderIdentity"
+                label="Gender Identity"
+                placeholder="Enter gender identity"
+                value={values.genderIdentity}
+                onChange={(event) => setField("genderIdentity", event.target.value)}
+                error={errors.genderIdentity}
+                maxLength={NAME_MAX_LENGTH}
               />
               <SignupDropdown
                 name="language"
@@ -601,63 +620,62 @@ const AddPatient = () => {
                 placeholder="Select language"
                 options={LANGUAGES}
                 value={values.language}
-                onChange={(v) => setField("language", v)}
+                onChange={(value) => setField("language", value)}
                 error={errors.language}
               />
-              <SignupField
-                name="emergencyName"
-                label="Emergency Contact Name"
-                placeholder="Enter contact name"
-                value={values.emergencyName}
-                onChange={(e) => setField("emergencyName", e.target.value)}
-                error={errors.emergencyName}
-              />
-              <PhoneField
-                name="emergencyPhone"
-                label="Emergency Contact Number"
-                placeholder="Enter phone number"
-                value={values.emergencyPhone}
-                onChange={(v) => setField("emergencyPhone", v)}
-                countryCode={values.emergencyPhoneCountry}
-                onCountryChange={(iso) =>
-                  setField("emergencyPhoneCountry", iso)
-                }
-                error={errors.emergencyPhone}
-              />
+              {!isEditMode && (
+                <>
+                  <SignupField
+                    name="emergencyName"
+                    label="Emergency Contact Name"
+                    placeholder="Enter contact name"
+                    value={values.emergencyName}
+                    onChange={(event) => setField("emergencyName", event.target.value)}
+                    error={errors.emergencyName}
+                    maxLength={200}
+                  />
+                  <PhoneField
+                    name="emergencyPhone"
+                    label="Emergency Contact Number"
+                    placeholder="Enter phone number"
+                    value={values.emergencyPhone}
+                    onChange={(value) => setField("emergencyPhone", value)}
+                    countryCode={values.emergencyPhoneCountry}
+                    onCountryChange={(iso) => setField("emergencyPhoneCountry", iso)}
+                    error={errors.emergencyPhone}
+                  />
+                </>
+              )}
             </div>
           </section>
 
           <hr className="my-6 border-divider" />
 
-          {/* 3. Address information */}
+          {/* 3. Address */}
           <section>
-            <SectionHeader
-              step={3}
-              title="Address Information"
-              subtitle="Patient's residential address."
-            />
+            <SectionHeader step={3} title="Address" subtitle="The patient's residential address." />
             <div className="grid gap-4 sm:grid-cols-2">
               <SignupField
                 name="address1"
                 label="Address Line 1"
-                placeholder="Enter address line 1"
+                placeholder="Street address"
                 value={values.address1}
-                onChange={(e) => setField("address1", e.target.value)}
+                onChange={(event) => setField("address1", event.target.value)}
                 error={errors.address1}
               />
               <SignupField
                 name="address2"
-                label={<>Address Line 2<Opt /></>}
-                placeholder="Enter address line 2"
+                label="Address Line 2"
+                placeholder="Apartment, suite, unit"
                 value={values.address2}
-                onChange={(e) => setField("address2", e.target.value)}
+                onChange={(event) => setField("address2", event.target.value)}
                 error={errors.address2}
               />
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <SignupDropdown
                 name="country"
-                label="Country *"
+                label={<>Country<Req /></>}
                 placeholder="Select country"
                 options={COUNTRY_OPTIONS}
                 value={values.country}
@@ -667,15 +685,14 @@ const AddPatient = () => {
               <SignupDropdown
                 key={`state-${values.country}`}
                 name="state"
-                label="State"
-                placeholder={
-                  stateOptions.length ? "Select state" : "No states available"
-                }
+                label={isUsAddress ? "State" : "State / Region"}
+                placeholder={stateOptions.length ? "Select state" : "No states available"}
                 options={stateOptions}
                 value={values.state}
                 onChange={handleStateChange}
                 disabled={stateOptions.length === 0}
                 error={errors.state}
+                hint={isUsAddress ? undefined : "Used to find the city; stored for US addresses only."}
               />
               <SignupDropdown
                 key={`city-${values.country}-${values.state}`}
@@ -690,166 +707,79 @@ const AddPatient = () => {
                 }
                 options={cityOptions}
                 value={values.city}
-                onChange={(v) => setField("city", v)}
-                disabled={
-                  cityOptions.length === 0 ||
-                  (stateOptions.length > 0 && !values.state)
-                }
+                onChange={(value) => setField("city", value)}
+                disabled={cityOptions.length === 0 || (stateOptions.length > 0 && !values.state)}
                 error={errors.city}
               />
-              <SignupField
-                name="zip"
-                label={postalLabel}
-                placeholder={`Enter ${postalLabel.toLowerCase()}`}
-                value={values.zip}
-                onChange={(e) => setField("zip", e.target.value)}
-                error={errors.zip}
+              {isUsAddress && (
+                <SignupField
+                  name="zip"
+                  label={postalLabel}
+                  placeholder={`Enter ${postalLabel.toLowerCase()}`}
+                  value={values.zip}
+                  onChange={(event) => setField("zip", event.target.value)}
+                  error={errors.zip}
+                  maxLength={10}
+                />
+              )}
+            </div>
+          </section>
+
+          <hr className="my-6 border-divider" />
+
+          {/* 4. Communication preferences */}
+          <section>
+            <SectionHeader step={4} title="Communication Preferences" subtitle="How the patient prefers to be contacted." />
+            <div className="grid gap-4 sm:grid-cols-2 sm:items-start">
+              <SignupDropdown
+                name="preferredContactMethod"
+                label="Preferred Contact Method"
+                options={CONTACT_METHODS}
+                value={values.preferredContactMethod}
+                onChange={(value) => setField("preferredContactMethod", value as FormValues["preferredContactMethod"])}
+                error={errors.preferredContactMethod}
               />
-            </div>
-          </section>
-        </form>
-
-        {/* ================= RIGHT: SIDEBAR ================= */}
-        <aside className="space-y-4 sm:space-y-5">
-          {/* Profile photo */}
-          <section className={cardCls}>
-            <h3 className="text-sm font-semibold text-heading">Profile Photo</h3>
-            
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png, image/jpeg, image/jpg, image/webp"
-              onChange={handlePhotoSelect}
-              className="hidden"
-              id="patient-photo-upload"
-            />
-
-            <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              {/* Avatar circle / Image preview */}
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="group relative flex h-24 w-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-border bg-shape-sky/40 text-body transition-all duration-200 hover:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 sm:h-28 sm:w-28"
-                title={photoPreview ? "Click to change photo" : "Click to upload photo"}
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }
-                }}
-              >
-                {photoPreview ? (
-                  <>
-                    <img
-                      src={photoPreview}
-                      alt="Patient avatar preview"
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    {/* Hover overlay with camera icon */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/45 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <Camera className="h-5 w-5 text-white" />
-                      <span className="mt-0.5 text-[10px] font-medium text-white">Change</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <User className="h-10 w-10 text-body transition-transform duration-200 group-hover:scale-105" strokeWidth={1.5} />
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/25 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <Camera className="h-5 w-5 text-white" />
-                      <span className="mt-0.5 text-[10px] font-medium text-white">Upload</span>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Action buttons and format info */}
-              <div className="flex flex-col gap-1.5">
-                {photoPreview ? (
-                  <div className="flex items-center gap-3 text-xs font-medium">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="cursor-pointer text-primary transition-colors hover:text-primary-hover hover:underline focus-visible:outline-none"
-                    >
-                      Change Photo
-                    </button>
-                    <span className="text-body/30" aria-hidden="true">•</span>
-                    <button
-                      type="button"
-                      onClick={handleRemovePhoto}
-                      className="cursor-pointer text-danger transition-colors hover:text-danger/80 hover:underline focus-visible:outline-none"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <AddInternalButton
-                    text="Upload Photo"
-                    icon={<ImagePlus className="h-4 w-4" />}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="!h-10"
-                  />
-                )}
-                <p className="text-xs text-body">JPG, PNG up to 5MB</p>
-              </div>
-            </div>
-          </section>
-
-          {/* Assign roles */}
-          <section className={cardCls}>
-            <h3 className="text-sm font-semibold text-heading">Assign Role(s)</h3>
-            <p className="mt-1 text-xs text-body">
-              Select which role(s) this user will have access to.
-            </p>
-
-            <div className="mt-4 space-y-4">
-              {ROLES.map((r) => (
-                <label
-                  key={r.id}
-                  htmlFor={`role-${r.id}`}
-                  className="flex cursor-pointer items-start gap-3"
-                >
-                  <RadioCheckButtonh
-                    id={`role-${r.id}`}
+              <div className="flex flex-col gap-3 sm:pt-8">
+                <label className="flex items-center gap-3">
+                  <input
                     type="checkbox"
-                    defaultChecked={r.checked}
+                    checked={values.allowEmailNotifications}
+                    onChange={(event) => setField("allowEmailNotifications", event.target.checked)}
                     className={checkboxCls}
                   />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium text-heading">
-                      {r.label}
-                    </span>
-                    <span className="mt-0.5 block text-xs leading-relaxed text-body">
-                      {r.desc}
-                    </span>
-                  </span>
+                  <span className="text-sm text-heading">Allow email notifications</span>
                 </label>
-              ))}
+                <label className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={values.allowSmsNotifications}
+                    onChange={(event) => setField("allowSmsNotifications", event.target.checked)}
+                    className={checkboxCls}
+                  />
+                  <span className="text-sm text-heading">Allow SMS notifications</span>
+                </label>
+              </div>
             </div>
           </section>
 
-          {/* Status */}
-          <section className={cardCls}>
-            <h3 className="text-sm font-semibold text-heading">Status</h3>
-            <TogglableSwitch
-              id="status"
-              defaultChecked
-              ariaLabel="Active patient status"
-              className="mt-4 items-start"
-              label={
-                <span>
-                  <span className="block text-sm font-medium text-heading">
-                    Active
-                  </span>
-                  <span className="mt-0.5 block text-xs text-body">
-                    Inactive users will not be able to access the platform.
-                  </span>
-                </span>
-              }
-            />
-          </section>
+          {/* Enter in any field submits the form */}
+          <button type="submit" className="hidden" aria-hidden tabIndex={-1} />
+        </form>
+
+        {/* Summary */}
+        <aside className={cardCls}>
+          <h3 className="text-sm font-semibold text-heading">Profile</h3>
+          <div className="mt-4 flex items-center gap-4">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-border bg-shape-sky/40 text-body sm:h-24 sm:w-24">
+              <User className="h-9 w-9 text-body" strokeWidth={1.5} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-heading">{displayName || "New patient"}</p>
+              <p className="mt-1 text-xs text-body">
+                {loadedPatient ? `Patient ID ${loadedPatient.medicalRecordNumber}` : "A patient ID is assigned on save."}
+              </p>
+            </div>
+          </div>
         </aside>
       </div>
     </div>

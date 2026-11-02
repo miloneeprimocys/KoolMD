@@ -8,8 +8,7 @@ import type { InvoiceItem } from "@/billing/manage/invoice/createinvoice/AddCust
 import type { DeletablePaymentMethod } from "@/billing/manage/payment-method/DeletePaymentMethod";
 import type { ClearinghouseAccount } from "@/billing/clearinghouse/clearingaccount/ClearinghouseAccounts";
 import type { TestResult } from "@/billing/clearinghouse/clearingaccount/TestConnection";
-import type { Medication } from "@/patient/viewpatients/medications/ViewMedication";
-import type { Allergy } from "@/patient/viewpatients/allergies/ViewAllergy";
+import type { CatalogMedication } from "@/prescriptions/addprescription/SelectMedicationModal";
 
 export interface PrescriptionToDelete {
   id: string;
@@ -30,10 +29,6 @@ export interface LicenseToDelete {
 
 /** Modal visibility and transient modal state. */
 interface ModalState {
-  AddMedicalCondition: boolean;
-  AddFamilyHistory: boolean;
-  AddImmunization: boolean;
-  AddSurgery: boolean;
   DeletePrescription: boolean;
   deletePrescriptionTarget: PrescriptionToDelete | null;
   deletedPrescriptionIds: string[];
@@ -81,29 +76,14 @@ interface ModalState {
   SendWaitingRoomMessage: boolean;
   MarkNoShow: boolean;
   DisconnectIntegration: boolean;
-  AddAllergy: boolean;
-  AddMedication: boolean;
-  AddClinicalNote: boolean;
   EditContactInformation: boolean;
-  EditLifestyle: boolean;
-  ViewMedication: boolean;
-  EditMedication: boolean;
-  DeleteMedication: boolean;
-  MarkInactiveMedication: boolean;
-  medicationTarget: Medication | null;
-  ViewAllergy: boolean;
-  EditAllergy: boolean;
-  DeleteAllergy: boolean;
-  allergyTarget: Allergy | null;
+  /** Catalog medication picked in the prescription "Select Medication" modal. */
+  medicationTarget: CatalogMedication | null;
   AddDocument: boolean;
   SelectMedication: boolean;
 }
 
 const initialState: ModalState = {
-  AddMedicalCondition: false,
-  AddFamilyHistory: false,
-  AddImmunization: false,
-  AddSurgery: false,
   DeletePrescription: false,
   deletePrescriptionTarget: null,
   deletedPrescriptionIds: [],
@@ -147,20 +127,8 @@ const initialState: ModalState = {
   SendWaitingRoomMessage: false,
   MarkNoShow: false,
   DisconnectIntegration: false,
-  AddAllergy: false,
-  AddMedication: false,
-  AddClinicalNote: false,
   EditContactInformation: false,
-  EditLifestyle: false,
-  ViewMedication: false,
-  EditMedication: false,
-  DeleteMedication: false,
-  MarkInactiveMedication: false,
   medicationTarget: null,
-  ViewAllergy: false,
-  EditAllergy: false,
-  DeleteAllergy: false,
-  allergyTarget: null,
   AddDocument: false,
   SelectMedication: false,
 };
@@ -221,12 +189,6 @@ const dialogSlice = createSlice({
       }
       if (action.payload === "RescheduleAppointment") {
         state.RescheduleAppointment = false;
-      }
-      if (action.payload === "ViewMedication" || action.payload === "EditMedication" || action.payload === "DeleteMedication" || action.payload === "MarkInactiveMedication") {
-        state.medicationTarget = null;
-      }
-      if (action.payload === "ViewAllergy" || action.payload === "EditAllergy" || action.payload === "DeleteAllergy") {
-        state.allergyTarget = null;
       }
       if (action.payload === "SelectMedication") {
         state.medicationTarget = null;
@@ -370,43 +332,11 @@ const dialogSlice = createSlice({
         state.deletedPrescriptionIds.push(action.payload);
       }
     },
-    showViewMedication: (state, action: PayloadAction<Medication>) => {
-      state.medicationTarget = action.payload;
-      state.ViewMedication = true;
-    },
-    showEditMedication: (state, action: PayloadAction<Medication>) => {
-      state.medicationTarget = action.payload;
-      state.EditMedication = true;
-    },
-    showDeleteMedication: (state, action: PayloadAction<Medication>) => {
-      state.medicationTarget = action.payload;
-      state.DeleteMedication = true;
-    },
-    showMarkInactiveMedication: (state, action: PayloadAction<Medication>) => {
-      state.medicationTarget = action.payload;
-      state.MarkInactiveMedication = true;
-    },
-    showViewAllergy: (state, action: PayloadAction<Allergy>) => {
-      state.allergyTarget = action.payload;
-      state.ViewAllergy = true;
-    },
-    showEditAllergy: (state, action: PayloadAction<Allergy>) => {
-      state.allergyTarget = action.payload;
-      state.EditAllergy = true;
-    },
-    showDeleteAllergy: (state, action: PayloadAction<Allergy>) => {
-      state.allergyTarget = action.payload;
-      state.DeleteAllergy = true;
-    },
-    selectMedication: (state, action: PayloadAction<any>) => {
+    selectMedication: (state, action: PayloadAction<CatalogMedication>) => {
       state.medicationTarget = action.payload;
       state.SelectMedication = false;
     },
     hideAllModals: (state) => {
-      state.AddMedicalCondition = false;
-      state.AddFamilyHistory = false;
-      state.AddImmunization = false;
-      state.AddSurgery = false;
       state.DeletePrescription = false;
       state.deletePrescriptionTarget = null;
       state.DeleteLicense = false;
@@ -447,20 +377,7 @@ const dialogSlice = createSlice({
       state.SendWaitingRoomMessage = false;
       state.MarkNoShow = false;
       state.DisconnectIntegration = false;
-      state.AddAllergy = false;
-      state.AddMedication = false;
-      state.AddClinicalNote = false;
       state.EditContactInformation = false;
-      state.EditLifestyle = false;
-      state.ViewMedication = false;
-      state.EditMedication = false;
-      state.DeleteMedication = false;
-      state.MarkInactiveMedication = false;
-      state.medicationTarget = null;
-      state.ViewAllergy = false;
-      state.EditAllergy = false;
-      state.DeleteAllergy = false;
-      state.allergyTarget = null;
       state.AddDocument = false;
       state.SelectMedication = false;
       state.medicationTarget = null;
@@ -499,13 +416,6 @@ export const {
   templateQuestionSaved,
   clearTemplateQuestionResult,
   prescriptionDeleted,
-  showViewMedication,
-  showEditMedication,
-  showDeleteMedication,
-  showMarkInactiveMedication,
-  showViewAllergy,
-  showEditAllergy,
-  showDeleteAllergy,
   selectMedication,
 
 } = dialogSlice.actions;

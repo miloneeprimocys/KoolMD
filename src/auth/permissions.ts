@@ -8,6 +8,18 @@ import type { CurrentUser } from "@/types/auth";
 export const PERMISSIONS = {
   PATIENT_READ: "patient:read",
   PATIENT_CREATE: "patient:create",
+  /** Demographics, emergency contacts, insurance and documents. */
+  PATIENT_UPDATE: "patient:update",
+  PATIENT_MANAGE_STATUS: "patient:manage-status",
+  ALLERGY_READ: "allergy:read",
+  ALLERGY_UPDATE: "allergy:update",
+  CONDITION_READ: "condition:read",
+  CONDITION_WRITE: "condition:write",
+  /** Surgical and family history, immunizations, lifestyle. */
+  MEDICAL_HISTORY_READ: "medical-history:read",
+  MEDICAL_HISTORY_WRITE: "medical-history:write",
+  MEDICATION_READ: "medication:read",
+  MEDICATION_WRITE: "medication:write",
   PRACTITIONER_READ: "practitioner:read",
   PRACTITIONER_MANAGE: "practitioner:manage",
   APPOINTMENT_READ: "appointment:read",

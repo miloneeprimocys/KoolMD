@@ -1,55 +1,80 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   Clock,
   Globe,
   Hash,
   Heart,
+  Info,
   Mail,
   MapPin,
+  Pencil,
   Phone,
   Plus,
+  Send,
   ShieldCheck,
+  Trash2,
   User,
   UserCheck,
   Users,
   type LucideIcon,
 } from "lucide-react";
 
-import Tags from "@/components/Tags";
+import Tags, { type TagTone } from "@/components/Tags";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 import EditButton from "@/components/EditButton";
+import DeleteDialog from "@/components/Deletedialog";
+import IconAction from "@/components/IconAction";
+import SuccessToast from "@/components/SuccessToast";
+import ErrorToast from "@/components/ErrorToast";
+import { PERMISSIONS } from "@/auth/permissions";
 import { useAppDispatch } from "@/hooks/useAppHooks";
+import { usePermission } from "@/hooks/usePermission";
 import { showModal } from "@/redux/slices/dialogslice";
+import { deleteEmergencyContact } from "@/redux/thunks/patientDetailThunks";
+import { invitePatientToPortal } from "@/redux/thunks/patientThunks";
+import EmergencyContactModal from "./EmergencyContactModal";
+import InsuranceModal from "./InsuranceModal";
+import PatientStatusModal from "./PatientStatusModal";
+import type {
+  EmergencyContact,
+  PatientAppointment,
+  PatientDetail,
+  PatientInsurance,
+  PatientStatus,
+} from "@/types/patient";
+import {
+  calculateAgeInYears,
+  formatDateOnly,
+  formatDateTime,
+  formatLanguage,
+  humanizeEnum,
+} from "@/utils/formatters";
 
-/* ---------- Static data (replace with API data later) ---------- */
 const NOT_PROVIDED = "Not provided";
 
-const CONTACT: { icon: LucideIcon; label: string; value: string }[] = [
-  { icon: Phone, label: "Phone Number", value: "+91 1235874691" },
-  { icon: Mail, label: "Email Address", value: "milonee.primocys@gmail.com" },
-  { icon: MapPin, label: "Address", value: NOT_PROVIDED },
-];
+type FieldItem = { icon: LucideIcon; label: string; value: string };
 
-const PERSONAL: { icon: LucideIcon; label: string; value: string }[] = [
-  { icon: CalendarDays, label: "Date of Birth", value: "Jul 11, 2005 (21 years)" },
-  { icon: User, label: "Gender", value: "Female" },
-  { icon: Globe, label: "Preferred Language", value: NOT_PROVIDED },
-  { icon: Heart, label: "Marital Status", value: NOT_PROVIDED },
-];
+const STATUS_TONES: Record<PatientStatus, TagTone> = {
+  ACTIVE: "success",
+  INACTIVE: "danger",
+  DECEASED: "neutral",
+};
 
-const ACCOUNT: { icon: LucideIcon; label: string; value: string }[] = [
-  { icon: Hash, label: "Patient ID", value: "KMD-0000003" },
-  { icon: CalendarDays, label: "Created Date", value: "Oct 6, 2026, 10:30 AM" },
-  { icon: Clock, label: "Last Updated", value: "Oct 6, 2026, 10:30 AM" },
-  { icon: UserCheck, label: "Assigned Provider", value: "Not assigned" },
-];
+const orNotProvided = (value: string | null | undefined) =>
+  value && value.trim() !== "" ? value : NOT_PROVIDED;
 
-const hasProvidedValue = (value: string) =>
-  value.trim() !== "" && value !== NOT_PROVIDED && value !== "Not assigned";
+/** "12 Main St, Apt 4, Austin, TX 78701" — or "Not provided" when no part is set. */
+const formatAddress = (patient: PatientDetail) => {
+  const stateAndZip = [patient.stateCode, patient.postalCode].filter(Boolean).join(" ");
+  return orNotProvided(
+    [patient.addressLine1, patient.addressLine2, patient.city, stateAndZip].filter(Boolean).join(", "),
+  );
+};
 
 /* ---------- Small building blocks ---------- */
 const IconBadge = ({
@@ -96,7 +121,7 @@ const Card = ({
   </section>
 );
 
-const isMuted = (v: string) => v === NOT_PROVIDED || v === "Not assigned";
+const isMuted = (v: string) => v === NOT_PROVIDED;
 
 const Field = ({ icon, label, value }: { icon: LucideIcon; label: string; value: string }) => (
   <li className="flex items-center gap-3">
@@ -131,13 +156,124 @@ const EmptyState = ({
   </div>
 );
 
+/** One row of a list card (emergency contact, insurance, appointment). */
+const ListRow = ({
+  title,
+  description,
+  tag,
+  actions,
+}: {
+  title: string;
+  description: string;
+  tag?: React.ReactNode;
+  actions?: React.ReactNode;
+}) => (
+  <li className="flex items-start justify-between gap-3 rounded-xl border border-border/60 px-3.5 py-3">
+    <div className="min-w-0">
+      <p className="break-words text-sm font-semibold text-heading">{title}</p>
+      <p className="mt-0.5 break-words text-xs text-body">{description}</p>
+    </div>
+    <div className="flex shrink-0 items-center gap-1">
+      {tag}
+      {actions}
+    </div>
+  </li>
+);
+
+/** Which list editor is open: `null` item = add a new one. */
+type OpenEditor =
+  | { kind: "emergencyContact"; item: EmergencyContact | null }
+  | { kind: "insurance"; item: PatientInsurance | null }
+  | null;
+
 /* ---------- Component ---------- */
 type Props = {
-  onEdit?: (section: string) => void;
+  patient: PatientDetail;
+  emergencyContacts: EmergencyContact[];
+  insurances: PatientInsurance[];
+  recentAppointments: PatientAppointment[];
+  /** Set when appointments could not be loaded (the rest of the overview still shows). */
+  recentAppointmentsError: string | null;
 };
 
-const OverviewPatient = ({ onEdit }: Props) => {
+const OverviewPatient = ({
+  patient,
+  emergencyContacts,
+  insurances,
+  recentAppointments,
+  recentAppointmentsError,
+}: Props) => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const canUpdatePatient = usePermission(PERMISSIONS.PATIENT_UPDATE);
+  const canManageStatus = usePermission(PERMISSIONS.PATIENT_MANAGE_STATUS);
+  const canCreatePatient = usePermission(PERMISSIONS.PATIENT_CREATE);
+  const [openEditor, setOpenEditor] = useState<OpenEditor>(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
+  const [inviteResult, setInviteResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [contactToDelete, setContactToDelete] = useState<EmergencyContact | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const editPatient = () => router.push(`/edit-patient?id=${encodeURIComponent(patient.id)}`);
+
+  const confirmDeleteContact = async () => {
+    if (!contactToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    const result = await dispatch(
+      deleteEmergencyContact({ patientId: patient.id, contactId: contactToDelete.id }),
+    );
+    setIsDeleting(false);
+    if (deleteEmergencyContact.fulfilled.match(result)) {
+      setContactToDelete(null);
+    } else {
+      setDeleteError(result.payload?.message ?? "The contact could not be removed.");
+    }
+  };
+
+  const contactFields: FieldItem[] = [
+    { icon: Phone, label: "Phone Number", value: orNotProvided(patient.phoneNumber) },
+    { icon: Mail, label: "Email Address", value: orNotProvided(patient.email) },
+    { icon: MapPin, label: "Address", value: formatAddress(patient) },
+  ];
+
+  const personalFields: FieldItem[] = [
+    {
+      icon: CalendarDays,
+      label: "Date of Birth",
+      value: `${formatDateOnly(patient.dateOfBirth)} (${calculateAgeInYears(patient.dateOfBirth)} years)`,
+    },
+    { icon: User, label: "Gender", value: humanizeEnum(patient.administrativeGender) },
+    { icon: Globe, label: "Preferred Language", value: formatLanguage(patient.preferredLanguage) },
+    { icon: Heart, label: "Gender Identity", value: orNotProvided(patient.genderIdentity) },
+  ];
+
+  const accountFields: FieldItem[] = [
+    { icon: Hash, label: "Patient ID", value: patient.medicalRecordNumber },
+    { icon: CalendarDays, label: "Created Date", value: formatDateTime(patient.createdAt) },
+    { icon: Clock, label: "Last Updated", value: formatDateTime(patient.updatedAt) },
+    { icon: UserCheck, label: "Online Account", value: patient.hasPortalAccount ? "Yes" : "No" },
+    ...(patient.deceasedAt
+      ? [{ icon: CalendarDays, label: "Date of Death", value: formatDateOnly(patient.deceasedAt.slice(0, 10)) }]
+      : []),
+    ...(patient.status !== "ACTIVE" && patient.statusReason
+      ? [{ icon: Info, label: "Status Reason", value: patient.statusReason }]
+      : []),
+  ];
+
+  const canInvite = canCreatePatient && !patient.hasPortalAccount && patient.status === "ACTIVE";
+  const invite = async () => {
+    setIsInviting(true);
+    const result = await dispatch(invitePatientToPortal({ patientId: patient.id }));
+    setIsInviting(false);
+    setInviteResult(
+      invitePatientToPortal.fulfilled.match(result)
+        ? { type: "success", message: `An invitation was emailed to ${patient.email}.` }
+        : { type: "error", message: result.payload?.message ?? "The invitation could not be sent." },
+    );
+  };
 
 
   return (
@@ -151,13 +287,13 @@ const OverviewPatient = ({ onEdit }: Props) => {
           icon={Phone}
           title="Contact Information"
           action={
-            CONTACT.some((item) => hasProvidedValue(item.value)) ? (
+            canUpdatePatient ? (
               <EditButton section="Contact Information" onEdit={() => dispatch(showModal("EditContactInformation"))} />
             ) : undefined
           }
         >
           <ul className="space-y-4">
-            {CONTACT.map((c) => (
+            {contactFields.map((c) => (
               <Field key={c.label} {...c} />
             ))}
           </ul>
@@ -167,15 +303,65 @@ const OverviewPatient = ({ onEdit }: Props) => {
           className="flex-1"
           icon={Users}
           title="Emergency Contact"
+          action={
+            canUpdatePatient && emergencyContacts.length > 0 ? (
+              <EditButton
+                section="Emergency Contact"
+                label="Add"
+                onEdit={() => setOpenEditor({ kind: "emergencyContact", item: null })}
+              />
+            ) : undefined
+          }
         >
-          <EmptyState
-            icon={Users}
-            title="No emergency contact added"
-            description="Add emergency contact information for this patient."
-            action={
-              <ImportButton text="Add Emergency Contact" icon={<Plus className="h-4 w-4" />} onClick={() => {}} />
-            }
-          />
+          {emergencyContacts.length > 0 ? (
+            <ul className="space-y-2.5">
+              {emergencyContacts.map((contact) => (
+                <ListRow
+                  key={contact.id}
+                  title={contact.fullName}
+                  description={[humanizeEnum(contact.relationship), contact.phoneNumber, contact.email]
+                    .filter(Boolean)
+                    .join(" • ")}
+                  tag={contact.isPrimary ? <Tags text="Primary" tone="success" /> : undefined}
+                  actions={
+                    canUpdatePatient && (
+                      <>
+                        <IconAction
+                          icon={Pencil}
+                          label={`Edit ${contact.fullName}`}
+                          onClick={() => setOpenEditor({ kind: "emergencyContact", item: contact })}
+                        />
+                        <IconAction
+                          icon={Trash2}
+                          tone="danger"
+                          label={`Remove ${contact.fullName}`}
+                          onClick={() => {
+                            setDeleteError(null);
+                            setContactToDelete(contact);
+                          }}
+                        />
+                      </>
+                    )
+                  }
+                />
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              icon={Users}
+              title="No emergency contact added"
+              description="Add emergency contact information for this patient."
+              action={
+                canUpdatePatient && (
+                  <ImportButton
+                    text="Add Emergency Contact"
+                    icon={<Plus className="h-4 w-4" />}
+                    onClick={() => setOpenEditor({ kind: "emergencyContact", item: null })}
+                  />
+                )
+              }
+            />
+          )}
         </Card>
       </div>
 
@@ -186,13 +372,11 @@ const OverviewPatient = ({ onEdit }: Props) => {
           icon={User}
           title="Personal Information"
           action={
-            PERSONAL.some((item) => hasProvidedValue(item.value)) ? (
-              <EditButton section="Personal Information" onEdit={onEdit} />
-            ) : undefined
+            canUpdatePatient ? <EditButton section="Personal Information" onEdit={editPatient} /> : undefined
           }
         >
           <ul className="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
-            {PERSONAL.map((p) => (
+            {personalFields.map((p) => (
               <Field key={p.label} {...p} />
             ))}
           </ul>
@@ -202,15 +386,63 @@ const OverviewPatient = ({ onEdit }: Props) => {
           className="flex-1"
           icon={ShieldCheck}
           title="Insurance Information"
+          action={
+            canUpdatePatient && insurances.length > 0 ? (
+              <EditButton
+                section="Insurance"
+                label="Add"
+                onEdit={() => setOpenEditor({ kind: "insurance", item: null })}
+              />
+            ) : undefined
+          }
         >
-          <EmptyState
-            icon={ShieldCheck}
-            title="No insurance added"
-            description="Add insurance details to manage billing and claims."
-            action={
-              <ImportButton text="Add Insurance Information" icon={<Plus className="h-4 w-4" />} onClick={() => {}} />
-            }
-          />
+          {insurances.length > 0 ? (
+            <ul className="space-y-2.5">
+              {insurances.map((insurance) => (
+                <ListRow
+                  key={insurance.id}
+                  title={[insurance.payerName, insurance.planName].filter(Boolean).join(" — ")}
+                  description={[
+                    `${humanizeEnum(insurance.coveragePriority)} coverage`,
+                    `Member ID ${insurance.memberId}`,
+                    insurance.groupNumber ? `Group ${insurance.groupNumber}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" • ")}
+                  tag={
+                    <Tags
+                      text={humanizeEnum(insurance.status)}
+                      tone={insurance.status === "ACTIVE" ? "success" : "neutral"}
+                    />
+                  }
+                  actions={
+                    canUpdatePatient && (
+                      <IconAction
+                        icon={Pencil}
+                        label={`Edit ${insurance.payerName}`}
+                        onClick={() => setOpenEditor({ kind: "insurance", item: insurance })}
+                      />
+                    )
+                  }
+                />
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              icon={ShieldCheck}
+              title="No insurance added"
+              description="Add insurance details to manage billing and claims."
+              action={
+                canUpdatePatient && (
+                  <ImportButton
+                    text="Add Insurance Information"
+                    icon={<Plus className="h-4 w-4" />}
+                    onClick={() => setOpenEditor({ kind: "insurance", item: null })}
+                  />
+                )
+              }
+            />
+          )}
         </Card>
       </div>
 
@@ -220,10 +452,10 @@ const OverviewPatient = ({ onEdit }: Props) => {
           className="flex-1"
           icon={UserCheck}
           title="Account Status"
-          action={<Tags text="Active" tone="success" />}
+          action={<Tags text={humanizeEnum(patient.status)} tone={STATUS_TONES[patient.status]} />}
         >
           <ul className="space-y-4">
-            {ACCOUNT.map((a) => (
+            {accountFields.map((a) => (
               <li key={a.label} className="flex items-center justify-between gap-3">
                 <p className="flex min-w-0 items-center gap-3 text-xs text-body sm:text-sm">
                   <IconBadge icon={a.icon} size="sm" />
@@ -239,6 +471,24 @@ const OverviewPatient = ({ onEdit }: Props) => {
               </li>
             ))}
           </ul>
+          {(canManageStatus || canInvite) && (
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-divider pt-4">
+              {canManageStatus && (
+                <ImportButton text="Change Status" icon={null} onClick={() => setIsStatusModalOpen(true)} />
+              )}
+              {canInvite && (
+                <ImportButton
+                  text={isInviting ? "Sending…" : "Invite to Portal"}
+                  icon={<Send className="h-4 w-4" />}
+                  disabled={isInviting || !patient.email}
+                  onClick={invite}
+                />
+              )}
+            </div>
+          )}
+          {canInvite && !patient.email && (
+            <p className="mt-2 text-xs text-body">Add an email address to invite this patient online.</p>
+          )}
         </Card>
 
         <Card
@@ -246,15 +496,83 @@ const OverviewPatient = ({ onEdit }: Props) => {
           icon={CalendarDays}
           title="Recent Appointments"
         >
-          <EmptyState
-            icon={CalendarDays}
-            title="No appointments yet"
-            description="This patient does not have any appointments scheduled."
-            action={<AddButton text="Book Appointment" onClick={() => {}} />}
-          />
+          {recentAppointmentsError ? (
+            <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-xs text-body">
+              Appointments could not be loaded: {recentAppointmentsError}
+            </p>
+          ) : recentAppointments.length > 0 ? (
+            <ul className="space-y-2.5">
+              {recentAppointments.map((appointment) => (
+                <ListRow
+                  key={appointment.id}
+                  title={appointment.appointmentType.name}
+                  description={[
+                    formatDateTime(appointment.startsAt, appointment.timeZone),
+                    `Dr. ${appointment.practitioner.firstName} ${appointment.practitioner.lastName}`,
+                    humanizeEnum(appointment.consultationMode),
+                  ].join(" • ")}
+                  tag={<Tags text={humanizeEnum(appointment.status)} tone="neutral" />}
+                />
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              icon={CalendarDays}
+              title="No appointments yet"
+              description="This patient does not have any appointments scheduled."
+              action={<AddButton text="Book Appointment" onClick={() => router.push("/book-appointment")} />}
+            />
+          )}
         </Card>
       </div>
     </div>
+
+    <SuccessToast
+      isOpen={inviteResult?.type === "success"}
+      onClose={() => setInviteResult(null)}
+      title="Invitation sent"
+      message={inviteResult?.message}
+    />
+    <ErrorToast
+      isOpen={inviteResult?.type === "error"}
+      onClose={() => setInviteResult(null)}
+      title="Invitation failed"
+      message={inviteResult?.message}
+    />
+    {isStatusModalOpen && (
+      <PatientStatusModal patient={patient} onClose={() => setIsStatusModalOpen(false)} />
+    )}
+
+    {/* ---- Editors (mounted only while open, so each opening starts from current data) ---- */}
+    {openEditor?.kind === "emergencyContact" && (
+      <EmergencyContactModal
+        key={openEditor.item?.id ?? "new"}
+        patientId={patient.id}
+        contact={openEditor.item}
+        isFirstContact={emergencyContacts.length === 0}
+        onClose={() => setOpenEditor(null)}
+      />
+    )}
+    {openEditor?.kind === "insurance" && (
+      <InsuranceModal
+        key={openEditor.item?.id ?? "new"}
+        patientId={patient.id}
+        insurance={openEditor.item}
+        onClose={() => setOpenEditor(null)}
+      />
+    )}
+    <DeleteDialog
+      open={contactToDelete !== null}
+      onClose={() => !isDeleting && setContactToDelete(null)}
+      onConfirm={confirmDeleteContact}
+      title="Remove emergency contact?"
+      description={
+        deleteError ?? `${contactToDelete?.fullName ?? "This contact"} will be removed from this patient.`
+      }
+      confirmText="Remove"
+      loadingText="Removing…"
+      loading={isDeleting}
+    />
 
     {/* ---- Row 2: full-width HIPAA banner ---- */}
     {/* <div className="flex items-start gap-3 rounded-[8px] border border-primary/20 bg-primary/5 dark:bg-primary/20 p-4 sm:p-5">
