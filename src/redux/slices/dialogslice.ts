@@ -8,7 +8,7 @@ import type { InvoiceItem } from "@/billing/manage/invoice/createinvoice/AddCust
 import type { DeletablePaymentMethod } from "@/billing/manage/payment-method/DeletePaymentMethod";
 import type { ClearinghouseAccount } from "@/billing/clearinghouse/clearingaccount/ClearinghouseAccounts";
 import type { TestResult } from "@/billing/clearinghouse/clearingaccount/TestConnection";
-import type { CatalogMedication } from "@/prescriptions/addprescription/SelectMedicationModal";
+import type { CatalogMedication } from "@/prescriptions/addprescription/SelectMedicationlistModal";
 
 export interface PrescriptionToDelete {
   id: string;
