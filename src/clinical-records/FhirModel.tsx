@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   BookOpen,
@@ -66,6 +67,7 @@ type Resource = {
   pageTitle: string;
   pageSubtitle: string;
   addLabel: string;
+  addRoute?: string;
   screen?: React.ComponentType;
 };
 
@@ -79,6 +81,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Patients",
     pageSubtitle: "View and manage patient demographic and administrative information (FHIR Resource: Patient).",
     addLabel: "Add Patient",
+    addRoute: "/add-patient",
     screen: FhirPatient,
   },
   {
@@ -90,6 +93,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Practitioners",
     pageSubtitle: "View and manage healthcare providers (FHIR Resource: Practitioner).",
     addLabel: "Add Practitioner",
+    addRoute: "/provider/add-practitioner",
     screen: FhirPractitioner,
   },
   {
@@ -134,6 +138,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Appointments",
     pageSubtitle: "View and manage patient appointments (FHIR Resource: Appointment).",
     addLabel: "Add Appointment",
+    addRoute: "/book-appointment",
     screen: FhirAppointment,
   },
   {
@@ -145,6 +150,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Encounters",
     pageSubtitle: "View and manage clinical encounters and visits (FHIR Resource: Encounter).",
     addLabel: "Add Encounter",
+    addRoute: "/new-encounter",
     screen: FhirEncounter,
   },
   {
@@ -156,6 +162,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Observations",
     pageSubtitle: "View and manage clinical observations and measurements (FHIR Resource: Observation).",
     addLabel: "Add Observation",
+    addRoute: "/add-observation",
     screen: FhirObservation,
   },
   {
@@ -189,6 +196,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Medication Requests",
     pageSubtitle: "View and manage medication requests (FHIR Resource: MedicationRequest).",
     addLabel: "Create Medication Request",
+    addRoute: "/medication/new-prescription",
     screen: FhirMedicationRequest,
   },
   {
@@ -208,6 +216,7 @@ const RESOURCES: Resource[] = [
 /*  Component                                                        */
 /* ---------------------------------------------------------------- */
 const FhirModel = () => {
+  const router = useRouter();
   const [activeKey, setActiveKey] = useState<ResourceKey>("Patient");
   const [resourceQuery, setResourceQuery] = useState("");
 
@@ -267,14 +276,16 @@ const FhirModel = () => {
             }}
             className="whitespace-nowrap px-4 text-primary"
           />
-          <AddButton
-            text={active.addLabel}
-            icon={<Plus className="h-4 w-4" />}
-            onClick={() => {
-              /* TODO: open add form for active.key */
-            }}
-            className="whitespace-nowrap"
-          />
+          {active.addRoute && (
+            <AddButton
+              text={active.addLabel}
+              icon={<Plus className="h-4 w-4" />}
+              onClick={() => {
+                if (active.addRoute) router.push(active.addRoute);
+              }}
+              className="whitespace-nowrap"
+            />
+          )}
         </div>
       </div>
 

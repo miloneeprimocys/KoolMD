@@ -287,7 +287,7 @@ const BookNewAppointment = ({ onBack }: Props) => {
 
       {/* Sticky bottom buttons */}
       <div className="sticky -bottom-4 z-[250] -mx-4 -mb-4 mt-4 border-t border-border bg-card px-4 py-4 sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6 sm:py-5">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 sm:gap-3">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-center sm:justify-end gap-2 sm:gap-3">
           {isFirstStep ? (
             <ImportButton text="Cancel" icon={null} onClick={goBack} className="shrink-0 whitespace-nowrap px-3 sm:px-5" />
           ) : (

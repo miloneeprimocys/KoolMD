@@ -23,6 +23,7 @@ import {
   Landmark,
   ListChecks,
   MessageSquare,
+  Pill,
   Receipt,
   RefreshCw,
   Send,
@@ -129,6 +130,16 @@ const SECTIONS: NavSection[] = [
       },
       { label: "Lab Results", href: "/lab-results", Icon: FlaskConical },
       { label: "Questionnaires", href: "/questionnaires", Icon: ListChecks },
+      {
+        label: "Medications",
+        href: "/medication/medication-list",
+        Icon: Pill,
+        children: [
+          { label: "Medication List", href: "/medication/medication-list", Icon: Pill },
+          { label: "Prescription History", href: "/medication/prescription-list", Icon: Receipt },
+          { label: "Reconciliation", href: "/medication/reconciliation-list", Icon: RefreshCw },
+        ],
+      },
       {
         label: "Referrals",
         href: "/referral",
@@ -336,6 +347,8 @@ const RELATED_ROUTE_PATHS: Record<string, string[]> = {
   "/prescriptions": ["/add-prescription", "/edit-prescription", "/view-prescription"],
   "/lab-results": ["/new-laborder", "/new-lab-order"],
   "/questionnaires": ["/edit-questionnaire", "/view-response", "/edit-response", "/add-template"],
+  "/medication/prescription-list": ["/medication/new-prescription"],
+  "/medication/reconciliation-list": ["/medication/reconciliation-list/start", "/medication/reconciliation-list/add"],
   "/referral/efax": ["/referral/efax/new-efax"],
   "/payers/accounts": [
     "/payers/add-accounts",
@@ -415,6 +428,12 @@ const MainSidebar = ({ isMini, onToggleMini }: MainSidebarProps) => {
     restoreScroll();
     frame = window.requestAnimationFrame(restoreScroll);
     return () => window.cancelAnimationFrame(frame);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (pathname?.startsWith("/medication/")) {
+      setOpenGroups((groups) => ({ ...groups, Medications: true }));
+    }
   }, [pathname]);
 
   const toggle = (label: string) =>

@@ -191,6 +191,8 @@ const DayRow = ({
           Add Shift
         </button>
 
+
+
         {/* Shift pairs: 2 per row */}
         <div className="order-3 grid w-full grid-cols-1 gap-2 md:grid-cols-2 2xl:order-2 2xl:w-auto 2xl:min-w-0 2xl:flex-1">
           {day.shifts.map((s, idx) => (

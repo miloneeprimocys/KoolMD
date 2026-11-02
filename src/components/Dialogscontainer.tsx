@@ -25,7 +25,7 @@ import UnlockPopup from "@/administration/chatunlock/Unlockpopup";
 import DisconnectIntegration from "@/settings/integration/DisconnectIntegration";
 import EditContactInformationModal from "@/patient/viewpatients/overview/EditContactInformationModal";
 import AddDocumentModal from "@/prescriptions/viewprescription/AddDocumentModal";
-import SelectMedicationModal from "@/prescriptions/addprescription/SelectMedicationModal";
+import SelectMedicationModal from "@/prescriptions/addprescription/SelectMedicationlistModal";
 import DeleteLicense from "@/providers/licensemanagement/Deletelicense";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {

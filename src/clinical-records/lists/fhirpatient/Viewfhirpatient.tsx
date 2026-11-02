@@ -11,7 +11,7 @@ import SignupDropdown from "@/components/SignupDropdown";
 import { cardCls, toOptions } from "@/providers/Shared";
 
 import FhirOverview from "./Fhiroverview";
-import FhirObservations, { VIEW_PATIENT_ROUTE } from "./Fhirobservations";
+import FhirObservations, { VIEW_PATIENT_ROUTE } from "./observations/Fhirobservations";
 import FhirResourceMapping from "./Fhirresourcemapping";
 import FhirValidationRules from "./Fhirvalidationrules";
 
