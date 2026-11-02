@@ -40,7 +40,7 @@ import EditMedication from "@/patient/viewpatients/medications/Editmedication";
 import DeleteMedication from "@/patient/viewpatients/medications/Deletemedication";
 import MarkInactiveMedication from "@/patient/viewpatients/medications/Markinactivemedication";
 import AddDocumentModal from "@/prescriptions/viewprescription/AddDocumentModal";
-import SelectMedicationModal from "@/prescriptions/addprescription/SelectMedicationModal";
+import SelectMedicationModal from "@/prescriptions/addprescription/SelectMedicationlistModal";
 import DeleteLicense from "@/providers/licensemanagement/Deletelicense";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {

@@ -49,6 +49,8 @@ export interface SignupDropdownProps {
   bordered?: boolean;
   /** Additional classes for the visible dropdown trigger. */
   triggerClassName?: string;
+  /** Optional color override for the dropdown chevron. */
+  chevronClassName?: string;
   /** Render the options in a viewport layer to escape clipped containers. */
   portalMenu?: boolean;
   /** Maximum portal menu height in pixels when the menu is scrollable. */
@@ -86,6 +88,7 @@ const SignupDropdown = forwardRef<HTMLInputElement, SignupDropdownProps>(
       compact = false,
       bordered = true,
       triggerClassName = "",
+      chevronClassName = "",
       portalMenu = false,
       menuMaxHeight = 256,
       menuScrollable = true,
@@ -476,7 +479,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                     pointer-events-none absolute top-1/2 -translate-y-1/2
                     ${chevronSize} ${chevronRight}
                     bg-card transition-transform duration-300
-                    ${open ? "rotate-180 text-primary" : "text-label"}
+                    ${open ? "rotate-180" : ""} ${chevronClassName || (open ? "text-primary" : "text-label")}
                   `}
                 />
               )}
@@ -539,7 +542,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                   absolute top-1/2 -translate-y-1/2
                   ${chevronSize} ${chevronRight}
                   transition-transform duration-300
-                  ${open ? "rotate-180 text-primary" : "text-label"}
+                  ${open ? "rotate-180" : ""} ${chevronClassName || (open ? "text-primary" : "text-label")}
                 `}
               />
             </button>
@@ -575,7 +578,7 @@ const chevronRight = compact ? "right-2" : "right-3.5";
                 shadow-2xl shadow-black/20 dark:shadow-black/60
                 ring-1 ring-border/60
                 py-1
-                animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both]
+                animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both] custom-scrollbar
                 ${!portalMenu && (placement === "down" ? "top-full mt-1.5" : "bottom-full mb-1")}
               `}
             >

@@ -28,7 +28,8 @@ import LabResults from "@/labresults/Labresults";
 import NewLabOrder from "@/labresults/newlaborder/Newlaborder";
 import Fhircentered from "@/clinical-records/FhirModel";
 import ViewFhirPatient from "@/clinical-records/lists/fhirpatient/Viewfhirpatient";
-import AddObservation from "@/clinical-records/lists/fhirpatient/Addobservation";
+import AddObservation from "@/clinical-records/lists/fhirpatient/observations/Addobservation";
+import ViewFhirObservations from "@/clinical-records/lists/fhirpatient/observations/Viewfhirobservations";
 import Billing from "@/billing/payment/payment-gateway/Billing";
 import ClearinghouseAccounts from "@/billing/clearinghouse/clearingaccount/ClearinghouseAccounts";
 import AddClearinghouseAccount from "@/billing/clearinghouse/clearingaccount/AddClearinghouseAccount";
@@ -63,6 +64,12 @@ import ProviderMarketPlace, { ProviderMarketplaceProfilePage } from "@/referral/
 import EditQuestionnaire from "@/Questionnaires/Editquestionnaire";
 import ViewResponse from "@/Questionnaires/response/Viewresponse";
 import AddTemplate from "@/Questionnaires/template/Addtemplate";
+import MedicationListPage from "@/medications/medicationlist/Medicationlistpage";
+import PrescriptionHistoryPage from "@/medications/prescriptionlist/Prescriptionhistorypage";
+import NewPrescription from "@/medications/prescriptionlist/Newprescription";
+import ReconciliationPage from "@/medications/reconciliationlist/Reconciliationpage";
+import ReconcileMedications from "@/medications/reconciliationlist/Reconcilemedications";
+import AddReconciledMedication from "@/medications/reconciliationlist/Addreconciledmedication";
 import { PERMISSIONS, type PermissionCode } from "@/auth/permissions";
 
 /**
@@ -286,6 +293,11 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "Add Observation",
     access: "protected",
   },
+  "view-observation": {
+    component: ViewFhirObservations,
+    title: "View Observation",
+    access: "protected",
+  },
   billing: {
     component: Billing,
     title: "Billing & Payments",
@@ -504,6 +516,36 @@ export const ROUTES: Record<string, RouteConfig> = {
   questionnaires: {
     component: QuestionnairesPage,
     title: "Questionnaires",
+    access: "protected",
+  },
+  "medication/medication-list": {
+    component: MedicationListPage,
+    title: "Medication List",
+    access: "protected",
+  },
+  "medication/prescription-list": {
+    component: PrescriptionHistoryPage,
+    title: "Prescription History",
+    access: "protected",
+  },
+  "medication/new-prescription": {
+    component: NewPrescription,
+    title: "New Prescription",
+    access: "protected",
+  },
+  "medication/reconciliation-list": {
+    component: ReconciliationPage,
+    title: "Reconciliation",
+    access: "protected",
+  },
+  "medication/reconciliation-list/start": {
+    component: ReconcileMedications,
+    title: "Reconcile Medications",
+    access: "protected",
+  },
+  "medication/reconciliation-list/add": {
+    component: AddReconciledMedication,
+    title: "Add Medication",
     access: "protected",
   },
   "settings/integration": {

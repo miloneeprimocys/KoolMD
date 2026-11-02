@@ -86,7 +86,7 @@ type Props = {
   onSelect: (medication: CatalogMedication) => void;
 };
 
-const SelectMedicationModal = ({ open, onClose, onSelect }: Props) => {
+const SelectMedicationlistModal = ({ open, onClose, onSelect }: Props) => {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
@@ -226,4 +226,4 @@ const SelectMedicationModal = ({ open, onClose, onSelect }: Props) => {
   );
 };
 
-export default SelectMedicationModal;
+export default SelectMedicationlistModal;
