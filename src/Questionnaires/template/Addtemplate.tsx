@@ -2,7 +2,7 @@
 
 import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Copy,
   Eye,
@@ -262,11 +262,17 @@ const PreviewField = ({ q }: { q: TemplateQuestion }) => {
 /* ---------- Page ---------- */
 const AddTemplate = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const savedTemplateQuestion = useAppSelector((state) => state.dialog.templateQuestionResult);
   const idSeed = useRef(100);
   const newId = () => `q${idSeed.current++}`;
   const previewRef = useRef<HTMLDivElement | null>(null);
+
+  const templateId = searchParams.get("id");
+  const isEditMode = Boolean(templateId);
+  const pageTitle = isEditMode ? "Edit Questionnaire Template" : "Add Questionnaire Template";
+  const breadcrumbLabel = isEditMode ? "Edit Template" : "Add Template";
 
   /* Template details */
   const [name, setName] = useState("Pre-Visit Intake");
@@ -405,14 +411,14 @@ const AddTemplate = () => {
         items={[
           { label: "Questionnaires", href: "/questionnaires" },
           { label: "Templates", href: "/questionnaires?tab=templates" },
-          { label: "Add Template" },
+          { label: breadcrumbLabel },
         ]}
       />
 
       {/* Title + actions */}
       <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
-          <h2 className="break-words text-lg font-semibold text-heading sm:text-xl 2xl:text-2xl">Add Questionnaire Template</h2>
+          <h2 className="break-words text-lg font-semibold text-heading sm:text-xl 2xl:text-2xl">{pageTitle}</h2>
           <p className="mt-0.5 text-sm text-body">
             Create a reusable questionnaire for patient intake, follow-ups or assessments.
           </p>

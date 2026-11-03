@@ -251,8 +251,23 @@ const ViewEncounter = () => {
 
   const { patient, visit, clinical, patientInfo, followUp } = ENCOUNTER;
 
+  // Map sections to step numbers
+  const sectionToStep: Record<string, number> = {
+    "Encounter": 1,
+    "Patient Information": 1,
+    "Clinical Information": 2,
+    "Diagnoses": 3,
+    "Orders": 4,
+    "Prescriptions": 4,
+    "Attachments": 5,
+    "Follow-up": 6,
+  };
+
   // TODO: route to your edit screens / open your modals for each section
-  const editSection = (section: string) => router.push(`/edit-encounter?id=${encounterKey}&section=${encodeURIComponent(section)}`);
+  const editSection = (section: string) => {
+    const step = sectionToStep[section] ?? 1;
+    router.push(`/edit-encounter?id=${encounterKey}&section=${encodeURIComponent(section)}&step=${step}`);
+  };
 
   const copyLink = async () => {
     try {

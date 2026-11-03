@@ -64,13 +64,15 @@ const STEPS: VerticalStepItem[] = [
 const NewEncounter = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const patientId = useSearchParams().get("id");
+  const searchParams = useSearchParams();
+  const patientId = searchParams.get("id");
+  const sectionStep = searchParams.get("step");
   const isEditMode = pathname === "/edit-encounter";
   const encounterTitle = isEditMode ? "Edit Encounter" : "New Encounter";
   const query = patientId ? `?id=${patientId}` : "";
   const viewHref = `/view-encounters${query}`;
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(sectionStep ? parseInt(sectionStep, 10) : 1);
   const isFirst = step === 1;
   const isLast = step === STEPS.length;
   const current = STEPS[step - 1];

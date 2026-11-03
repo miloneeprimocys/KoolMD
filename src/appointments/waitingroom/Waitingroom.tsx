@@ -168,12 +168,7 @@ const WaitingRoom = () => {
       status: <Tags text="Waiting" tone="info" />,
       actions: (
         <div className="flex w-full items-center justify-center gap-1">
-          <button type="button" aria-label="Start video consultation" className={iconBtn}>
-            <Video className="h-4 w-4" />
-          </button>
-          <button type="button" aria-label="Send message" className={iconBtn}>
-            <MessageCircle className="h-4 w-4" />
-          </button>
+       
           <Actions
             onAction={(action) => {
               if (action === "view") {

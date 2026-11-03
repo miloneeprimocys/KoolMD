@@ -30,6 +30,12 @@ import Fhircentered from "@/clinical-records/FhirModel";
 import ViewFhirPatient from "@/clinical-records/lists/fhirpatient/Viewfhirpatient";
 import AddObservation from "@/clinical-records/lists/fhirpatient/observations/Addobservation";
 import ViewFhirObservations from "@/clinical-records/lists/fhirpatient/observations/Viewfhirobservations";
+import AddPractitionerRole from "@/clinical-records/lists/fhirpatient/practitionerrole/Addpractitionerrole";
+import AddOrganization from "@/clinical-records/lists/fhirpatient/organizations/Addorganization";
+import AddLocation from "@/clinical-records/lists/fhirpatient/locations/Addlocation";
+import AddCondition from "@/clinical-records/lists/fhirpatient/conditions/Addcondition";
+import AddMedication from "@/clinical-records/lists/fhirpatient/medication/Addmedication";
+import AddMedicationStatement from "@/clinical-records/lists/fhirpatient/medicationstatement/Addmedicationstatement";
 import Billing from "@/billing/payment/payment-gateway/Billing";
 import ClearinghouseAccounts from "@/billing/clearinghouse/clearingaccount/ClearinghouseAccounts";
 import AddClearinghouseAccount from "@/billing/clearinghouse/clearingaccount/AddClearinghouseAccount";
@@ -71,7 +77,14 @@ import ReconciliationPage from "@/medications/reconciliationlist/Reconciliationp
 import ReconcileMedications from "@/medications/reconciliationlist/Reconcilemedications";
 import AddReconciledMedication from "@/medications/reconciliationlist/Addreconciledmedication";
 import { PERMISSIONS, type PermissionCode } from "@/auth/permissions";
-
+import CompensationAgreement from "@/compensation/Compensationagreement";
+import ProviderDirectory from "@/compensation/Providerdirectory";
+import ProviderCompensationProfile from "@/compensation/Providercompensationprofile";
+import GeneratePaymentSheet from "@/compensation/Generatepaymentsheet";
+import ReviewApprovePayment from "@/compensation/Reviewapprovepayment";
+import RecordPayment from "@/compensation/Recordpayment";
+import PaymentHistory from "@/compensation/Paymenthistory";
+import CompensationDashboard from "@/compensation/Compensationdashboard";
 /**
  * protected → signed-in only · guest → signed-out only · public → anyone
  */
@@ -298,6 +311,36 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "View Observation",
     access: "protected",
   },
+  "fhir/add-practitioner-role": {
+    component: AddPractitionerRole,
+    title: "Add Practitioner Role",
+    access: "protected",
+  },
+  "fhir/add-organization": {
+    component: AddOrganization,
+    title: "Add Organization",
+    access: "protected",
+  },
+  "fhir/add-location": {
+    component: AddLocation,
+    title: "Add Location",
+    access: "protected",
+  },
+  "fhir/add-condition": {
+    component: AddCondition,
+    title: "Add Condition",
+    access: "protected",
+  },
+  "fhir/add-medication": {
+    component: AddMedication,
+    title: "Add Medication",
+    access: "protected",
+  },
+  "fhir/add-medication-statement": {
+    component: AddMedicationStatement,
+    title: "Add Medication Statement",
+    access: "protected",
+  },
   billing: {
     component: Billing,
     title: "Billing & Payments",
@@ -503,6 +546,46 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "Clearinghouse",
     access: "protected",
   },
+    compensation: {
+    component: CompensationDashboard,
+    title: "Provider Compensation",
+    access: "protected",
+  },
+  "compensation/provider-directory": {
+    component: ProviderDirectory,
+    title: "Provider Directory",
+    access: "protected",
+  },
+  "compensation/provider-profile": {
+    component: ProviderCompensationProfile,
+    title: "Provider Compensation Profile",
+    access: "protected",
+  },
+  "compensation/agreement": {
+    component: CompensationAgreement,
+    title: "Compensation Agreement",
+    access: "protected",
+  },
+  "compensation/generate-payment-sheet": {
+    component: GeneratePaymentSheet,
+    title: "Generate Payment Sheet",
+    access: "protected",
+  },
+  "compensation/payment-sheet-review": {
+    component: ReviewApprovePayment,
+    title: "Review & Approve Payment",
+    access: "protected",
+  },
+  "compensation/record-payment": {
+    component: RecordPayment,
+    title: "Record Payment",
+    access: "protected",
+  },
+  "compensation/payment-history": {
+    component: PaymentHistory,
+    title: "Payment History",
+    access: "protected",
+  },
   "new-laborder": {
     component: NewLabOrder,
     title: "New Lab Order",
@@ -621,6 +704,11 @@ export const ROUTES: Record<string, RouteConfig> = {
   "add-template": {
     component: AddTemplate,
     title: "Add Template",
+    access: "protected",
+  },
+  "edit-template": {
+    component: AddTemplate,
+    title: "Edit Template",
     access: "protected",
   },
 };

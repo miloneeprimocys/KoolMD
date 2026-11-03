@@ -7,11 +7,11 @@ import Table from "@/components/Table";
 import { type TableColumn } from "@/components/Tableheader";
 import Content from "@/components/Content";
 import Tags from "@/components/Tags";
+import EditButton from "@/components/EditButton";
 import { cardCls } from "@/providers/Shared";
 import LabOrderColumns from "./Labordercolumns";
 import {
   CATEGORY_TONE,
-  EditLink,
   SelectedTestsCard,
   formatPrice,
   type LabTest,
@@ -49,10 +49,10 @@ export const SAMPLE_PATIENT: PatientInfo = {
 };
 
 /* ---------- Small pieces ---------- */
-const CardHeader = ({ title, onEdit }: { title: string; onEdit?: () => void }) => (
+const CardHeader = ({ title, onEdit, section }: { title: string; onEdit?: () => void; section?: string }) => (
   <div className="mb-3 flex items-center justify-between gap-3">
     <h3 className="text-base font-semibold text-heading">{title}</h3>
-    {onEdit && <EditLink onClick={onEdit} />}
+    {onEdit && <EditButton section={section || title} onEdit={onEdit} />}
   </div>
 );
 
@@ -109,7 +109,7 @@ const ReviewSave = ({ tests, snapshot, additional, patient = SAMPLE_PATIENT, onE
       <div className="min-w-0 space-y-4 sm:space-y-5">
         {/* Patient information */}
         <section className={`${cardCls} sm:p-6`}>
-          <CardHeader title="Patient Information" onEdit={() => onEdit(1)} />
+          <CardHeader title="Patient Information" section="Patient Information" onEdit={() => onEdit(1)} />
           <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.35fr)_repeat(3,minmax(0,1fr))] lg:items-center lg:gap-0">
             <div className="flex min-w-0 items-center gap-3 lg:pr-4">
               <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-semibold text-primary">
@@ -222,7 +222,7 @@ const ReviewSave = ({ tests, snapshot, additional, patient = SAMPLE_PATIENT, onE
 
         <SelectedTestsCard tests={tests} showPrice onEdit={() => onEdit(2)} />
 
-        <div className="flex items-center justify-between rounded-2xl border border-border bg-primary/5 dark:bg-primary/15 px-5 py-4">
+        <div className="flex items-center justify-between rounded-2xl border border-border bg-primary/5 dark:bg-primary/15 px-5 py-4 mt-1">
           <span className="text-sm font-semibold text-heading">Estimated Total</span>
           <span className="text-lg font-bold text-label">₹ {formatPrice(total)}</span>
         </div>

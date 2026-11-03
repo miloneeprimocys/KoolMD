@@ -161,7 +161,7 @@ const Efax = () => {
     actions: (
       <div className="flex w-full items-center justify-center gap-1">
         <Actions
-          actions={["view", "download", "more"]}
+          actions={["view", "download", ]}
           size="sm"
           onAction={(action) => {
             if (action === "view") selectFax(f);
@@ -190,7 +190,7 @@ const Efax = () => {
         <StatCards stats={STATS} />
 
         {/* Tabs */}
-        <div role="tablist" className="flex gap-6 overflow-x-auto overflow-y-hidden border-b border-divider">
+        <div role="tablist" className="flex gap-6 overflow-x-auto overflow-y-hidden border-b border-label/15 ">
           {TABS.map((t) => (
             <button
               key={t}
@@ -201,8 +201,8 @@ const Efax = () => {
                 setTab(t);
                 setPage(1);
               }}
-              className={`-mb-px shrink-0 cursor-pointer border-b-2 px-1 pb-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
-                tab === t ? "border-primary text-primary" : "border-transparent text-body hover:text-heading"
+              className={`-mb-px shrink-0 cursor-pointer border-b-2 px-1 pb-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
+                tab === t ? "border-primary/80 text-primary" : "border-transparent text-body hover:text-heading"
               }`}
             >
               {t}

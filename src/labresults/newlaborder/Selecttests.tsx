@@ -12,6 +12,7 @@ import Tags, { type TagTone } from "@/components/Tags";
 import Pagination from "@/components/Pagination";
 import { TableSelectAllCheckbox } from "@/components/TableSelection";
 import { FieldError } from "@/components/SignupField";
+import EditButton from "@/components/EditButton";
 import { cardCls } from "@/providers/Shared";
 import LabOrderColumns from "./Labordercolumns";
 
@@ -78,18 +79,6 @@ export const CATEGORY_TONE: Record<TestCategory, TagTone> = {
 const checkboxCls =
   "h-4 w-4 cursor-pointer rounded border-border accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
 
-/* "Edit" link used on the Additional Info + Review cards */
-export const EditLink = ({ onClick }: { onClick?: () => void }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:text-sm"
-  >
-    <Pencil className="h-3.5 w-3.5" />
-    Edit
-  </button>
-);
-
 /* ---------------------------------------------------------------- */
 /*  Selected tests card (right column on steps 2 and 3, and 4)      */
 /* ---------------------------------------------------------------- */
@@ -101,6 +90,7 @@ export const SelectedTestsCard = ({
   showPrice = false,
   showTemplateButton = false,
   listMaxHeightClass = "max-h-80",
+  useEditButton = false,
 }: {
   tests: LabTest[];
   onRemove?: (id: string) => void;
@@ -109,6 +99,7 @@ export const SelectedTestsCard = ({
   showPrice?: boolean;
   showTemplateButton?: boolean;
   listMaxHeightClass?: string;
+  useEditButton?: boolean;
 }) => (
   <section className={`${cardCls} sm:p-6`}>
     <div className="mb-4 flex items-center justify-between gap-3">
@@ -122,7 +113,11 @@ export const SelectedTestsCard = ({
           Clear All
         </button>
       )}
-      {onEdit && <EditLink onClick={onEdit} />}
+      {onEdit && useEditButton ? (
+        <EditButton section="Selected Tests" onEdit={onEdit} />
+      ) : onEdit ? (
+        <EditButton section="Selected Tests" onEdit={onEdit} />
+      ) : null}
     </div>
 
     {tests.length === 0 ? (

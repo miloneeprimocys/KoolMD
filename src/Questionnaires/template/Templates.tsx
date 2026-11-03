@@ -149,7 +149,13 @@ const Templates = () => {
     updatedOn: <Content title={t.updatedOn} />,
     actions: (
       <div className="flex w-full items-center justify-center">
-        <Actions onAction={(action) => console.log("template action:", action, t.id)} />
+        <Actions
+          actions={["edit"]}
+          size="sm"
+          onAction={(action) => {
+            if (action === "edit") router.push(`/edit-template?id=${t.id}`);
+          }}
+        />
       </div>
     ),
   }));

@@ -185,7 +185,7 @@ const FhirObservations = () => {
     actions: (
       <div className="flex w-full items-center justify-center">
         <Actions
-          actions={["view", "edit", "more"]}
+          actions={["view", "edit"]}
           size="sm"
           onAction={(action) => {
             if (action === "view") router.push(`${VIEW_OBSERVATION_ROUTE}?id=${o.id}`);

@@ -7,6 +7,7 @@ import SignupDropdown from "@/components/SignupDropdown";
 import DatePicker from "@/components/Datepicker";
 import Tags, { type TagTone } from "@/components/Tags";
 import { ModalRadioGroup } from "@/components/Modalshell";
+import EditButton from "@/components/EditButton";
 import {
   Opt,
   Req,
@@ -17,7 +18,7 @@ import {
   type Errors,
   type StepProps,
 } from "@/providers/Shared";
-import { SelectedTestsCard, EditLink, type LabTest } from "./Selecttests";
+import { SelectedTestsCard, type LabTest } from "./Selecttests";
 import LabOrderColumns from "./Labordercolumns";
 
 /* ---------- Options ---------- */
@@ -261,7 +262,7 @@ const AdditionalInfo = ({
         <section className={`${cardCls} sm:p-6`}>
           <div className="mb-3 flex items-center justify-between gap-3">
             <h3 className="text-base font-semibold text-heading">Order Summary</h3>
-            <EditLink onClick={() => onEdit(1)} />
+            <EditButton section="Order Summary" onEdit={() => onEdit(1)} />
           </div>
           <dl className="divide-y divide-divider">
             <SummaryRow label="Patient">{snapshot.patient}</SummaryRow>

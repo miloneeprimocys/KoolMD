@@ -96,7 +96,7 @@ const SECTIONS: NavSection[] = [
             href: "/provider/practitioner",
             Icon: Stethoscope,
             requiredPermission: PERMISSIONS.PRACTITIONER_READ,
-          },
+          }, 
           {
             label: "License Management",
             href: "/provider/license-management",
@@ -230,8 +230,20 @@ const SECTIONS: NavSection[] = [
           { label: "Claims", href: "/payers/claims", Icon: ClipboardList },
         ],
       },
+        {
+        label: "Compensation",
+        href: "/compensation",
+        Icon: DollarSign,
+        children: [
+          { label: "Provider Directory", href: "/compensation/provider-directory", Icon: BookUser },
+          { label: "Compensation Agreements", href: "/compensation/agreement", Icon: FileText },
+          { label: "Generate Payment Sheet", href: "/compensation/generate-payment-sheet", Icon: ClipboardList },
+          { label: "Payment History", href: "/compensation/payment-history", Icon: History },
+        ],
+      },
     ],
   },
+  
 ];
 
 /* ----- Shared link styles (blue accent) ----- */
@@ -343,10 +355,20 @@ const RELATED_ROUTE_PATHS: Record<string, string[]> = {
   ],
   "/appointments": ["/book-appointment", "/edit-appointment"],
   "/encounters": ["/new-encounter", "/edit-encounter", "/view-encounter"],
-  "/fhir-model": [],
+  "/fhir-model": [
+    "/view-fhir-patient",
+    "/add-observation",
+    "/view-observation",
+    "/fhir/add-practitioner-role",
+    "/fhir/add-organization",
+    "/fhir/add-location",
+    "/fhir/add-condition",
+    "/fhir/add-medication",
+    "/fhir/add-medication-statement",
+  ],
   "/prescriptions": ["/add-prescription", "/edit-prescription", "/view-prescription"],
   "/lab-results": ["/new-laborder", "/new-lab-order"],
-  "/questionnaires": ["/edit-questionnaire", "/view-response", "/edit-response", "/add-template"],
+  "/questionnaires": ["/edit-questionnaire", "/view-response", "/edit-response", "/add-template", "/edit-template"],
   "/medication/prescription-list": ["/medication/new-prescription"],
   "/medication/reconciliation-list": ["/medication/reconciliation-list/start", "/medication/reconciliation-list/add"],
   "/referral/efax": ["/referral/efax/new-efax"],
@@ -358,6 +380,9 @@ const RELATED_ROUTE_PATHS: Record<string, string[]> = {
   ],
   "/payers/eligibility-verification": ["/payers/eligibility-verification/check"],
   "/payers/claims": ["/payers/claims/submit", "/payers/claims/view"],
+    "/compensation/provider-directory": ["/compensation/provider-profile"],
+  "/compensation/payment-history": ["/compensation/payment-sheet-review", "/compensation/record-payment"],
+
 };
 
 const checkIsActive = (href: string, pathname: string | null) => {
@@ -389,7 +414,12 @@ const checkIsActive = (href: string, pathname: string | null) => {
   }
 
   if (path === "/patients") {
-    return pathname === "/patients" || pathname.includes("patient");
+    return (
+      pathname === "/patients" ||
+      pathname === "/add-patient" ||
+      pathname === "/edit-patient" ||
+      pathname === "/view-patient"
+    );
   }
 
   if (path !== "/" && pathname.startsWith(`${path}/`)) {

@@ -87,7 +87,7 @@ const Billing = () => {
       </div>
 
       {/* Tabs */}
-      <div role="tablist" className="flex gap-6 overflow-x-auto border-b border-divider hide-scrollbar">
+      <div role="tablist" className="flex gap-6 overflow-x-auto border-b border-label/15 hide-scrollbar">
         {TABS.map((t) => (
           <button
             key={t.key}

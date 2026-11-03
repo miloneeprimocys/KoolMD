@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Activity,
   BookOpen,
@@ -29,16 +29,16 @@ import TableStatus from "@/components/TableStatus";
 
 import FhirPatient from "./lists/fhirpatient/Fhirpatient";
 import FhirPractitioner from "./lists/Fhirpractitioner";
-import FhirPractitionerRole from "./lists/Fhirpractitionerrole";
-import FhirOrganization from "./lists/Fhirorganization";
-import FhirLocation from "./lists/Fhirlocation";
+import FhirPractitionerRole from "./lists/fhirpatient/practitionerrole/Fhirpractitionerrole";
+import FhirOrganization from "./lists/fhirpatient/organizations/Fhirorganization";
+import FhirLocation from "./lists/fhirpatient/locations/Fhirlocation";
 import FhirAppointment from "./lists/Fhirappointment";
 import FhirEncounter from "./lists/Fhirencounter";
 import FhirObservation from "./lists/Fhirobservation";
-import FhirCondition from "./lists/Fhircondition";
-import FhirMedication from "./lists/Fhirmedication";
+import FhirCondition from "./lists/fhirpatient/conditions/Fhircondition";
+import FhirMedication from "./lists/fhirpatient/medication/Fhirmedication";
 import FhirMedicationRequest from "./lists/Fhirmedicationrequest";
-import FhirMedicationStatement from "./lists/Fhirmedicationstatement";
+import FhirMedicationStatement from "./lists/fhirpatient/medicationstatement/Fhirmedicationstatement";
 
 /* ---------------------------------------------------------------- */
 /*  Resource registry                                                */
@@ -105,6 +105,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Practitioner Roles",
     pageSubtitle: "View and manage roles and specialties of practitioners (FHIR Resource: PractitionerRole).",
     addLabel: "Add Practitioner Role",
+    addRoute: "/fhir/add-practitioner-role",
     screen: FhirPractitionerRole,
   },
   {
@@ -116,6 +117,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Organizations",
     pageSubtitle: "View and manage healthcare organizations (FHIR Resource: Organization).",
     addLabel: "Add Organization",
+    addRoute: "/fhir/add-organization",
     screen: FhirOrganization,
   },
   {
@@ -127,6 +129,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Locations",
     pageSubtitle: "View and manage physical locations and departments (FHIR Resource: Location).",
     addLabel: "Add Location",
+    addRoute: "/fhir/add-location",
     screen: FhirLocation,
   },
   {
@@ -174,6 +177,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Conditions",
     pageSubtitle: "View and manage patient conditions, diagnoses and clinical problems (FHIR Resource: Condition).",
     addLabel: "Add Condition",
+    addRoute: "/fhir/add-condition",
     screen: FhirCondition,
   },
   {
@@ -185,6 +189,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Medications",
     pageSubtitle: "View and manage medication master data (FHIR Resource: Medication).",
     addLabel: "Add Medication",
+    addRoute: "/fhir/add-medication",
     screen: FhirMedication,
   },
   {
@@ -208,6 +213,7 @@ const RESOURCES: Resource[] = [
     pageTitle: "Medication Statements",
     pageSubtitle: "View and manage medication statements (FHIR Resource: MedicationStatement).",
     addLabel: "Add Medication Statement",
+    addRoute: "/fhir/add-medication-statement",
     screen: FhirMedicationStatement,
   },
 ];
@@ -217,8 +223,37 @@ const RESOURCES: Resource[] = [
 /* ---------------------------------------------------------------- */
 const FhirModel = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeKey, setActiveKey] = useState<ResourceKey>("Patient");
   const [resourceQuery, setResourceQuery] = useState("");
+
+  /* Map resource keys to URL-friendly slugs */
+  const keyToSlug: Record<ResourceKey, string> = {
+    Patient: "patients",
+    Practitioner: "practitioners",
+    PractitionerRole: "practitioner-roles",
+    Organization: "organizations",
+    Location: "locations",
+    Appointment: "appointments",
+    Encounter: "encounters",
+    Observation: "observations",
+    Condition: "conditions",
+    Medication: "medications",
+    MedicationRequest: "medication-requests",
+    MedicationStatement: "medication-statements",
+  };
+
+  const slugToKey: Record<string, ResourceKey> = Object.fromEntries(
+    Object.entries(keyToSlug).map(([key, slug]) => [slug, key as ResourceKey])
+  );
+
+  /* Sync activeKey with URL */
+  useEffect(() => {
+    const resource = searchParams.get("resource");
+    if (resource && resource in slugToKey) {
+      setActiveKey(slugToKey[resource]);
+    }
+  }, [searchParams]);
 
   /* Small screens only: "list" = sidebar list, "detail" = selected screen.
      On lg+ screens both are always visible, so this has no effect there. */
@@ -227,6 +262,8 @@ const FhirModel = () => {
   const openResource = (key: ResourceKey) => {
     setActiveKey(key);
     setMobileView("detail");
+    const slug = keyToSlug[key];
+    router.push(`/fhir-model?resource=${slug}`);
   };
 
   const active = RESOURCES.find((r) => r.key === activeKey) ?? RESOURCES[0];
