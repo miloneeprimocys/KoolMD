@@ -119,9 +119,13 @@ const checkboxCls =
 const Configuration = ({
   onSave,
   onDisconnect,
+  onViewSetupGuide,
+  onTestConnection,
 }: {
   onSave?: (values: ConfigurationValues) => void;
   onDisconnect?: () => void;
+  onViewSetupGuide?: () => void;
+  onTestConnection?: () => void;
 }) => {
   const [values, setValues] = useState<ConfigurationValues>(initialConfiguration());
   const [errors, setErrors] = useState<Errors>({});
@@ -151,7 +155,7 @@ const Configuration = ({
           <ImportButton
             text="View Setup Guide"
             icon={<BookOpen className="h-4 w-4" />}
-            onClick={() => {}}
+            onClick={() => onViewSetupGuide?.()}
           />
         }
       >
@@ -215,7 +219,7 @@ const Configuration = ({
           <ImportButton
             text="Test Connection"
             icon={<Plug className="h-4 w-4" />}
-            onClick={() => {}}
+            onClick={() => onTestConnection?.()}
           />
         }
       >

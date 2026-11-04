@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { Eye, RotateCcw } from "lucide-react";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showIntegrationInfo } from "@/redux/slices/dialogslice";
 
 import Table from "@/components/Table";
 import { type TableColumn } from "@/components/Tableheader";
@@ -92,6 +94,7 @@ const initialMaps = () => Object.fromEntries(ROWS.map((r) => [r.id, r.map]));
 const initialTypes = () => Object.fromEntries(ROWS.map((r) => [r.id, r.orderType]));
 
 const StatusMapping = () => {
+  const dispatch = useAppDispatch();
   const [maps, setMaps] = useState<Record<string, string>>(initialMaps());
   const [types, setTypes] = useState<Record<string, string>>(initialTypes());
   // bumping this re-mounts the (uncontrolled) switches so "Reset" turns them all back on
@@ -158,7 +161,7 @@ const StatusMapping = () => {
             <ImportButton
               text="View Status List"
               icon={<Eye className="h-4 w-4" />}
-              onClick={() => {}}
+              onClick={() => dispatch(showIntegrationInfo("status-list"))}
               className="min-w-0 flex-1 !px-2 !text-xs sm:flex-none sm:!px-5 sm:!text-sm"
             />
             <ImportButton

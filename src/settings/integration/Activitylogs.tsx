@@ -13,6 +13,7 @@ import EditButton from "@/components/EditButton";
 import ImportButton from "@/components/ImportButton";
 import SearchAndFilter from "@/components/Searchandfilter";
 import RightSubSection from "@/components/RightSubSection";
+import SuccessToast from "@/components/SuccessToast";
 import { cardCls } from "@/providers/Shared";
 import IntegrationSidebar, {
   ACTIVITY_ICON,
@@ -103,6 +104,7 @@ const ActivityLogs = () => {
   const [selected, setSelected] = useState<ActivityLog | null>(LOGS[1]);
   const [leftPanelHeight, setLeftPanelHeight] = useState(0);
   const [rightPanelHeight, setRightPanelHeight] = useState(0);
+  const [copyToastOpen, setCopyToastOpen] = useState(false);
   const leftPanelRef = useRef<HTMLElement>(null);
 
   useLayoutEffect(() => {
@@ -174,6 +176,12 @@ const ActivityLogs = () => {
     <div
       className="flex min-w-0 flex-col gap-4 sm:gap-5 2xl:flex-row 2xl:items-stretch"
     >
+      <SuccessToast
+        isOpen={copyToastOpen}
+        onClose={() => setCopyToastOpen(false)}
+        title="Copied Successfully"
+        message="The code was copied to your clipboard."
+      />
       <section
         ref={leftPanelRef}
         className={`${cardCls} min-w-0 flex-1 space-y-4 sm:p-6 ${
@@ -249,6 +257,7 @@ const ActivityLogs = () => {
         </div>
       </section>
 
+
       {selected && (
         <RightSubSection
           ariaLabel="Activity log details"
@@ -263,6 +272,7 @@ const ActivityLogs = () => {
               variant="logs"
               log={selected}
               onCloseLog={closePanel}
+              onCopiedCode={() => setCopyToastOpen(true)}
             />
           )}
         </RightSubSection>

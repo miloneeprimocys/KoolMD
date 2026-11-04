@@ -21,9 +21,12 @@ import {
 } from "lucide-react";
 
 import Tags, { type TagTone } from "@/components/Tags";
+import AddInternalButton from "@/components/AddInternalButton";
 import ImportButton from "@/components/ImportButton";
 import SearchAndFilter from "@/components/Searchandfilter";
 import { cardCls } from "@/providers/Shared";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showIntegrationInfo, type IntegrationInfoKind } from "@/redux/slices/dialogslice";
 
 /* ---------------------------------------------------------------- */
 /*  Shared helpers (used by every step file)                        */
@@ -116,12 +119,13 @@ export const StepLayout = ({
 };
 
 /* ---------- Copy to clipboard ---------- */
-const useCopy = (text: string) => {
+const useCopy = (text: string, onCopied?: () => void) => {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
+      onCopied?.();
       setTimeout(() => setCopied(false), 1500);
     } catch {
       /* clipboard not available */
@@ -135,12 +139,14 @@ export const CodeBlock = ({
   code,
   lineNumbers = false,
   copy = false,
+  onCopied,
 }: {
   code: string;
   lineNumbers?: boolean;
   copy?: boolean;
+  onCopied?: () => void;
 }) => {
-  const { copied, copy: doCopy } = useCopy(code);
+  const { copied, copy: doCopy } = useCopy(code, onCopied);
   const lines = code.split("\n");
   return (
     <div className="relative overflow-x-auto rounded-xl border border-border bg-primary/5 p-3">
@@ -169,8 +175,8 @@ export const CodeBlock = ({
 };
 
 /** Code block with a title row and a "Copy" text button. */
-export const CodeSection = ({ title, code }: { title: string; code: string }) => {
-  const { copied, copy } = useCopy(code);
+export const CodeSection = ({ title, code, onCopied }: { title: string; code: string; onCopied?: () => void }) => {
+  const { copied, copy } = useCopy(code, onCopied);
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
@@ -325,12 +331,12 @@ const Guidelines = ({ items, children }: { items: string[]; children?: React.Rea
   </section>
 );
 
-const GuideButton = () => (
-  <ImportButton
+const GuideButton = ({ onClick }: { onClick: () => void }) => (
+  <AddInternalButton
     text="View Integration Guide"
     icon={<BookOpen className="h-4 w-4" />}
-    className="mt-4 w-full"
-    onClick={() => {}}
+    className="mt-4 w-full justify-center flex h-10! dark:border-primary/50  dark:text-label"
+    onClick={onClick}
   />
 );
 
@@ -423,10 +429,14 @@ type Props = {
   /** logs variant: the selected log + close handler */
   log?: ActivityLog | null;
   onCloseLog?: () => void;
+  onCopiedCode?: () => void;
 };
 
-const IntegrationSidebar = ({ variant, log, onCloseLog }: Props) => {
+const IntegrationSidebar = ({ variant, log, onCloseLog, onCopiedCode }: Props) => {
+  const dispatch = useAppDispatch();
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const openInfo = (kind: IntegrationInfoKind) =>
+    dispatch(showIntegrationInfo(kind));
 
   switch (variant) {
     /* ---------- Configuration ---------- */
@@ -479,7 +489,7 @@ const IntegrationSidebar = ({ variant, log, onCloseLog }: Props) => {
             }
           >
             <p className="text-xs text-body">Follow the integration guide for step-by-step instructions.</p>
-            <GuideButton />
+            <GuideButton onClick={() => openInfo("setup-guide")} />
           </SideCard>
         </>
       );
@@ -503,7 +513,7 @@ const IntegrationSidebar = ({ variant, log, onCloseLog }: Props) => {
               text="View Sample Data"
               icon={<FileText className="h-4 w-4" />}
               className="mt-4 w-full"
-              onClick={() => {}}
+              onClick={() => openInfo("mapping-data")}
             />
           </SideCard>
           <Guidelines
@@ -570,7 +580,7 @@ const IntegrationSidebar = ({ variant, log, onCloseLog }: Props) => {
               "Test the mapping by creating a sample order.",
             ]}
           >
-            <GuideButton />
+            <GuideButton onClick={() => openInfo("setup-guide")} />
           </Guidelines>
         </>
       );
@@ -673,7 +683,7 @@ const IntegrationSidebar = ({ variant, log, onCloseLog }: Props) => {
               <li>Validate API permissions</li>
               <li>Review the integration guide for troubleshooting steps</li>
             </ul>
-            <GuideButton />
+            <GuideButton onClick={() => openInfo("setup-guide")} />
           </SideCard>
         </>
       );
@@ -740,8 +750,8 @@ const IntegrationSidebar = ({ variant, log, onCloseLog }: Props) => {
           </dl>
 
           <div className="mt-5 space-y-4">
-            <CodeSection title="Request Payload" code={d.payload} />
-            <CodeSection title="Response" code={d.response} />
+            <CodeSection title="Request Payload" code={d.payload} onCopied={onCopiedCode} />
+            <CodeSection title="Response" code={d.response} onCopied={onCopiedCode} />
           </div>
         </section>
       );

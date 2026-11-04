@@ -210,12 +210,13 @@ export const ModalCheckboxGroup = ({
 /*  Attachments (uses FileDropzone's "attachment" variant)          */
 /* ---------------------------------------------------------------- */
 export const AttachmentField = ({
-  title, file, onChange, error,
+  title, file, onChange, error, maxSizeMB = 5,
 }: {
   title: string;
   file: File | null;
   onChange: (f: File | null) => void;
   error?: string;
+  maxSizeMB?: number;
 }) => (
   <div className="w-full">
     <p className="mb-2 text-sm font-medium text-label">
@@ -227,7 +228,7 @@ export const AttachmentField = ({
       file={file}
       onChange={onChange}
       error={error}
-      maxSizeMB={5}
+      maxSizeMB={maxSizeMB}
     />
   </div>
 );

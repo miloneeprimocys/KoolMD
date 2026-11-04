@@ -158,13 +158,13 @@ const ViewClaims = () => {
             icon={<Printer className="h-4 w-4" />}
             onClick={() => window.print()}
           />
-          <ImportButton
+          {/* <ImportButton
             text="More"
             icon={<ChevronDown className="h-4 w-4" />}
             onClick={() => {
               // TODO: open your "More" actions menu
             }}
-          />
+          /> */}
         </div>
       </div>
 

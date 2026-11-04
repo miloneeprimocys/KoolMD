@@ -4,6 +4,8 @@ import React from "react";
 
 import Tags from "@/components/Tags";
 import EditButton from "@/components/EditButton";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showProviderOverviewEdit } from "@/redux/slices/dialogslice";
 
 /* ---------- Static data (replace with API data later) ---------- */
 const PERSONAL: { label: string; value: string }[] = [
@@ -81,11 +83,21 @@ type Props = {
   signatureUrl?: string;
 };
 
-const Overview = ({ onEdit, photoUrl, signatureUrl }: Props) => (
+const Overview = ({ onEdit, photoUrl, signatureUrl }: Props) => {
+  const dispatch = useAppDispatch();
+  const handleEdit = (section: string) => {
+    if (section === "Personal Information" || section === "Professional Information" || section === "Contact Information" || section === "Practice Information" || section === "Profile Photo & Signature") {
+      dispatch(showProviderOverviewEdit(section));
+      return;
+    }
+    onEdit?.(section);
+  };
+
+  return (
   <div className="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-2">
     {/* Left column */}
     <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
-      <Card title="Personal Information" onEdit={onEdit}>
+      <Card title="Personal Information" onEdit={handleEdit}>
         <dl>
           {PERSONAL.map((r) => (
             <Row key={r.label} label={r.label}>
@@ -101,7 +113,7 @@ const Overview = ({ onEdit, photoUrl, signatureUrl }: Props) => (
         </dl>
       </Card>
 
-      <Card title="Professional Information" onEdit={onEdit}>
+      <Card title="Professional Information" onEdit={handleEdit}>
         <dl>
           {PROFESSIONAL.map((r) => (
             <Row key={r.label} label={r.label}>
@@ -117,7 +129,7 @@ const Overview = ({ onEdit, photoUrl, signatureUrl }: Props) => (
 
     {/* Right column */}
     <div className="flex min-w-0 flex-col gap-4 sm:gap-5">
-      <Card title="Contact Information" onEdit={onEdit}>
+      <Card title="Contact Information" onEdit={handleEdit}>
         <dl>
           {CONTACT.map((r) => (
             <Row key={r.label} label={r.label}>
@@ -127,7 +139,7 @@ const Overview = ({ onEdit, photoUrl, signatureUrl }: Props) => (
         </dl>
       </Card>
 
-      <Card title="Practice Information" onEdit={onEdit}>
+      <Card title="Practice Information" onEdit={handleEdit}>
         <dl>
           {PRACTICE.map((r) => (
             <Row key={r.label} label={r.label}>
@@ -137,7 +149,7 @@ const Overview = ({ onEdit, photoUrl, signatureUrl }: Props) => (
         </dl>
       </Card>
 
-      <Card title="Profile Photo & Signature" onEdit={onEdit}>
+      <Card title="Profile Photo & Signature" onEdit={handleEdit}>
         <div className="flex flex-col gap-4 pb-3 sm:flex-row sm:items-start">
           {/* Photo: always a square */}
           <div className="w-32 shrink-0">
@@ -172,6 +184,7 @@ const Overview = ({ onEdit, photoUrl, signatureUrl }: Props) => (
       </Card>
     </div>
   </div>
-);
+  );
+};
 
 export default Overview;

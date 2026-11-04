@@ -10,6 +10,8 @@ import ImportButton from "@/components/ImportButton";
 import SignupField from "@/components/SignupField";
 import SignupDropdown from "@/components/SignupDropdown";
 import DatePicker from "@/components/Datepicker";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showIntegrationInfo } from "@/redux/slices/dialogslice";
 import { toOptions } from "@/providers/Shared";
 import IntegrationSidebar, {
   FieldCell,
@@ -147,6 +149,7 @@ const initialMaps = () =>
   Object.fromEntries([...PATIENT_ROWS, ...PROVIDER_ROWS].map((r) => [r.id, r.map]));
 
 const Mapping = () => {
+  const dispatch = useAppDispatch();
   const [maps, setMaps] = useState<Record<string, string>>(initialMaps());
   const [defaults, setDefaults] = useState<Record<string, string>>({});
 
@@ -206,7 +209,7 @@ const Mapping = () => {
             <p className="text-xs text-body sm:text-sm">{subtitle}</p>
           </div>
         </div>
-        <ImportButton text="Preview Data" icon={<Eye className="h-4 w-4" />} onClick={() => {}} />
+        <ImportButton text="Preview Data" icon={<Eye className="h-4 w-4" />} onClick={() => dispatch(showIntegrationInfo("mapping-data"))} />
       </div>
       <div className="w-full min-w-0 rounded-[14px] border border-border bg-card">
         <Table columns={COLUMNS} rows={buildRows(list, targets)} bordered={false} />

@@ -2,6 +2,8 @@
 
 import React, { useMemo, useState } from "react";
 import { Eye, RotateCcw } from "lucide-react";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showIntegrationInfo } from "@/redux/slices/dialogslice";
 
 import Table from "@/components/Table";
 import { type TableColumn } from "@/components/Tableheader";
@@ -85,6 +87,7 @@ const initialDefaults = () =>
   Object.fromEntries(ROWS.filter((r) => r.fallback).map((r) => [r.id, r.fallback as string]));
 
 const ResultMapping = () => {
+  const dispatch = useAppDispatch();
   const [maps, setMaps] = useState<Record<string, string>>(initialMaps());
   const [defaults, setDefaults] = useState<Record<string, string>>(initialDefaults());
   const [search, setSearch] = useState("");
@@ -145,7 +148,7 @@ const ResultMapping = () => {
         subtitle="Map lab result fields from the external system to KOOLMD result fields (M13)."
         actions={
           <>
-            <ImportButton text="View Sample Results" icon={<Eye className="h-4 w-4" />} onClick={() => {}} />
+            <ImportButton text="View Sample Results" icon={<Eye className="h-4 w-4" />} onClick={() => dispatch(showIntegrationInfo("sample-results"))} />
             <ImportButton
               text="Reset Mapping"
               icon={<RotateCcw className="h-4 w-4" />}

@@ -26,6 +26,11 @@ import DisconnectIntegration from "@/settings/integration/DisconnectIntegration"
 import EditContactInformationModal from "@/patient/viewpatients/overview/EditContactInformationModal";
 import AddDocumentModal from "@/prescriptions/viewprescription/AddDocumentModal";
 import SelectMedicationModal from "@/prescriptions/addprescription/SelectMedicationlistModal";
+import EditProviderOverviewModal from "@/providers/viewproviders/EditProviderOverviewModal";
+import SelectImagingPatientModal from "@/referral/basicimaging/SelectImagingPatientModal";
+import IntegrationInfoModal from "@/settings/integration/IntegrationInfoModal";
+import TestGatewayConnectionModal from "@/billing/payment/payment-gateway/Testgatewayconnectionmodal";
+import EditTransactionFeesModal from "@/billing/payment/payment-gateway/Edittransactionfeesmodal";
 import DeleteLicense from "@/providers/licensemanagement/Deletelicense";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
@@ -178,6 +183,11 @@ const DialogsContainer = () => {
         onConfirm={() => dispatch(hideModal("DisconnectIntegration"))}
       />
       <EditContactInformationModal />
+      <EditProviderOverviewModal />
+      <SelectImagingPatientModal />
+      <IntegrationInfoModal />
+      <TestGatewayConnectionModal />
+      <EditTransactionFeesModal />
       <AddDocumentModal
         open={addDocumentOpen}
         onClose={() => dispatch(hideModal("AddDocument"))}

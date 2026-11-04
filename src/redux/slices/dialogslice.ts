@@ -1,14 +1,15 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import type {
-  QuestionTypeKey,
-  TemplateQuestion,
-} from "@/Questionnaires/template/Addtemplateques";
+import type { QuestionTypeKey, TemplateQuestion } from "@/Questionnaires/template/Addtemplateques";
 import type { MembershipPlan } from "@/billing/membership/membership-plans/Viewmembershipplan";
 import type { InvoiceItem } from "@/billing/manage/invoice/createinvoice/AddCustomItem";
 import type { DeletablePaymentMethod } from "@/billing/manage/payment-method/DeletePaymentMethod";
 import type { ClearinghouseAccount } from "@/billing/clearinghouse/clearingaccount/ClearinghouseAccounts";
 import type { TestResult } from "@/billing/clearinghouse/clearingaccount/TestConnection";
 import type { CatalogMedication } from "@/prescriptions/addprescription/SelectMedicationlistModal";
+import type { PatientDetail } from "@/types/patient";
+
+export type IntegrationInfoKind =
+  | "documentation" | "setup-guide" | "mapping-data" | "order-preview" | "sample-results" | "status-list";
 
 export interface PrescriptionToDelete {
   id: string;
@@ -61,10 +62,7 @@ interface ModalState {
   AddTemplateQuestion: boolean;
   UnlockPopup: boolean;
   unlockPopupConfirmed: boolean;
-  templateQuestionModal: {
-    question: TemplateQuestion | null;
-    initialType: QuestionTypeKey;
-  } | null;
+  templateQuestionModal: { question: TemplateQuestion | null; initialType: QuestionTypeKey } | null;
   templateQuestionResult: TemplateQuestion | null;
   RescheduleAppointment: boolean;
   CancelAppointment: boolean;
@@ -77,10 +75,21 @@ interface ModalState {
   MarkNoShow: boolean;
   DisconnectIntegration: boolean;
   EditContactInformation: boolean;
+  EditProviderOverview: boolean;
+  providerOverviewSection:
+    | "Personal Information" | "Professional Information" | "Contact Information"
+    | "Practice Information" | "Profile Photo & Signature" | null;
+  SelectImagingPatient: boolean;
+  imagingPatientSelection: PatientDetail | null;
+  IntegrationInfo: boolean;
+  integrationInfoKind: IntegrationInfoKind | null;
   /** Catalog medication picked in the prescription "Select Medication" modal. */
   medicationTarget: CatalogMedication | null;
   AddDocument: boolean;
   SelectMedication: boolean;
+  TestPaymentGatewayConnection: boolean;
+  EditPaymentGatewayFees: boolean;
+  paymentGatewayFees: Record<"card" | "ach" | "apple" | "google", string>;
 }
 
 const initialState: ModalState = {
@@ -128,265 +137,246 @@ const initialState: ModalState = {
   MarkNoShow: false,
   DisconnectIntegration: false,
   EditContactInformation: false,
+  EditProviderOverview: false,
+  providerOverviewSection: null,
+  SelectImagingPatient: false,
+  imagingPatientSelection: null,
+  IntegrationInfo: false,
+  integrationInfoKind: null,
   medicationTarget: null,
   AddDocument: false,
   SelectMedication: false,
+  TestPaymentGatewayConnection: false,
+  EditPaymentGatewayFees: false,
+  paymentGatewayFees: {
+    card: "2.9% + $0.30",
+    ach: "1% (max $10)",
+    apple: "2.9% + $0.30",
+    google: "2.9% + $0.30",
+  },
 };
 
 // Only boolean keys can be toggled with showModal / hideModal
-type OnlyBooleanKeys<T> = {
-  [K in keyof T]: T[K] extends boolean ? K : never;
-}[keyof T];
+type OnlyBooleanKeys<T> = { [K in keyof T]: T[K] extends boolean ? K : never }[keyof T];
 
 export type ModalKey = Exclude<OnlyBooleanKeys<ModalState>, "unlockPopupConfirmed">;
+
+type StateKey = keyof ModalState;
+
+/** Extra state fields that get reset to their initial value when a given modal is hidden. */
+const resetOnHide: Partial<Record<ModalKey, StateKey[]>> = {
+  UnlockPopup: ["unlockPopupConfirmed"],
+  EditProviderOverview: ["providerOverviewSection"],
+  SelectImagingPatient: ["imagingPatientSelection"],
+  IntegrationInfo: ["integrationInfoKind"],
+  DeletePrescription: ["deletePrescriptionTarget"],
+  DeleteLicense: ["licenseDeleteTarget"],
+  ViewMembershipPlan: ["membershipPlanTarget"],
+  DeleteMembershipPlan: ["membershipPlanTarget"],
+  AddCustomInvoiceItem: ["customInvoiceItem", "customInvoiceItemDefaultDate"],
+  DeleteCustomInvoiceItem: ["customInvoiceItemDeleteTarget"],
+  DeletePaymentMethod: ["paymentMethodDeleteTarget", "paymentMethodDeleteIsDefault"],
+  TestConnection: ["clearinghouseTestResult"],
+  DeleteClearinghouseAccount: ["clearinghouseAccountDeleteTarget"],
+  AssignQuestionnaire: ["assignQuestionnaireId"],
+  AddTemplateQuestion: ["templateQuestionModal"],
+  SelectMedication: ["medicationTarget"],
+};
+
+const reset = (state: ModalState, keys: StateKey[]) =>
+  Object.assign(state, Object.fromEntries(keys.map((k) => [k, initialState[k]])));
+
+const addUnique = (list: string[], id: string) => {
+  if (!list.includes(id)) list.push(id);
+};
 
 const dialogSlice = createSlice({
   name: "modals",
   initialState,
   reducers: {
-    showModal: (state, action: PayloadAction<ModalKey>) => {
-      state[action.payload] = true;
-      if (action.payload === "UnlockPopup") {
-        state.unlockPopupConfirmed = false;
-      }
+    showModal: (state, { payload }: PayloadAction<ModalKey>) => {
+      state[payload] = true;
+      if (payload === "UnlockPopup") state.unlockPopupConfirmed = false;
     },
-    hideModal: (state, action: PayloadAction<ModalKey>) => {
-      state[action.payload] = false;
-      if (action.payload === "UnlockPopup") {
-        state.unlockPopupConfirmed = false;
-      }
-      if (action.payload === "DeletePrescription") {
-        state.deletePrescriptionTarget = null;
-      }
-      if (action.payload === "DeleteLicense") {
-        state.licenseDeleteTarget = null;
-      }
-      if (action.payload === "ViewMembershipPlan" || action.payload === "DeleteMembershipPlan") {
-        state.membershipPlanTarget = null;
-      }
-      if (action.payload === "AddCustomInvoiceItem") {
-        state.customInvoiceItem = null;
-        state.customInvoiceItemDefaultDate = "";
-      }
-      if (action.payload === "DeleteCustomInvoiceItem") {
-        state.customInvoiceItemDeleteTarget = null;
-      }
-      if (action.payload === "DeletePaymentMethod") {
-        state.paymentMethodDeleteTarget = null;
-        state.paymentMethodDeleteIsDefault = false;
-      }
-      if (action.payload === "TestConnection") {
-        state.clearinghouseTestResult = null;
-      }
-      if (action.payload === "DeleteClearinghouseAccount") {
-        state.clearinghouseAccountDeleteTarget = null;
-      }
-      if (action.payload === "AssignQuestionnaire") {
-        state.assignQuestionnaireId = null;
-      }
-      if (action.payload === "AddTemplateQuestion") {
-        state.templateQuestionModal = null;
-      }
-      if (action.payload === "RescheduleAppointment") {
-        state.RescheduleAppointment = false;
-      }
-      if (action.payload === "SelectMedication") {
-        state.medicationTarget = null;
-      }
+    hideModal: (state, { payload }: PayloadAction<ModalKey>) => {
+      state[payload] = false;
+      reset(state, resetOnHide[payload] ?? []);
     },
-    showDeletePrescription: (state, action: PayloadAction<PrescriptionToDelete>) => {
-      state.deletePrescriptionTarget = action.payload;
-      state.DeletePrescription = true;
+    hideAllModals: (state) => {
+      // Everything goes back to its initial value except the "deleted" history and the gateway fees.
+      const { deletedPrescriptionIds, deletedLicenseIds, deletedMembershipPlanIds, paymentGatewayFees } = state;
+      Object.assign(state, initialState, {
+        deletedPrescriptionIds,
+        deletedLicenseIds,
+        deletedMembershipPlanIds,
+        paymentGatewayFees,
+      });
     },
-    showDeleteLicense: (state, action: PayloadAction<LicenseToDelete>) => {
-      state.licenseDeleteTarget = action.payload;
-      state.DeleteLicense = true;
+
+    showProviderOverviewEdit: (state, { payload }: PayloadAction<NonNullable<ModalState["providerOverviewSection"]>>) => {
+      Object.assign(state, { providerOverviewSection: payload, EditProviderOverview: true });
     },
-    licenseDeleted: (state, action: PayloadAction<string>) => {
-      if (!state.deletedLicenseIds.includes(action.payload)) {
-        state.deletedLicenseIds.push(action.payload);
-      }
-      state.licenseDeleteTarget = null;
-      state.DeleteLicense = false;
+    imagingPatientSelected: (state, { payload }: PayloadAction<PatientDetail>) => {
+      Object.assign(state, { imagingPatientSelection: payload, SelectImagingPatient: false });
     },
-    showMembershipPlanView: (state, action: PayloadAction<MembershipPlan>) => {
-      state.membershipPlanTarget = action.payload;
-      state.DeleteMembershipPlan = false;
-      state.ViewMembershipPlan = true;
+    clearImagingPatientSelection: (state) => {
+      state.imagingPatientSelection = null;
     },
-    showMembershipPlanDelete: (state, action: PayloadAction<MembershipPlan>) => {
-      state.membershipPlanTarget = action.payload;
-      state.ViewMembershipPlan = false;
-      state.DeleteMembershipPlan = true;
+    showIntegrationInfo: (state, { payload }: PayloadAction<IntegrationInfoKind>) => {
+      Object.assign(state, { integrationInfoKind: payload, IntegrationInfo: true });
     },
-    selectMembershipPlanForEdit: (state, action: PayloadAction<MembershipPlan>) => {
-      state.membershipPlanTarget = action.payload;
-      state.ViewMembershipPlan = false;
-      state.DeleteMembershipPlan = false;
+    savePaymentGatewayFees: (state, { payload }: PayloadAction<ModalState["paymentGatewayFees"]>) => {
+      Object.assign(state, { paymentGatewayFees: payload, EditPaymentGatewayFees: false });
     },
-    membershipPlanDeleted: (state, action: PayloadAction<string>) => {
-      if (!state.deletedMembershipPlanIds.includes(action.payload)) {
-        state.deletedMembershipPlanIds.push(action.payload);
-      }
-      state.membershipPlanTarget = null;
-      state.DeleteMembershipPlan = false;
+
+    // Prescriptions
+    showDeletePrescription: (state, { payload }: PayloadAction<PrescriptionToDelete>) => {
+      Object.assign(state, { deletePrescriptionTarget: payload, DeletePrescription: true });
     },
-    showAddCustomInvoiceItem: (
-      state,
-      action: PayloadAction<{ item?: InvoiceItem | null; defaultDate?: string }>,
-    ) => {
-      state.customInvoiceItem = action.payload.item ?? null;
-      state.customInvoiceItemDefaultDate = action.payload.defaultDate ?? "";
-      state.AddCustomInvoiceItem = true;
+    prescriptionDeleted: (state, { payload }: PayloadAction<string>) => {
+      addUnique(state.deletedPrescriptionIds, payload);
     },
-    customInvoiceItemSaved: (state, action: PayloadAction<InvoiceItem>) => {
-      state.customInvoiceItemResult = action.payload;
-      state.AddCustomInvoiceItem = false;
-      state.customInvoiceItem = null;
-      state.customInvoiceItemDefaultDate = "";
+    selectMedication: (state, { payload }: PayloadAction<CatalogMedication>) => {
+      Object.assign(state, { medicationTarget: payload, SelectMedication: false });
+    },
+
+    // Licenses
+    showDeleteLicense: (state, { payload }: PayloadAction<LicenseToDelete>) => {
+      Object.assign(state, { licenseDeleteTarget: payload, DeleteLicense: true });
+    },
+    licenseDeleted: (state, { payload }: PayloadAction<string>) => {
+      addUnique(state.deletedLicenseIds, payload);
+      Object.assign(state, { licenseDeleteTarget: null, DeleteLicense: false });
+    },
+
+    // Membership plans
+    showMembershipPlanView: (state, { payload }: PayloadAction<MembershipPlan>) => {
+      Object.assign(state, { membershipPlanTarget: payload, DeleteMembershipPlan: false, ViewMembershipPlan: true });
+    },
+    showMembershipPlanDelete: (state, { payload }: PayloadAction<MembershipPlan>) => {
+      Object.assign(state, { membershipPlanTarget: payload, ViewMembershipPlan: false, DeleteMembershipPlan: true });
+    },
+    selectMembershipPlanForEdit: (state, { payload }: PayloadAction<MembershipPlan>) => {
+      Object.assign(state, { membershipPlanTarget: payload, ViewMembershipPlan: false, DeleteMembershipPlan: false });
+    },
+    membershipPlanDeleted: (state, { payload }: PayloadAction<string>) => {
+      addUnique(state.deletedMembershipPlanIds, payload);
+      Object.assign(state, { membershipPlanTarget: null, DeleteMembershipPlan: false });
+    },
+
+    // Custom invoice items
+    showAddCustomInvoiceItem: (state, { payload }: PayloadAction<{ item?: InvoiceItem | null; defaultDate?: string }>) => {
+      Object.assign(state, {
+        customInvoiceItem: payload.item ?? null,
+        customInvoiceItemDefaultDate: payload.defaultDate ?? "",
+        AddCustomInvoiceItem: true,
+      });
+    },
+    customInvoiceItemSaved: (state, { payload }: PayloadAction<InvoiceItem>) => {
+      Object.assign(state, {
+        customInvoiceItemResult: payload,
+        AddCustomInvoiceItem: false,
+        customInvoiceItem: null,
+        customInvoiceItemDefaultDate: "",
+      });
     },
     clearCustomInvoiceItemResult: (state) => {
       state.customInvoiceItemResult = null;
     },
-    showDeleteCustomInvoiceItem: (state, action: PayloadAction<InvoiceItem>) => {
-      state.customInvoiceItemDeleteTarget = action.payload;
-      state.DeleteCustomInvoiceItem = true;
+    showDeleteCustomInvoiceItem: (state, { payload }: PayloadAction<InvoiceItem>) => {
+      Object.assign(state, { customInvoiceItemDeleteTarget: payload, DeleteCustomInvoiceItem: true });
     },
-    customInvoiceItemDeleted: (state, action: PayloadAction<string>) => {
-      state.customInvoiceItemDeletedId = action.payload;
-      state.customInvoiceItemDeleteTarget = null;
-      state.DeleteCustomInvoiceItem = false;
+    customInvoiceItemDeleted: (state, { payload }: PayloadAction<string>) => {
+      Object.assign(state, {
+        customInvoiceItemDeletedId: payload,
+        customInvoiceItemDeleteTarget: null,
+        DeleteCustomInvoiceItem: false,
+      });
     },
     clearCustomInvoiceItemDeletedId: (state) => {
       state.customInvoiceItemDeletedId = null;
     },
-    showDeletePaymentMethod: (state, action: PayloadAction<{ method: DeletablePaymentMethod; isDefault: boolean }>) => {
-      state.paymentMethodDeleteTarget = action.payload.method;
-      state.paymentMethodDeleteIsDefault = action.payload.isDefault;
-      state.DeletePaymentMethod = true;
+
+    // Payment methods
+    showDeletePaymentMethod: (state, { payload }: PayloadAction<{ method: DeletablePaymentMethod; isDefault: boolean }>) => {
+      Object.assign(state, {
+        paymentMethodDeleteTarget: payload.method,
+        paymentMethodDeleteIsDefault: payload.isDefault,
+        DeletePaymentMethod: true,
+      });
     },
-    paymentMethodDeleted: (state, action: PayloadAction<string>) => {
-      state.deletedPaymentMethodId = action.payload;
-      state.paymentMethodDeleteTarget = null;
-      state.paymentMethodDeleteIsDefault = false;
-      state.DeletePaymentMethod = false;
+    paymentMethodDeleted: (state, { payload }: PayloadAction<string>) => {
+      Object.assign(state, {
+        deletedPaymentMethodId: payload,
+        paymentMethodDeleteTarget: null,
+        paymentMethodDeleteIsDefault: false,
+        DeletePaymentMethod: false,
+      });
     },
     clearDeletedPaymentMethodId: (state) => {
       state.deletedPaymentMethodId = null;
     },
-    showTestConnection: (state, action: PayloadAction<TestResult>) => {
-      state.clearinghouseTestResult = action.payload;
-      state.TestConnection = true;
+
+    // Clearinghouse
+    showTestConnection: (state, { payload }: PayloadAction<TestResult>) => {
+      Object.assign(state, { clearinghouseTestResult: payload, TestConnection: true });
     },
-    showDeleteClearinghouseAccount: (state, action: PayloadAction<ClearinghouseAccount>) => {
-      state.clearinghouseAccountDeleteTarget = action.payload;
-      state.DeleteClearinghouseAccount = true;
+    showDeleteClearinghouseAccount: (state, { payload }: PayloadAction<ClearinghouseAccount>) => {
+      Object.assign(state, { clearinghouseAccountDeleteTarget: payload, DeleteClearinghouseAccount: true });
     },
-    clearinghouseAccountDeleted: (state, action: PayloadAction<string>) => {
-      state.deletedClearinghouseAccountId = action.payload;
-      state.clearinghouseAccountDeleteTarget = null;
-      state.DeleteClearinghouseAccount = false;
+    clearinghouseAccountDeleted: (state, { payload }: PayloadAction<string>) => {
+      Object.assign(state, {
+        deletedClearinghouseAccountId: payload,
+        clearinghouseAccountDeleteTarget: null,
+        DeleteClearinghouseAccount: false,
+      });
     },
     clearDeletedClearinghouseAccountId: (state) => {
       state.deletedClearinghouseAccountId = null;
     },
+
+    // Questionnaires
     /** Open the assign modal, optionally preselecting a questionnaire id. */
     showAssignQuestionnaire: {
-      reducer: (state, action: PayloadAction<string | null>) => {
-        state.assignQuestionnaireId = action.payload;
-        state.AssignQuestionnaire = true;
+      reducer: (state, { payload }: PayloadAction<string | null>) => {
+        Object.assign(state, { assignQuestionnaireId: payload, AssignQuestionnaire: true });
       },
       prepare: (questionnaireId?: string) => ({ payload: questionnaireId ?? null }),
     },
     showAddTemplateQuestion: (
       state,
-      action: PayloadAction<{
-        question?: TemplateQuestion | null;
-        initialType?: QuestionTypeKey;
-      }>,
+      { payload }: PayloadAction<{ question?: TemplateQuestion | null; initialType?: QuestionTypeKey }>,
     ) => {
-      state.templateQuestionModal = {
-        question: action.payload.question ?? null,
-        initialType: action.payload.initialType ?? "short",
-      };
-      state.templateQuestionResult = null;
-      state.AddTemplateQuestion = true;
+      Object.assign(state, {
+        templateQuestionModal: { question: payload.question ?? null, initialType: payload.initialType ?? "short" },
+        templateQuestionResult: null,
+        AddTemplateQuestion: true,
+      });
     },
-    confirmUnlockPopup: (state) => {
-      state.UnlockPopup = false;
-      state.unlockPopupConfirmed = true;
-    },
-    clearUnlockPopupConfirmation: (state) => {
-      state.unlockPopupConfirmed = false;
-    },
-    templateQuestionSaved: (state, action: PayloadAction<TemplateQuestion>) => {
-      state.templateQuestionResult = action.payload;
-      state.AddTemplateQuestion = false;
-      state.templateQuestionModal = null;
+    templateQuestionSaved: (state, { payload }: PayloadAction<TemplateQuestion>) => {
+      Object.assign(state, { templateQuestionResult: payload, AddTemplateQuestion: false, templateQuestionModal: null });
     },
     clearTemplateQuestionResult: (state) => {
       state.templateQuestionResult = null;
     },
-    prescriptionDeleted: (state, action: PayloadAction<string>) => {
-      if (!state.deletedPrescriptionIds.includes(action.payload)) {
-        state.deletedPrescriptionIds.push(action.payload);
-      }
+
+    // Unlock popup
+    confirmUnlockPopup: (state) => {
+      Object.assign(state, { UnlockPopup: false, unlockPopupConfirmed: true });
     },
-    selectMedication: (state, action: PayloadAction<CatalogMedication>) => {
-      state.medicationTarget = action.payload;
-      state.SelectMedication = false;
-    },
-    hideAllModals: (state) => {
-      state.DeletePrescription = false;
-      state.deletePrescriptionTarget = null;
-      state.DeleteLicense = false;
-      state.licenseDeleteTarget = null;
-      state.ViewMembershipPlan = false;
-      state.DeleteMembershipPlan = false;
-      state.membershipPlanTarget = null;
-      state.AddCustomInvoiceItem = false;
-      state.customInvoiceItem = null;
-      state.customInvoiceItemDefaultDate = "";
-      state.customInvoiceItemResult = null;
-      state.DeleteCustomInvoiceItem = false;
-      state.customInvoiceItemDeleteTarget = null;
-      state.customInvoiceItemDeletedId = null;
-      state.DeletePaymentMethod = false;
-      state.paymentMethodDeleteTarget = null;
-      state.paymentMethodDeleteIsDefault = false;
-      state.deletedPaymentMethodId = null;
-      state.TestConnection = false;
-      state.clearinghouseTestResult = null;
-      state.DeleteClearinghouseAccount = false;
-      state.clearinghouseAccountDeleteTarget = null;
-      state.deletedClearinghouseAccountId = null;
-      state.AssignQuestionnaire = false;
-      state.assignQuestionnaireId = null;
-      state.AddTemplateQuestion = false;
-      state.UnlockPopup = false;
+    clearUnlockPopupConfirmation: (state) => {
       state.unlockPopupConfirmed = false;
-      state.templateQuestionModal = null;
-      state.templateQuestionResult = null;
-      state.RescheduleAppointment = false;
-      state.CancelAppointment = false;
-      state.JoinVideoVisit = false;
-      state.ApproveRequest = false;
-      state.DeclineRequest = false;
-      state.SuggestAlternativeTime = false;
-      state.StartConsultation = false;
-      state.SendWaitingRoomMessage = false;
-      state.MarkNoShow = false;
-      state.DisconnectIntegration = false;
-      state.EditContactInformation = false;
-      state.AddDocument = false;
-      state.SelectMedication = false;
-      state.medicationTarget = null;
     },
   },
 });
 
 export const {
   showModal,
+  showProviderOverviewEdit,
+  imagingPatientSelected,
+  clearImagingPatientSelection,
+  showIntegrationInfo,
+  savePaymentGatewayFees,
   hideModal,
   hideAllModals,
   showDeletePrescription,
@@ -417,9 +407,5 @@ export const {
   clearTemplateQuestionResult,
   prescriptionDeleted,
   selectMedication,
-
 } = dialogSlice.actions;
 export default dialogSlice.reducer;
-
-
-

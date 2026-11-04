@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { Eye, RotateCcw } from "lucide-react";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showIntegrationInfo } from "@/redux/slices/dialogslice";
 
 import Table from "@/components/Table";
 import { type TableColumn } from "@/components/Tableheader";
@@ -75,6 +77,7 @@ const initialDefaults = () =>
   Object.fromEntries(ROWS.filter((r) => r.fallback).map((r) => [r.id, r.fallback as string]));
 
 const LabOrderMapping = () => {
+  const dispatch = useAppDispatch();
   const [maps, setMaps] = useState<Record<string, string>>(initialMaps());
   const [defaults, setDefaults] = useState<Record<string, string>>(initialDefaults());
 
@@ -122,7 +125,7 @@ const LabOrderMapping = () => {
         subtitle="Map KOOLMD lab order fields to the corresponding fields in the lab system (M13)."
         actions={
           <>
-            <ImportButton text="Preview Order Format" icon={<Eye className="h-4 w-4" />} onClick={() => {}} />
+            <ImportButton text="Preview Order Format" icon={<Eye className="h-4 w-4" />} onClick={() => dispatch(showIntegrationInfo("order-preview"))} />
             <ImportButton
               text="Reset Mapping"
               icon={<RotateCcw className="h-4 w-4" />}

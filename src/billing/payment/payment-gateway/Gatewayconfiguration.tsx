@@ -14,6 +14,8 @@ import { type TableColumn } from "@/components/Tableheader";
 import StickyColumns from "@/components/StickyColumns";
 import Tags from "@/components/Tags";
 import { Req, cardCls, toOptions, type Errors } from "@/providers/Shared";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 import { METHODS, MethodBrands, MethodIcon, type MethodId, type MethodKind, type MethodsState } from "./Supportedmethods";
 
 /* ---------- Static data ---------- */
@@ -101,6 +103,8 @@ type Props = {
 };
 
 const GatewayConfiguration = ({ methods, onMethodsChange, onSave }: Props) => {
+  const dispatch = useAppDispatch();
+  const paymentGatewayFees = useAppSelector((state) => state.dialog.paymentGatewayFees);
   const [values, setValues] = useState<Values>(initialValues());
   const [errors, setErrors] = useState<Errors>({});
   const [copied, setCopied] = useState(false);
@@ -131,7 +135,7 @@ const GatewayConfiguration = ({ methods, onMethodsChange, onSave }: Props) => {
 
   const feeRows = METHODS.map((m) => ({
     method: <span className="text-sm text-heading">{m.name}</span>,
-    fee: <span className="text-sm text-heading">{m.fee}</span>,
+    fee: <span className="text-sm text-heading">{paymentGatewayFees[m.id]}</span>,
   }));
 
   return (
@@ -317,7 +321,7 @@ const GatewayConfiguration = ({ methods, onMethodsChange, onSave }: Props) => {
             <h3 className="flex items-center gap-2 text-base font-semibold text-heading">
               Transaction Fees <Info className="h-4 w-4 text-body" />
             </h3>
-            <EditButton section="Transaction Fees" label="Edit Fees" onEdit={() => {}} />
+            <EditButton section="Transaction Fees" label="Edit Fees" onEdit={() => dispatch(showModal("EditPaymentGatewayFees"))} />
           </div>
           <div className="overflow-hidden rounded-[14px] border border-border bg-card">
             <Table columns={FEE_COLUMNS} rows={feeRows} bordered={false} />

@@ -15,8 +15,12 @@ import SignupField from "@/components/SignupField";
 import SignupDropdown, { type DropdownOption } from "@/components/SignupDropdown";
 import ImportButton from "@/components/ImportButton";
 import { ModalRadioGroup } from "@/components/Modalshell";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 import {
   Req,
+  DEFAULT_COUNTRY,
+  PhoneField,
   cardCls,
   todayISO,
   toOptions,
@@ -40,8 +44,10 @@ export type ImagingDoc = {
 export type ImagingValues = {
   /* step 1 – patient */
   patient: string;
+  patientLabel: string;
   dob: string;
   mrn: string;
+  phoneCountry: string;
   phone: string;
   gender: string;
   address: string;
@@ -208,8 +214,10 @@ export const initialImagingValues = (): ImagingValues => {
   const r = PROVIDER_RECIPIENTS[0];
   return {
     patient: p.id,
+    patientLabel: `${p.name} (DOB: ${p.dob} | MRN: ${p.mrn})`,
     dob: p.dob,
     mrn: p.mrn,
+    phoneCountry: DEFAULT_COUNTRY,
     phone: p.phone,
     gender: p.gender,
     address: p.address,
@@ -337,14 +345,18 @@ const SectionTitle = ({ title, action }: { title: string; action?: React.ReactNo
 /*  Component                                                        */
 /* ---------------------------------------------------------------- */
 const ImagingPatientStep = ({ values: v, errors, onChange }: StepProps<ImagingValues>) => {
+  const dispatch = useAppDispatch();
   const isProvider = v.recipientType === "provider";
   const noun = isProvider ? "Provider" : "Facility";
   const directory = isProvider ? PROVIDER_RECIPIENTS : FACILITY_RECIPIENTS;
+  const patientOptions = PATIENT_OPTIONS.some((option) => option.value === v.patient)
+    ? PATIENT_OPTIONS
+    : [{ value: v.patient, label: v.patientLabel }, ...PATIENT_OPTIONS];
 
   const pickPatient = (id: string) => {
     const p = getPatient(id);
     if (!p) return;
-    onChange({ patient: id, dob: p.dob, mrn: p.mrn, phone: p.phone, gender: p.gender, address: p.address });
+    onChange({ patient: id, patientLabel: `${p.name} (DOB: ${p.dob} | MRN: ${p.mrn})`, dob: p.dob, mrn: p.mrn, phoneCountry: DEFAULT_COUNTRY, phone: p.phone, gender: p.gender, address: p.address });
   };
 
   const pickRecipient = (id: string) => {
@@ -376,7 +388,7 @@ const ImagingPatientStep = ({ values: v, errors, onChange }: StepProps<ImagingVa
       <section className={`${cardCls} sm:p-6`}>
         <SectionTitle
           title="Patient Information"
-          action={<ImportButton text="Select from Patient" icon={null} onClick={() => {}} />}
+          action={<ImportButton text="Select from Patient" icon={null} onClick={() => dispatch(showModal("SelectImagingPatient"))} />}
         />
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr]">
@@ -386,7 +398,7 @@ const ImagingPatientStep = ({ values: v, errors, onChange }: StepProps<ImagingVa
                 label={<>Patient Name<Req /></>}
                 icon={<Search className="h-4 w-4" />}
                 placeholder="Search patient by name, MRN or DOB..."
-                options={PATIENT_OPTIONS}
+                options={patientOptions}
                 value={v.patient}
                 onChange={pickPatient}
                 error={errors.patient}
@@ -408,12 +420,14 @@ const ImagingPatientStep = ({ values: v, errors, onChange }: StepProps<ImagingVa
             />
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1.6fr]">
-            <SignupField
+            <PhoneField
               name="phone"
               label="Phone"
-              placeholder="(000) 000-0000"
+              placeholder="Enter phone number"
               value={v.phone}
-              onChange={(e) => onChange({ phone: e.target.value })}
+              onChange={(value) => onChange({ phone: value })}
+              countryCode={v.phoneCountry}
+              onCountryChange={(country) => onChange({ phoneCountry: country })}
             />
             <SignupDropdown
               name="gender"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Send } from "lucide-react";
 
@@ -9,6 +9,10 @@ import AddSteps from "@/components/Addsteps";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 import type { Errors } from "@/providers/Shared";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
+import { clearImagingPatientSelection } from "@/redux/slices/dialogslice";
+import { humanizeEnum } from "@/utils/formatters";
+import { fromE164 } from "@/utils/phone";
 import ImagingPatientStep, { initialImagingValues, validateImagingPatient, type ImagingValues } from "./Imagingpatient";
 import ImagingDetailsStep, { validateImagingDetails } from "./Imagingdetails";
 import ImagingClinicalStep, { validateImagingClinical } from "./Imagingclinical";
@@ -39,6 +43,8 @@ const initialValues = (): ImagingValues => initialImagingValues();
 /* ---------- Page ---------- */
 const BasicImagingReferral = () => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const selectedPatient = useAppSelector((state) => state.dialog.imagingPatientSelection);
   const [currentStep, setCurrentStep] = useState(1);
   const [values, setValues] = useState<ImagingValues>(initialValues());
   const [errors, setErrors] = useState<Errors>({});
@@ -47,14 +53,39 @@ const BasicImagingReferral = () => {
   const isLastStep = currentStep === STEPS.length;
 
   /** Patch values and clear the errors of the fields that were edited. */
-  const update = (patch: Partial<ImagingValues>) => {
+  const update = useCallback((patch: Partial<ImagingValues>) => {
     setValues((prev) => ({ ...prev, ...patch }));
     setErrors((prev) => {
       const next = { ...prev };
       Object.keys(patch).forEach((k) => delete next[k]);
       return next;
     });
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedPatient) return;
+    const [year, month, day] = selectedPatient.dateOfBirth.split("-");
+    const dob = `${month}/${day}/${year}`;
+    const address = [
+      selectedPatient.addressLine1,
+      selectedPatient.addressLine2,
+      selectedPatient.city,
+      [selectedPatient.stateCode, selectedPatient.postalCode].filter(Boolean).join(" "),
+    ].filter(Boolean).join(", ");
+    const name = [selectedPatient.firstName, selectedPatient.middleName, selectedPatient.lastName].filter(Boolean).join(" ");
+    const patientPhone = fromE164(selectedPatient.phoneNumber, "US");
+    update({
+      patient: selectedPatient.id,
+      patientLabel: `${name} (DOB: ${dob} | MRN: ${selectedPatient.medicalRecordNumber})`,
+      dob,
+      mrn: selectedPatient.medicalRecordNumber,
+      phoneCountry: patientPhone.countryIso,
+      phone: patientPhone.nationalNumber,
+      gender: humanizeEnum(selectedPatient.administrativeGender),
+      address,
+    });
+    dispatch(clearImagingPatientSelection());
+  }, [selectedPatient, dispatch, update]);
 
   const goTo = (step: number) => {
     setErrors({});

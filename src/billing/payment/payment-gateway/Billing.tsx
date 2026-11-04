@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useAppDispatch } from "@/hooks/useAppHooks";
+import { showModal } from "@/redux/slices/dialogslice";
 
 import Breadcrumb from "@/components/Breadcrumb";
 import AddButton from "@/components/Addbutton";
@@ -51,6 +53,7 @@ const PATH_TABS: Record<string, TabKey> = Object.fromEntries(
 const Billing = () => {
   const pathname = usePathname();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const tab = PATH_TABS[pathname ?? ""] ?? "configuration";
   useEffect(() => {
     if (pathname === "/billing") router.replace(TAB_PATHS.configuration);
@@ -79,9 +82,9 @@ const Billing = () => {
         <div className="flex shrink-0 items-center gap-3">
           <Tags text="Connected" tone="success" />
           {tab === "configuration" ? (
-            <AddButton text="Test Connection" icon={null} onClick={() => {}} />
+            <AddButton text="Test Connection" icon={null} onClick={() => dispatch(showModal("TestPaymentGatewayConnection"))} />
           ) : (
-            <ImportButton text="Test Connection" icon={null} onClick={() => {}} />
+            <ImportButton text="Test Connection" icon={null} onClick={() => dispatch(showModal("TestPaymentGatewayConnection"))} />
           )}
         </div>
       </div>

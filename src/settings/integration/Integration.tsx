@@ -8,7 +8,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import AddButton from "@/components/Addbutton";
 import ImportButton from "@/components/ImportButton";
 import { useAppDispatch } from "@/hooks/useAppHooks";
-import { showModal } from "@/redux/slices/dialogslice";
+import { showIntegrationInfo, showModal } from "@/redux/slices/dialogslice";
 import Configuration from "./Configuration";
 import Mapping from "./Mapping";
 import LabOrderMapping from "./Labordermapping";
@@ -122,7 +122,7 @@ const Integration = () => {
               text="View Documentation"
               icon={<BookOpen className="h-4 w-4" />}
               className="shrink-0 whitespace-nowrap"
-              onClick={() => {}}
+              onClick={() => dispatch(showIntegrationInfo("documentation"))}
             />
           </div>
 
@@ -155,7 +155,11 @@ const Integration = () => {
           {/* Tab panels – all stay mounted so mappings keep their state while switching tabs */}
           <div>
             <div role="tabpanel" hidden={tab !== "configuration"}>
-              <Configuration onDisconnect={() => dispatch(showModal("DisconnectIntegration"))} />
+              <Configuration
+                onDisconnect={() => dispatch(showModal("DisconnectIntegration"))}
+                onViewSetupGuide={() => dispatch(showIntegrationInfo("setup-guide"))}
+                onTestConnection={() => changeTab("test-connection")}
+              />
             </div>
             <div role="tabpanel" hidden={tab !== "mapping"}><Mapping /></div>
             <div role="tabpanel" hidden={tab !== "lab-order-mapping"}><LabOrderMapping /></div>
