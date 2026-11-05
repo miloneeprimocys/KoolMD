@@ -61,6 +61,9 @@ import QuestionnairesPage from "@/Questionnaires/Questionnairespage";
 import CreateQuestionnaire from "@/Questionnaires/CreateQuestionnaire";
 import Administration from "@/administration/chatunlock/Administration";
 import Integration from "@/settings/integration/Integration";
+import RolesPermissions from "@/userroles/Rolespermissions";
+import RoleDetails from "@/userroles/Roledetails";
+import CreateRole from "@/userroles/Createrole";
 import ReferralManagement from "@/referral/referralmanagement/Referralmanagement";
 import NewReferral from "@/referral/referralmanagement/newreferral/Newreferral";
 import BasicImagingReferral from "@/referral/basicimaging/Basicimagingreferral";
@@ -634,6 +637,26 @@ export const ROUTES: Record<string, RouteConfig> = {
   "settings/integration": {
     component: Integration,
     title: "Integrations",
+    access: "protected",
+  },
+  "settings/roles-permissions": {
+    component: RolesPermissions,
+    title: "Users & Roles",
+    access: "protected",
+  },
+  "settings/roles-permissions/role-details": {
+    component: RoleDetails,
+    title: "Users & Roles",
+    access: "protected",
+  },
+  "settings/roles-permissions/create-role": {
+    component: CreateRole,
+    title: "Users & Roles",
+    access: "protected",
+  },
+  "settings/roles-permissions/edit-role": {
+    component: CreateRole,
+    title: "Users & Roles",
     access: "protected",
   },
   "referral/management": {

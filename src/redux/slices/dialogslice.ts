@@ -83,6 +83,8 @@ interface ModalState {
   imagingPatientSelection: PatientDetail | null;
   IntegrationInfo: boolean;
   integrationInfoKind: IntegrationInfoKind | null;
+  RequestAccess: boolean;
+  accessRequestModule: string | null;
   /** Catalog medication picked in the prescription "Select Medication" modal. */
   medicationTarget: CatalogMedication | null;
   AddDocument: boolean;
@@ -143,6 +145,8 @@ const initialState: ModalState = {
   imagingPatientSelection: null,
   IntegrationInfo: false,
   integrationInfoKind: null,
+  RequestAccess: false,
+  accessRequestModule: null,
   medicationTarget: null,
   AddDocument: false,
   SelectMedication: false,
@@ -169,6 +173,7 @@ const resetOnHide: Partial<Record<ModalKey, StateKey[]>> = {
   EditProviderOverview: ["providerOverviewSection"],
   SelectImagingPatient: ["imagingPatientSelection"],
   IntegrationInfo: ["integrationInfoKind"],
+  RequestAccess: ["accessRequestModule"],
   DeletePrescription: ["deletePrescriptionTarget"],
   DeleteLicense: ["licenseDeleteTarget"],
   ViewMembershipPlan: ["membershipPlanTarget"],
@@ -224,6 +229,9 @@ const dialogSlice = createSlice({
     },
     showIntegrationInfo: (state, { payload }: PayloadAction<IntegrationInfoKind>) => {
       Object.assign(state, { integrationInfoKind: payload, IntegrationInfo: true });
+    },
+    showAccessRequest: (state, { payload }: PayloadAction<string>) => {
+      Object.assign(state, { accessRequestModule: payload, RequestAccess: true });
     },
     savePaymentGatewayFees: (state, { payload }: PayloadAction<ModalState["paymentGatewayFees"]>) => {
       Object.assign(state, { paymentGatewayFees: payload, EditPaymentGatewayFees: false });
@@ -376,6 +384,7 @@ export const {
   imagingPatientSelected,
   clearImagingPatientSelection,
   showIntegrationInfo,
+  showAccessRequest,
   savePaymentGatewayFees,
   hideModal,
   hideAllModals,

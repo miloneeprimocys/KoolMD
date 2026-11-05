@@ -32,6 +32,7 @@ import IntegrationInfoModal from "@/settings/integration/IntegrationInfoModal";
 import TestGatewayConnectionModal from "@/billing/payment/payment-gateway/Testgatewayconnectionmodal";
 import EditTransactionFeesModal from "@/billing/payment/payment-gateway/Edittransactionfeesmodal";
 import DeleteLicense from "@/providers/licensemanagement/Deletelicense";
+import RequestAccessModal from "@/userroles/Requestaccessmodal";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
   hideModal,
@@ -89,6 +90,8 @@ const DialogsContainer = () => {
   const disconnectIntegrationOpen = useAppSelector((state) => state.dialog.DisconnectIntegration);
   const addDocumentOpen = useAppSelector((state) => state.dialog.AddDocument);
   const selectMedicationOpen = useAppSelector((state) => state.dialog.SelectMedication);
+  const requestAccessOpen = useAppSelector((state) => state.dialog.RequestAccess);
+  const accessRequestModule = useAppSelector((state) => state.dialog.accessRequestModule);
 
   return (
     <>
@@ -196,6 +199,12 @@ const DialogsContainer = () => {
         open={selectMedicationOpen}
         onClose={() => dispatch(hideModal("SelectMedication"))}
         onSelect={(medication) => dispatch(selectMedication(medication))}
+      />
+      <RequestAccessModal
+        open={requestAccessOpen}
+        moduleName={accessRequestModule}
+        onClose={() => dispatch(hideModal("RequestAccess"))}
+        onSubmit={() => dispatch(hideModal("RequestAccess"))}
       />
     </>
   );

@@ -165,7 +165,7 @@ const SECTIONS: NavSection[] = [
         Icon: Settings,
         children: [
           { label: "Integrations", href: "/settings/integration", Icon: Stethoscope },
-          { label: "Users & Roles", href: "/settings/users-roles", Icon: Users },
+          { label: "Users & Roles", href: "/settings/roles-permissions", Icon: Users },
           { label: "Templates", href: "/settings/templates", Icon: FileText },
           { label: "System Preferences", href: "/settings/system-preferences", Icon: Settings },
           { label: "Audit Logs", href: "/settings/audit-logs", Icon: ClipboardList },
