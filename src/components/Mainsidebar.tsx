@@ -7,6 +7,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  Bell,
   BookUser,
   Calendar,
   CalendarDays,
@@ -130,6 +131,7 @@ const SECTIONS: NavSection[] = [
       },
       { label: "Lab Results", href: "/lab-results", Icon: FlaskConical },
       { label: "Questionnaires", href: "/questionnaires", Icon: ListChecks },
+      { label: "Notifications", href: "/notifications", Icon: Bell },
       {
         label: "Medications",
         href: "/medication/medication-list",

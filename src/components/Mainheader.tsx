@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Bell, Menu, ShieldCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import ThemeToggle from "./Themetoggle";
 import GlobalSearch from "./GlobalSearch";
@@ -14,6 +15,7 @@ interface MainHeaderProps {
 }
 
 const MainHeader = ({ onSearch }: MainHeaderProps) => {
+  const router = useRouter();
   return (
     <header className="flex h-14 min-w-0 shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-4 sm:px-5 xl:h-16 xl:px-6">
       {/* ---------- LEFT ---------- */}
@@ -65,6 +67,7 @@ const MainHeader = ({ onSearch }: MainHeaderProps) => {
         <button
           type="button"
           aria-label="Notifications"
+          onClick={() => router.push("/notifications")}
           className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-label transition-colors hover:bg-primary/5 hover:text-primary"
         >
           <Bell className="h-5 w-5" />
