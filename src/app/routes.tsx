@@ -88,6 +88,7 @@ import ReviewApprovePayment from "@/compensation/Reviewapprovepayment";
 import RecordPayment from "@/compensation/Recordpayment";
 import PaymentHistory from "@/compensation/Paymenthistory";
 import CompensationDashboard from "@/compensation/Compensationdashboard";
+import Messages from "@/messages/Messages";
 import Notifications from "@/notifications/Notifications";
 /**
  * protected → signed-in only · guest → signed-out only · public → anyone
@@ -608,6 +609,11 @@ export const ROUTES: Record<string, RouteConfig> = {
   notifications: {
     component: Notifications,
     title: "Notifications",
+    access: "protected",
+  },
+  messages: {
+    component: Messages,
+    title: "Messages",
     access: "protected",
   },
   "medication/medication-list": {

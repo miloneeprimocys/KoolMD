@@ -222,7 +222,7 @@ const FhirDetails = ({ observation }: { observation: ObservationRow }) => {
                 <div className="min-w-0 space-y-0.5">
                   <p className="text-[13px] text-body">{h.time}</p>
                   <p className="text-sm font-semibold text-heading">{h.title}</p>
-                  <p className="text-[13px] text-body">{h.description}</p>
+                  <p className="text-[13px] text-body">{h.description}</p>+
                   <p className="text-[13px] text-body">by {h.by}</p>
                 </div>
               </li>

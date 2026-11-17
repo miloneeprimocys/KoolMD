@@ -481,3 +481,79 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     background: color-mix(in srgb, var(--appt-color, var(--primary)) 60%, transparent);
   }
 }
+
+/* ==========================================================================
+   Emoji picker (emoji-picker-react) – themed with the app tokens
+   Follows <html class="dark"> automatically, because it only uses var(--…)
+   ========================================================================== */
+.emoji-picker-wrap .EmojiPickerReact.EmojiPickerReact {
+  /* surfaces */
+  --epr-bg-color: var(--card);
+  --epr-category-label-bg-color: var(--card);
+  --epr-picker-border-color: transparent;
+  --epr-picker-border-radius: 0px;
+
+  /* text */
+  --epr-text-color: var(--body);
+  --epr-category-label-text-color: var(--heading);
+  --epr-highlight-color: var(--primary);
+  --epr-category-icon-active-color: var(--primary);
+
+  /* search */
+  --epr-search-input-bg-color: var(--surface-start);
+  --epr-search-input-bg-color-active: var(--surface-start);
+  --epr-search-input-text-color: var(--heading);
+  --epr-search-input-placeholder-color: var(--placeholder);
+  --epr-search-border-color: var(--border);
+  --epr-search-border-color-active: var(--primary);
+  --epr-search-input-height: 38px;
+  --epr-search-input-border-radius: 10px;
+
+  /* hover / focus */
+  --epr-hover-bg-color: color-mix(in srgb, var(--primary) 12%, transparent);
+  --epr-focus-bg-color: color-mix(in srgb, var(--primary) 18%, transparent);
+
+  /* skin-tone popup */
+  --epr-skin-tone-picker-menu-color: var(--card);
+
+  /* compact sizing */
+  --epr-header-padding: 10px 12px;
+  --epr-horizontal-padding: 10px;
+  --epr-category-navigation-button-size: 26px;
+  --epr-category-label-height: 30px;
+  --epr-emoji-size: 22px;
+  --epr-emoji-padding: 5px;
+
+  border: none;
+  border-radius: 0;
+  font-family: inherit;
+}
+
+/* search box: Poppins + no browser outline */
+.emoji-picker-wrap .EmojiPickerReact input.epr-search {
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+/* category titles */
+.emoji-picker-wrap .EmojiPickerReact .epr-emoji-category-label {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* thin themed scrollbar inside the picker */
+.emoji-picker-wrap .EmojiPickerReact .epr-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.emoji-picker-wrap .EmojiPickerReact .epr-body::-webkit-scrollbar { width: 6px; }
+.emoji-picker-wrap .EmojiPickerReact .epr-body::-webkit-scrollbar-track { background: transparent; }
+.emoji-picker-wrap .EmojiPickerReact .epr-body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+.emoji-picker-wrap .EmojiPickerReact .epr-body::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}

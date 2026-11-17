@@ -13,11 +13,14 @@ type Props = {
   minZoom?: number;
   maxZoom?: number;
   zoomStep?: number;
+  /** Hide the zoom controls (e.g. for audio / documents). Default: true */
+  showZoom?: boolean;
   pageLabel?: string;
   onPrevious?: () => void;
   onNext?: () => void;
   previousDisabled?: boolean;
   nextDisabled?: boolean;
+  /** Optional – the download button is rendered only when this is passed. */
   onDownload?: () => void;
   children: ReactNode;
 };
@@ -34,6 +37,7 @@ const MaximizeImage = ({
   minZoom = 50,
   maxZoom = 150,
   zoomStep = 25,
+  showZoom = true,
   pageLabel,
   onPrevious,
   onNext,
@@ -62,24 +66,33 @@ const MaximizeImage = ({
           <div className="flex shrink-0 items-center gap-1">
             {pageLabel && (
               <div className="mr-1 flex items-center gap-0.5 border-r border-border pr-1">
-                <button type="button" aria-label="Previous page" disabled={previousDisabled} onClick={onPrevious} className={controlClass}>
+                <button type="button" aria-label="Previous" disabled={previousDisabled} onClick={onPrevious} className={controlClass}>
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <button type="button" aria-label="Next page" disabled={nextDisabled} onClick={onNext} className={controlClass}>
+                <button type="button" aria-label="Next" disabled={nextDisabled} onClick={onNext} className={controlClass}>
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             )}
-            <button type="button" aria-label="Zoom out" disabled={zoom <= minZoom} onClick={() => onZoomChange(Math.max(minZoom, zoom - zoomStep))} className={controlClass}>
-              <Minus className="h-4 w-4" />
-            </button>
-            <span className="min-w-11 text-center text-xs font-medium text-heading">{zoom}%</span>
-            <button type="button" aria-label="Zoom in" disabled={zoom >= maxZoom} onClick={() => onZoomChange(Math.min(maxZoom, zoom + zoomStep))} className={controlClass}>
-              <Plus className="h-4 w-4" />
-            </button>
-            <button type="button" aria-label="Download" onClick={onDownload} className={controlClass}>
-              <Download className="h-4 w-4" />
-            </button>
+
+            {showZoom && (
+              <>
+                <button type="button" aria-label="Zoom out" disabled={zoom <= minZoom} onClick={() => onZoomChange(Math.max(minZoom, zoom - zoomStep))} className={controlClass}>
+                  <Minus className="h-4 w-4" />
+                </button>
+                <span className="min-w-11 text-center text-xs font-medium text-heading">{zoom}%</span>
+                <button type="button" aria-label="Zoom in" disabled={zoom >= maxZoom} onClick={() => onZoomChange(Math.min(maxZoom, zoom + zoomStep))} className={controlClass}>
+                  <Plus className="h-4 w-4" />
+                </button>
+              </>
+            )}
+
+            {onDownload && (
+              <button type="button" aria-label="Download" title="Download" onClick={onDownload} className={controlClass}>
+                <Download className="h-4 w-4" />
+              </button>
+            )}
+
             <button type="button" aria-label="Minimize preview" title="Minimize preview" onClick={onClose} className={controlClass}>
               <Minimize2 className="h-4 w-4" />
             </button>

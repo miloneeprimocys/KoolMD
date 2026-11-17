@@ -50,7 +50,7 @@ const ProviderOverview = ({ profile }: { profile: ProviderProfile }) => {
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* About + specialties */}
-      <div className="grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 sm:gap-5 2xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <section className={`${cardCls} sm:p-6`}>
           <h3 className="mb-3 text-base font-semibold text-heading">About</h3>
           <p className={`text-sm leading-relaxed text-body ${expanded ? "" : "line-clamp-4"}`}>{profile.about}</p>

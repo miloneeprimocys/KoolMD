@@ -111,7 +111,7 @@ const ProviderServices = ({ profile, onBook }: Props) => {
           />
         </div>
       </div>
-
+   
       <div className="grid gap-5 2xl:grid-cols-[230px_minmax(0,1fr)]">
         {/* Categories */}
         <nav aria-label="Service categories" className="flex gap-2 overflow-x-auto 2xl:flex-col 2xl:gap-1 2xl:overflow-visible 2xl:border-r 2xl:border-divider 2xl:pr-4">
