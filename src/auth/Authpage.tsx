@@ -3,15 +3,22 @@
 import React, { Suspense, type ComponentType } from "react";
 import LeftSection from "./LeftSection";
 import LoginForm from "./LoginForm";
+import PatientSignupForm from "./patientpanelauth/PatientSignupForm";
 import SignupForm from "./SignupForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import ResetPasswordForm from "./ResetPasswordForm";
 
-export type AuthPageVariant = "login" | "signup" | "forgot-password" | "reset-password";
+export type AuthPageVariant =
+  | "login"
+  | "signup"
+  | "patient-signup"
+  | "forgot-password"
+  | "reset-password";
 
 const FORM_BY_VARIANT: Record<AuthPageVariant, ComponentType> = {
   login: LoginForm,
   signup: SignupForm,
+  "patient-signup": PatientSignupForm,
   "forgot-password": ForgotPasswordForm,
   "reset-password": ResetPasswordForm,
 };

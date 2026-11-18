@@ -23,7 +23,7 @@ const EmojiPicker = ({ onSelect, onClose, className = "" }: Props) => {
     <div
       role="dialog"
       aria-label="Emoji picker"
-      className={`emoji-picker-wrap overflow-hidden rounded-2xl border border-border bg-card shadow-2xl ring-1 ring-border/60 ${className}`}
+      className={`emoji-picker-wrap mb-4 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl ring-1 ring-border/60 ${className}`}
     >
       <EmojiPickerReact
         onEmojiClick={(data: EmojiClickData) => onSelect(data.emoji)}

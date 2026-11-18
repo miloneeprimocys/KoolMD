@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowLeft, CheckCheck, Download, FileText, Image as ImageIcon, Info, Music, Paperclip, Phone, Play, Video } from "lucide-react";
+import { ArrowDown, ArrowLeft, CheckCheck, Download, FileText, Image as ImageIcon, Info, Music, Paperclip, Phone, Play, Video } from "lucide-react";
 
 import MaximizeImage from "@/components/MaximizeImage"; // TODO: adjust to where your MaximizeImage component lives
-import MessageComposer, { type ComposerHandle, type SendPayload } from "./MessageComposer";
+import MessageComposer, { isRichText, plainTextOf, sanitizeRichText, type ComposerHandle, type SendPayload } from "./MessageComposer";
 import { ConversationAvatar, type Attachment, type ChatMessage, type Conversation } from "./MessageList";
+import { FaChevronDown } from "react-icons/fa";
 
 type Props = {
   conversation: Conversation;
@@ -71,7 +72,7 @@ const download = (a: Attachment) => {
 /*  Pieces                                                           */
 /* ---------------------------------------------------------------- */
 const MessageMeta = ({ time, mine }: { time: string; mine: boolean }) => (
-  <p className={`flex items-center gap-1 px-2 pb-1 pt-1 text-xs text-body ${mine ? "justify-end" : ""}`}>
+  <p className={`flex items-center gap-1 pb-1 pt-1 text-xs text-body ${mine ? "justify-end" : ""}`}>
     {time}
     {mine && <CheckCheck className="h-3.5 w-3.5 text-primary" />}
   </p>
@@ -79,8 +80,8 @@ const MessageMeta = ({ time, mine }: { time: string; mine: boolean }) => (
 
 const Bubble = ({ mine, wide = false, children }: { mine: boolean; wide?: boolean; children: React.ReactNode }) => (
   <div
-    className={`min-w-0 max-w-[85%] rounded-2xl p-2 text-sm text-heading sm:max-w-[75%] ${
-      mine ? "rounded-br-md bg-primary/10" : "rounded-bl-md bg-surface-start/70"
+    className={`min-w-0 max-w-full rounded-2xl px-1.5 pt-1 pb-1.5 text-sm text-heading ${
+      mine ? "rounded-br-none bg-primary/10" : "rounded-bl-none bg-surface-start/70"
     } ${wide ? "w-72" : ""}`}
   >
     {children}
@@ -104,6 +105,17 @@ const Row = ({
     {children}
   </div>
 );
+
+/** Message text: editor HTML (bold, italic, lists, links…) or plain text for older messages. */
+const MessageText = ({ text, className = "" }: { text: string; className?: string }) =>
+  isRichText(text) ? (
+    <div
+      className={`break-words [&_a]:text-primary [&_a]:underline [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-[15px] [&_h2]:font-bold [&_h3]:font-bold [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-0 [&_p:empty]:min-h-[1.25em] [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 ${className}`}
+      dangerouslySetInnerHTML={{ __html: sanitizeRichText(text) }}
+    />
+  ) : (
+    <p className={`whitespace-pre-wrap break-words ${className}`}>{text}</p>
+  );
 
 /** Up to 4 photos in a grid; the 4th shows "+N" when there are more (like WhatsApp). */
 const PhotoGrid = ({ items, onOpen }: { items: Attachment[]; onOpen: (a: Attachment) => void }) => {
@@ -249,9 +261,13 @@ const ViewerContent = ({ a, zoom }: { a: Attachment; zoom: number }) => {
 /* ---------------------------------------------------------------- */
 const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo, onSend }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<ComposerHandle>(null);
   const dragDepth = useRef(0);
   const [dragging, setDragging] = useState(false);
+  const [showScrollToLatest, setShowScrollToLatest] = useState(false);
+  const isAtLatestRef = useRef(true);
+  const previousConversationIdRef = useRef(conversation.id);
 
   /* Full-screen viewer (MaximizeImage) */
   const [viewer, setViewer] = useState<{ items: Attachment[]; index: number } | null>(null);
@@ -291,11 +307,52 @@ const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo,
     return () => document.removeEventListener("keydown", onKey);
   }, [viewer]);
 
-  /* Keep the newest message in view. */
+  const scrollToLatest = (behavior: ScrollBehavior = "auto") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior });
+    isAtLatestRef.current = true;
+    setShowScrollToLatest(false);
+  };
+
+  const onMessagesScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atLatest = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    isAtLatestRef.current = atLatest;
+    setShowScrollToLatest(!atLatest);
+  };
+
+  /* Keep the newest message in view when opening a conversation or adding a message. */
+  useEffect(() => {
+    const conversationChanged = previousConversationIdRef.current !== conversation.id;
+    previousConversationIdRef.current = conversation.id;
+    if (!conversationChanged && !isAtLatestRef.current) return;
+
+    const frame = requestAnimationFrame(() => scrollToLatest());
+    return () => cancelAnimationFrame(frame);
+  }, [conversation.id, conversation.messages.length]);
+
+  /* A chat can mount while hidden below xl; scroll once it becomes visible. */
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [conversation.id, conversation.messages.length]);
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) scrollToLatest();
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const observer = new ResizeObserver(() => {
+      if (isAtLatestRef.current) scrollToLatest();
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
 
   /* ---------- Drag & drop ---------- */
   const hasFiles = (e: React.DragEvent) => Array.from(e.dataTransfer.types).includes("Files");
@@ -329,12 +386,12 @@ const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo,
 
     /* Text only */
     if (segments.length === 0) {
-      const emojiCount = emojiOnlyCount(m.text);
+      const emojiCount = emojiOnlyCount(plainTextOf(m.text));
       if (emojiCount >= 1 && emojiCount <= 3) {
         return (
           <Row conversation={conversation} mine={mine} showAvatar>
             <div className="min-w-0 max-w-[85%] sm:max-w-[75%]">
-              <p className={`leading-tight ${BIG_EMOJI_SIZE[emojiCount]} ${mine ? "text-right" : ""}`}>{m.text}</p>
+              <p className={`leading-tight ${BIG_EMOJI_SIZE[emojiCount]} ${mine ? "text-right" : ""}`}>{plainTextOf(m.text)}</p>
               <MessageMeta time={m.time} mine={mine} />
             </div>
           </Row>
@@ -342,10 +399,10 @@ const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo,
       }
       return (
         <Row conversation={conversation} mine={mine} showAvatar>
-          <Bubble mine={mine}>
-            {m.text && <p className="whitespace-pre-wrap break-words px-2 pt-1">{m.text}</p>}
+          <div className={`flex w-fit min-w-0 max-w-[85%] flex-col sm:max-w-[75%] ${mine ? "items-end" : "items-start"}`}>
+            <Bubble mine={mine}>{m.text && <MessageText text={m.text} className="px-2 pt-1" />}</Bubble>
             <MessageMeta time={m.time} mine={mine} />
-          </Bubble>
+          </div>
         </Row>
       );
     }
@@ -355,23 +412,25 @@ const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo,
       <div className="space-y-1.5">
         {segments.map((segment, i) => (
           <Row key={i} conversation={conversation} mine={mine} showAvatar={i === 0}>
-            <Bubble mine={mine} wide>
-              {segment.type === "images" ? (
-                <PhotoGrid items={segment.items} onOpen={openAttachment} />
-              ) : segment.item.kind === "video" ? (
-                <VideoTile a={segment.item} onOpen={openAttachment} />
-              ) : segment.item.kind === "audio" ? (
-                segment.item.url ? (
-                  <audio controls src={segment.item.url} className="w-full" />
+            <div className={`flex w-fit min-w-0 max-w-[85%] flex-col sm:max-w-[75%] ${mine ? "items-end" : "items-start"}`}>
+              <Bubble mine={mine} wide>
+                {segment.type === "images" ? (
+                  <PhotoGrid items={segment.items} onOpen={openAttachment} />
+                ) : segment.item.kind === "video" ? (
+                  <VideoTile a={segment.item} onOpen={openAttachment} />
+                ) : segment.item.kind === "audio" ? (
+                  segment.item.url ? (
+                    <audio controls src={segment.item.url} className="w-full" />
+                  ) : (
+                    <DocumentCard a={segment.item} onOpen={openAttachment} />
+                  )
                 ) : (
                   <DocumentCard a={segment.item} onOpen={openAttachment} />
-                )
-              ) : (
-                <DocumentCard a={segment.item} onOpen={openAttachment} />
-              )}
-              {i === 0 && m.text && <p className="whitespace-pre-wrap break-words px-2 pt-2">{m.text}</p>}
+                )}
+                {i === 0 && m.text && <MessageText text={m.text} className="px-2 pt-2" />}
+              </Bubble>
               <MessageMeta time={m.time} mine={mine} />
-            </Bubble>
+            </div>
           </Row>
         ))}
       </div>
@@ -387,7 +446,7 @@ const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo,
       onDrop={onDrop}
     >
       {/* Header */}
-      <div className="flex h-[73px] shrink-0 items-center justify-between gap-2 border-b border-border px-2 sm:px-4">
+      <div className="flex h-[63px] shrink-0 items-center justify-between gap-2 border-b border-border px-2 sm:px-4">
         <div className="flex min-w-0 items-center gap-1 sm:gap-2">
           <button type="button" aria-label="Back to messages" onClick={onBack} className={`${iconButtonCls} xl:hidden`}>
             <ArrowLeft className="h-5 w-5" />
@@ -424,24 +483,39 @@ const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo,
       </div>
 
       {/* Messages */}
-      <div ref={scrollRef} className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-4 sm:px-5">
-        {conversation.messages.length === 0 && (
-          <p className="py-10 text-center text-sm text-body">No messages yet. Send the first secure message below.</p>
-        )}
+      <div className="relative min-h-0 flex-1">
+        <div ref={scrollRef} onScroll={onMessagesScroll} className="custom-scrollbar h-full min-h-0 overflow-y-auto px-3 py-4 sm:px-5">
+          <div ref={contentRef} className="space-y-4">
+            {conversation.messages.length === 0 && (
+              <p className="py-10 text-center text-sm text-body">No messages yet. Send the first secure message below.</p>
+            )}
 
-        {conversation.messages.map((m, i) => {
-          const showDay = i === 0 || conversation.messages[i - 1].day !== m.day;
-          return (
-            <React.Fragment key={m.id}>
-              {showDay && (
-                <div className="flex justify-center">
-                  <span className="rounded-full bg-surface-start/70 px-4 py-1 text-xs text-body">{m.day}</span>
-                </div>
-              )}
-              {renderMessage(m)}
-            </React.Fragment>
-          );
-        })}
+            {conversation.messages.map((m, i) => {
+              const showDay = i === 0 || conversation.messages[i - 1].day !== m.day;
+              return (
+                <React.Fragment key={m.id}>
+                  {showDay && (
+                    <div className="flex justify-center">
+                      <span className="rounded-full bg-surface-start/70 px-4 py-1 text-xs text-body">{m.day}</span>
+                    </div>
+                  )}
+                  {renderMessage(m)}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+        {showScrollToLatest && (
+          <button
+            type="button"
+            aria-label="Scroll to latest messages"
+            title="Scroll to latest messages"
+            onClick={() => scrollToLatest("smooth")}
+            className="absolute bottom-3 cursor-pointer right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-primary shadow-md transition-colors hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            <FaChevronDown  className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Composer */}
@@ -471,7 +545,7 @@ const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo,
         onNext={() => step(1)}
         previousDisabled={!viewer || viewer.index === 0}
         nextDisabled={!viewer || viewer.index === viewer.items.length - 1}
-        onDownload={() => current && download(current)}
+        onDownload={current?.url ? () => download(current) : undefined}
       >
         {current && <ViewerContent a={current} zoom={zoom} />}
       </MaximizeImage>

@@ -90,6 +90,7 @@ import PaymentHistory from "@/compensation/Paymenthistory";
 import CompensationDashboard from "@/compensation/Compensationdashboard";
 import Messages from "@/messages/Messages";
 import Notifications from "@/notifications/Notifications";
+import FindProviderMainPage from "@/Patient-Panel/FindProvider/FindProviderMainPage";
 /**
  * protected → signed-in only · guest → signed-out only · public → anyone
  */
@@ -106,6 +107,7 @@ export interface RouteConfig {
 
 const LoginPage = () => <AuthPage variant="login" />;
 const SignupPage = () => <AuthPage variant="signup" />;
+const PatientSignupPage = () => <AuthPage variant="patient-signup" />;
 const ForgotPasswordPage = () => <AuthPage variant="forgot-password" />;
 const ResetPasswordPage = () => <AuthPage variant="reset-password" />;
 
@@ -114,6 +116,7 @@ export const ROUTES: Record<string, RouteConfig> = {
   "": { component: LoginPage, access: "guest" },
   "auth/login": { component: LoginPage, access: "guest" },
   "auth/register": { component: SignupPage, access: "guest" },
+  "auth/patient/register": { component: PatientSignupPage, access: "guest" },
   "auth/forgot-password": { component: ForgotPasswordPage, access: "guest" },
 
   // Public — opened from email links, must work in any session state
@@ -122,6 +125,11 @@ export const ROUTES: Record<string, RouteConfig> = {
 
   // App (inside MainLayout)
   dashboard: { component: Dashboard, title: "Dashboard", access: "protected" },
+  "find-provider": {
+    component: FindProviderMainPage,
+    title: "Find a Provider",
+    access: "protected",
+  },
   patients: {
     component: Patient,
     title: "Patients",

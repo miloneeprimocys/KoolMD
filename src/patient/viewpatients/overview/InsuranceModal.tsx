@@ -189,17 +189,19 @@ const InsuranceModal = ({ patientId, insurance, onClose }: InsuranceModalProps) 
       errorMessage={saveError}
     >
       <FormGrid>
-        <SignupDropdown
-          name="coveragePriority"
-          label={<ReqLabel>Coverage Priority</ReqLabel>}
-          placeholder="Select priority"
-          options={toOptions(COVERAGE_PRIORITIES)}
-          value={values.coveragePriority}
-          onChange={(value) => setField("coveragePriority", value as CoveragePriority)}
-          error={errors.coveragePriority}
-          portalMenu
-          portalMenuZIndex={1000}
-        />
+        <FullRow>
+          <SignupDropdown
+            name="coveragePriority"
+            label={<ReqLabel>Coverage Priority</ReqLabel>}
+            placeholder="Select priority"
+            options={toOptions(COVERAGE_PRIORITIES)}
+            value={values.coveragePriority}
+            onChange={(value) => setField("coveragePriority", value as CoveragePriority)}
+            error={errors.coveragePriority}
+            portalMenu
+            portalMenuZIndex={1000}
+          />
+        </FullRow>
         {insurance ? (
           <SignupDropdown
             name="status"
@@ -210,9 +212,7 @@ const InsuranceModal = ({ patientId, insurance, onClose }: InsuranceModalProps) 
             portalMenu
             portalMenuZIndex={1000}
           />
-        ) : (
-          <div className="hidden sm:block" />
-        )}
+        ) : null}
         <SignupField
           name="payerName"
           label={<ReqLabel>Insurance Company</ReqLabel>}

@@ -170,7 +170,7 @@ const MessageContext = ({ conversation, onClose, onToggleStar, onToggleArchive }
   return (
     <div className="flex min-h-full flex-col">
       {/* Header – same height as the chat header so the columns line up */}
-      <div className="flex h-[73px] shrink-0 items-center justify-between gap-3 border-b border-border px-4 sm:px-5">
+      <div className="flex h-[63px] shrink-0 items-center justify-between gap-3 border-b border-border px-4 sm:px-5">
         <h3 className="flex items-center gap-2 text-base font-semibold text-heading">
           <User className="h-[18px] w-[18px] text-primary" />
           Patient Context

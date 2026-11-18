@@ -58,6 +58,7 @@ export type CalendarDayState = {
 
 type CalendarProps = {
   month: Date;
+  minMonth?: Date;
   selectedDate?: Date;
   today?: Date | null;
   onSelectDate: (date: Date) => void;
@@ -75,6 +76,7 @@ type CalendarProps = {
 
 const Calendar = ({
   month,
+  minMonth,
   selectedDate,
   today = null,
   onSelectDate,
@@ -90,6 +92,11 @@ const Calendar = ({
   dayGridClassName = "",
 }: CalendarProps) => {
   const monthDays = buildMonth(month);
+  const previousMonthDisabled =
+    !!minMonth &&
+    (month.getFullYear() < minMonth.getFullYear() ||
+      (month.getFullYear() === minMonth.getFullYear() &&
+        month.getMonth() <= minMonth.getMonth()));
 
   return (
     <div className={className}>
@@ -102,12 +109,13 @@ const Calendar = ({
             <button
               type="button"
               aria-label="Previous month"
+              disabled={previousMonthDisabled}
               onClick={() =>
                 onMonthChange?.(
                   new Date(month.getFullYear(), month.getMonth() - 1, 1),
                 )
               }
-              className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-body hover:text-primary"
+              className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-body hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>

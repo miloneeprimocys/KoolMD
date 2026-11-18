@@ -286,11 +286,11 @@ const OverviewPatient = ({
           className="flex-1"
           icon={Phone}
           title="Contact Information"
-          action={
-            canUpdatePatient ? (
-              <EditButton section="Contact Information" onEdit={() => dispatch(showModal("EditContactInformation"))} />
-            ) : undefined
-          }
+          // action={
+          //   canUpdatePatient ? (
+          //     <EditButton section="Contact Information" onEdit={() => dispatch(showModal("EditContactInformation"))} />
+          //   ) : undefined
+          // }
         >
           <ul className="space-y-4">
             {contactFields.map((c) => (
@@ -371,9 +371,9 @@ const OverviewPatient = ({
           className="flex-1"
           icon={User}
           title="Personal Information"
-          action={
-            canUpdatePatient ? <EditButton section="Personal Information" onEdit={editPatient} /> : undefined
-          }
+          // action={
+          //   canUpdatePatient ? <EditButton section="Personal Information" onEdit={editPatient} /> : undefined
+          // }
         >
           <ul className="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
             {personalFields.map((p) => (

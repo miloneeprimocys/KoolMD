@@ -27,6 +27,7 @@ import {
   Pill,
   Receipt,
   RefreshCw,
+  Search,
   Send,
   Settings,
   ShieldCheck,
@@ -39,7 +40,7 @@ import {
 } from "lucide-react";
 import { FaShieldAlt } from "react-icons/fa";
 import { useAppSelector } from "@/hooks/useAppHooks";
-import { selectPermissionCodes } from "@/redux/selectors/authSelectors";
+import { selectCurrentUser, selectPermissionCodes } from "@/redux/selectors/authSelectors";
 import { PERMISSIONS, type PermissionCode } from "@/auth/permissions";
 
 type SubItem = {
@@ -248,6 +249,15 @@ const SECTIONS: NavSection[] = [
   
 ];
 
+const PATIENT_SECTIONS: NavSection[] = [
+  {
+    items: [
+      { label: "Dashboard", href: "/dashboard", Icon: LayoutDashboard },
+      { label: "Find a Provider", href: "/find-provider", Icon: Search },
+    ],
+  },
+];
+
 /* ----- Shared link styles (blue accent) ----- */
 const linkBase =
   "relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-200 " +
@@ -434,11 +444,15 @@ const checkIsActive = (href: string, pathname: string | null) => {
 const MainSidebar = ({ isMini, onToggleMini }: MainSidebarProps) => {
   const pathname = usePathname();
   const navRef = useRef<HTMLElement>(null);
+  const currentUser = useAppSelector(selectCurrentUser);
   const permissionCodes = useAppSelector(selectPermissionCodes);
-  // Recomputed only when the signed-in user's permissions change.
+  const roleCodes = currentUser?.roleCodes ?? [];
+  const hasAdminRole = roleCodes.includes("ADMIN") || roleCodes.includes("SUPER_ADMIN");
+  const isPatient = roleCodes.includes("PATIENT") && !hasAdminRole;
+
   const visibleSections = useMemo(
-    () => filterSectionsByPermission(SECTIONS, permissionCodes),
-    [permissionCodes],
+    () => (isPatient ? PATIENT_SECTIONS : filterSectionsByPermission(SECTIONS, permissionCodes)),
+    [isPatient, permissionCodes],
   );
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
     Object.fromEntries(

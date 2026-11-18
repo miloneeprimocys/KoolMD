@@ -39,6 +39,10 @@ interface SignupFormValues {
   password: string;
 }
 
+interface SignupFormProps {
+  fixedAccountType?: SignupAccountType;
+}
+
 const EMPTY_SIGNUP_FORM: SignupFormValues = {
   accountType: "",
   firstName: "",
@@ -83,12 +87,15 @@ const validateSignupForm = (formValues: SignupFormValues): SignupErrors =>
     password: validateNewPassword(formValues.password, formValues),
   });
 
-const SignupForm = () => {
+const SignupForm = ({ fixedAccountType }: SignupFormProps) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const registerRequest = useAuthRequest("register");
 
-  const [formValues, setFormValues] = useState<SignupFormValues>(EMPTY_SIGNUP_FORM);
+  const [formValues, setFormValues] = useState<SignupFormValues>(() => ({
+    ...EMPTY_SIGNUP_FORM,
+    accountType: fixedAccountType ?? "",
+  }));
   const [showPassword, setShowPassword] = useState(false);
   const [touchedFields, setTouchedFields] = useState<Partial<Record<SignupField, boolean>>>({});
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -159,28 +166,29 @@ const SignupForm = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-7 space-y-3" noValidate>
-        {/* ---------- Role ---------- */}
-        <div
-          className={`animate-[fadeSlide_0.5s_cubic-bezier(0.16,1,0.3,1)_both] [animation-delay:0.1s] ${
-            isDropdownOpen ? "relative z-50" : ""
-          }`}
-        >
-          <SignupDropdown
-            id="role"
-            name="role"
-            label="Select Your Role"
-            placeholder="Choose your role"
-            icon={<Users className="h-[18px] w-[18px]" />}
-            value={formValues.accountType}
-            onChange={(selectedValue) =>
-              updateField("accountType", selectedValue as SignupAccountType)
-            }
-            onBlur={() => handleBlur("accountType")}
-            onOpenChange={setIsDropdownOpen}
-            options={ACCOUNT_TYPE_OPTIONS}
-            error={getFieldError("accountType")}
-          />
-        </div>
+        {!fixedAccountType && (
+          <div
+            className={`animate-[fadeSlide_0.5s_cubic-bezier(0.16,1,0.3,1)_both] [animation-delay:0.1s] ${
+              isDropdownOpen ? "relative z-50" : ""
+            }`}
+          >
+            <SignupDropdown
+              id="role"
+              name="role"
+              label="Select Your Role"
+              placeholder="Choose your role"
+              icon={<Users className="h-[18px] w-[18px]" />}
+              value={formValues.accountType}
+              onChange={(selectedValue) =>
+                updateField("accountType", selectedValue as SignupAccountType)
+              }
+              onBlur={() => handleBlur("accountType")}
+              onOpenChange={setIsDropdownOpen}
+              options={ACCOUNT_TYPE_OPTIONS}
+              error={getFieldError("accountType")}
+            />
+          </div>
+        )}
 
         {/* ---------- First + Last name ---------- */}
         <div className="animate-[fadeSlide_0.5s_cubic-bezier(0.16,1,0.3,1)_both] [animation-delay:0.13s]">

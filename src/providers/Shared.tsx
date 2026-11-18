@@ -671,6 +671,7 @@ export const ChipSelect = ({
   onChange,
   placeholder,
   error,
+  menuMaxHeight,
 }: {
   name: string;
   label: string;
@@ -679,6 +680,7 @@ export const ChipSelect = ({
   onChange: (value: string[]) => void;
   placeholder: string;
   error?: string;
+  menuMaxHeight?: number;
 }) => {
   const available = options.filter((o) => !value.includes(o.value));
   return (
@@ -692,6 +694,10 @@ export const ChipSelect = ({
         onChange={(v) => onChange([...value, v])}
         disabled={available.length === 0}
         error={error}
+        portalMenu={menuMaxHeight !== undefined}
+        menuMaxHeight={menuMaxHeight}
+        minSpaceBelow={menuMaxHeight === undefined ? undefined : menuMaxHeight + 12}
+        portalMenuZIndex={100}
       />
       {value.length > 0 && (
         <ul className="mt-2 flex flex-wrap gap-2">

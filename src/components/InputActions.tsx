@@ -21,6 +21,10 @@ import SignupDropdown, { type DropdownOption } from "@/components/SignupDropdown
 interface InputActionsProps {
   value: string;
   onChange: (value: string) => void;
+  toolbarActions?: React.ReactNode;
+  editorAction?: React.ReactNode;
+  showCounter?: boolean;
+  resetKey?: number;
   rows?: number;
   placeholder?: string;
   max?: number;
@@ -28,6 +32,8 @@ interface InputActionsProps {
 }
 
 const toEditorContent = (value: string) => {
+  if (!value) return "<p></p>";
+
   if (/<(?:p|h[1-6]|ul|ol|li|strong|em|u|a|img|br|blockquote)\b/i.test(value)) {
     return value;
   }
@@ -50,12 +56,17 @@ const TEXT_STYLES: DropdownOption[] = [
 const InputActions = ({
   value,
   onChange,
+  toolbarActions,
+  editorAction,
+  showCounter = true,
+  resetKey,
   rows = 4,
   placeholder,
   max,
   image = true,
 }: InputActionsProps) => {
   const lastValueRef = useRef(value);
+  const previousResetKeyRef = useRef(resetKey);
   const savedSelectionRef = useRef<{ from: number; to: number } | null>(null);
   const [modalMode, setModalMode] = React.useState<LinkModalMode | null>(null);
   const extensions = useMemo(
@@ -149,6 +160,13 @@ const InputActions = ({
     }
   }, [editor, value]);
 
+  useEffect(() => {
+    if (!editor || resetKey === previousResetKeyRef.current) return;
+    previousResetKeyRef.current = resetKey;
+    editor.commands.clearContent(false);
+    editor.commands.focus("start");
+  }, [editor, resetKey]);
+
   const addImage = () => {
     openModal("image");
   };
@@ -163,13 +181,12 @@ const InputActions = ({
 
     currentEditor
       .chain()
-      .focus()
-      .setTextSelection({ from, to })
-      .insertContent({
+      .insertContentAt({ from, to }, {
         type: "text",
         text,
         marks: [{ type: "link", attrs: { href, target: "_blank", rel: "noopener noreferrer" } }],
       })
+      .focus()
       .run();
     savedSelectionRef.current = null;
   };
@@ -215,12 +232,14 @@ const InputActions = ({
 
   return (
     <div className="min-w-0">
-      <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-card transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+      <div className="relative min-w-0 rounded-xl border border-border bg-card transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
         <div
           role="toolbar"
           aria-label="Text formatting"
           className="flex flex-wrap items-center gap-1 border-b border-divider px-2 py-1.5"
         >
+          {toolbarActions}
+          {toolbarActions && <span className="mx-1 h-5 w-px bg-divider" aria-hidden="true" />}
           <SignupDropdown
             name="input-actions-text-style"
             options={TEXT_STYLES}
@@ -245,10 +264,11 @@ const InputActions = ({
         </div>
         <EditorContent
           editor={editor}
-          className="max-h-[32rem] overflow-y-auto"
+          className={`max-h-[32rem] overflow-y-auto ${editorAction ? "[&_.tiptap]:!pb-14" : ""}`}
         />
+        {editorAction && <div className="absolute bottom-2 right-2 z-10">{editorAction}</div>}
       </div>
-      {max && (
+      {max && showCounter && (
         <p className="mt-1 text-right text-[11px] text-body">
           {activeFormats?.characters ?? 0}/{max}
         </p>

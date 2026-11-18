@@ -8,7 +8,7 @@ import RightSubSection from "@/components/RightSubSection"; // TODO: adjust to w
 import MessageList, { type Attachment, type ChatMessage, type Conversation, type EmrItem, type PatientInfo } from "./MessageList";
 import MessageChat from "./MessageChat";
 import MessageContext from "./MessageContext";
-import { type SendPayload } from "./MessageComposer";
+import { plainTextOf, type SendPayload } from "./MessageComposer";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API / redux selector)                  */
@@ -207,7 +207,7 @@ const Messages = () => {
     setConversations((prev) =>
       prev.map((c) =>
         c.id === active.id
-          ? { ...c, messages: [...c.messages, message], preview: previewOf(text, attachments), time: message.time }
+          ? { ...c, messages: [...c.messages, message], preview: previewOf(plainTextOf(text), attachments), time: message.time }
           : c,
       ),
     );
@@ -255,7 +255,7 @@ const Messages = () => {
       </div>
 
       {/* One card: list | chat | patient context */}
-      <div className="relative flex h-[calc(100dvh-10rem)] min-h-[420px] overflow-hidden rounded-[14px] border border-border bg-card sm:h-[calc(100dvh-12rem)] sm:min-h-[480px] lg:h-[calc(100dvh-11.5rem)]">
+      <div className="relative flex h-[calc(100dvh-10rem)] min-h-[420px] overflow-hidden rounded-[14px] border border-border bg-card sm:h-[calc(100dvh-12rem)] sm:min-h-[480px] lg:h-[calc(100dvh-11.5rem)] 2xl:h-[calc(100dvh-12rem)] 2xl:min-h-0">
         {/* Left – conversation list */}
         <section
           aria-label="Conversations"

@@ -97,6 +97,7 @@ const LinkModal = ({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    event.stopPropagation();
     setError("");
     setTextError("");
     setUrlError("");
