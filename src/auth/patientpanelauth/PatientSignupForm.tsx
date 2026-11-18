@@ -172,7 +172,7 @@ const PatientSignupForm = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-7 space-y-3" noValidate>
-        <div key={`step-${currentStep}`} className="animate-[fadeSlide_0.5s_cubic-bezier(0.16,1,0.3,1)_both] [animation-delay:0.08s]">
+        <div key={`step-${currentStep}`} className="relative z-10 animate-[fadeSlide_0.5s_cubic-bezier(0.16,1,0.3,1)_both] [animation-delay:0.08s]">
           {currentStep === 1 && <PatientAccountDetails values={account} errors={shownErrors} onChange={patcher(setAccount)} />}
           {currentStep === 2 && <PatientCompleteProfile values={profile} errors={shownErrors} onChange={patcher(setProfile)} />}
           {currentStep === 3 && <PatientPreferences values={prefs} errors={shownErrors} onChange={patcher(setPrefs)} />}
