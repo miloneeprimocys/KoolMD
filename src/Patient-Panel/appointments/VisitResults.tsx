@@ -206,7 +206,7 @@ const VisitResults = () => {
       </section>
 
       {/* Tabs */}
-      <div role="tablist" aria-label="Visit documents" className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1 hide-scrollbar sm:inline-flex">
+      <div role="tablist" aria-label="Visit documents" className="grid grid-cols-3 gap-1 rounded-2xl border border-border bg-card p-1.5">
         {tabs.map(({ key, label, Icon, href }) => {
           const isActive = key === "results";
           return (
@@ -216,12 +216,12 @@ const VisitResults = () => {
               type="button"
               aria-selected={isActive}
               onClick={() => !isActive && router.push(`${href}?id=${visitId}`)}
-              className={`flex flex-1 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:flex-none sm:px-6 sm:text-sm ${
-                isActive ? "bg-primary text-on-primary shadow-md shadow-primary/25" : "text-heading hover:bg-primary/10"
+              className={`flex min-w-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 py-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:px-4 ${
+                isActive ? "bg-primary font-semibold text-on-primary" : "text-heading hover:bg-primary/5"
               }`}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              {label}
+              <Icon className="hidden h-4 w-4 shrink-0 sm:block" />
+              <span className="truncate">{label}</span>
             </button>
           );
         })}

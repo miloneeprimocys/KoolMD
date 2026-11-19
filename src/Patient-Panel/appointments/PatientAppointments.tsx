@@ -4,12 +4,12 @@ import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Calendar,
+  CalendarX,
   CheckCircle2,
   Clock,
   FileText,
   History,
   MapPin,
-  MoreVertical,
   Star,
   Video,
   XCircle,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import AddButton from "@/components/Addbutton";
+import DeleteDialog from "@/components/Deletedialog";
 import EditButton from "@/components/EditButton";
 import ImportButton from "@/components/ImportButton";
 import Pagination from "@/components/Pagination";
@@ -345,27 +346,20 @@ const PatientAppointments = () => {
         </section>
       )}
       
-      {/* Cancel confirmation */}
-      {cancelTarget && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-4" onMouseDown={() => setCancelTarget(null)} role="presentation">
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            aria-label="Cancel appointment"
-            className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-6"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-base font-semibold text-heading">Cancel this appointment?</h3>
-            <p className="mt-2 text-sm text-body">
-              Your appointment with {cancelTarget.doctor} on {cancelTarget.date} will be cancelled. You can book a new one at any time.
-            </p>
-            <div className="mt-5 flex flex-row justify-end gap-2 sm:gap-3">
-              <ImportButton text="Keep Appointment" icon={null} className="flex-1 sm:flex-none" onClick={() => setCancelTarget(null)} />
-              <AddButton text="Yes, Cancel" icon={null} className="flex-1 sm:flex-none" onClick={confirmCancel} />
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteDialog
+        open={cancelTarget !== null}
+        onClose={() => setCancelTarget(null)}
+        onConfirm={confirmCancel}
+        icon={<CalendarX className="h-7 w-7" />}
+        title="Cancel this appointment?"
+        description={
+          cancelTarget
+            ? `Your appointment with ${cancelTarget.doctor} on ${cancelTarget.date} will be cancelled. You can book a new one at any time.`
+            : undefined
+        }
+        cancelText="Keep Appointment"
+        confirmText="Yes, Cancel"
+      />
     </div>
   );
 };
