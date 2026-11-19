@@ -17,6 +17,7 @@ type Props = {
   onToggleInfo: () => void;
   onOpenInfo: () => void;
   onSend: (payload: SendPayload) => void;
+  showInfo?: boolean;
 };
 
 const iconButtonCls =
@@ -259,7 +260,7 @@ const ViewerContent = ({ a, zoom }: { a: Attachment; zoom: number }) => {
 /* ---------------------------------------------------------------- */
 /*  Chat                                                             */
 /* ---------------------------------------------------------------- */
-const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo, onSend }: Props) => {
+const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo, onSend, showInfo = true }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<ComposerHandle>(null);
@@ -451,17 +452,27 @@ const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo,
           <button type="button" aria-label="Back to messages" onClick={onBack} className={`${iconButtonCls} xl:hidden`}>
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <button
-            type="button"
-            onClick={onOpenInfo}
-            className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-          >
-            <ConversationAvatar conversation={conversation} />
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-heading">{conversation.name}</span>
-              <span className="block truncate text-xs text-body">{conversation.role}</span>
-            </span>
-          </button>
+          {showInfo ? (
+            <button
+              type="button"
+              onClick={onOpenInfo}
+              className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            >
+              <ConversationAvatar conversation={conversation} />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold text-heading">{conversation.name}</span>
+                <span className="block truncate text-xs text-body">{conversation.role}</span>
+              </span>
+            </button>
+          ) : (
+            <div className="flex min-w-0 items-center gap-3">
+              <ConversationAvatar conversation={conversation} />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold text-heading">{conversation.name}</span>
+                <span className="block truncate text-xs text-body">{conversation.role}</span>
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
           <button type="button" aria-label="Start video call" className={`${iconButtonCls} hidden sm:flex`}>
@@ -470,15 +481,17 @@ const MessageChat = ({ conversation, infoOpen, onBack, onToggleInfo, onOpenInfo,
           <button type="button" aria-label="Start voice call" className={iconButtonCls}>
             <Phone className="h-[18px] w-[18px]" />
           </button>
-          <button
-            type="button"
-            aria-label={infoOpen ? "Hide patient context" : "Show patient context"}
-            aria-pressed={infoOpen}
-            onClick={onToggleInfo}
-            className={`${iconButtonCls} ${infoOpen ? "bg-primary/10 text-primary" : ""}`}
-          >
-            <Info className="h-[18px] w-[18px]" />
-          </button>
+          {showInfo && (
+            <button
+              type="button"
+              aria-label={infoOpen ? "Hide patient context" : "Show patient context"}
+              aria-pressed={infoOpen}
+              onClick={onToggleInfo}
+              className={`${iconButtonCls} ${infoOpen ? "bg-primary/10 text-primary" : ""}`}
+            >
+              <Info className="h-[18px] w-[18px]" />
+            </button>
+          )}
         </div>
       </div>
 

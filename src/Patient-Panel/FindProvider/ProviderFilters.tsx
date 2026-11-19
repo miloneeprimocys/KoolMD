@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CalendarDays, ChevronDown, ChevronUp, Circle, Filter, MapPin, Video } from "lucide-react";
+import { CalendarDays, ChevronDown, Circle, Filter, MapPin, Video } from "lucide-react";
 
 import ImportButton from "@/components/ImportButton";
 import RadioCheckButtonh from "@/components/RadioCheckButtonh";
@@ -70,9 +70,19 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
         className="flex w-full cursor-pointer items-center justify-between text-left text-sm font-semibold text-heading focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
       >
         {title}
-        {open ? <ChevronUp className="h-4 w-4 text-body" /> : <ChevronDown className="h-4 w-4 text-body" />}
+        <ChevronDown className={`h-4 w-4 text-body transition-transform duration-300 ease-in-out ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="mt-3 space-y-2.5">{children}</div>}
+      <div
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="mt-3 space-y-2.5" aria-hidden={!open} inert={!open}>
+            {children}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

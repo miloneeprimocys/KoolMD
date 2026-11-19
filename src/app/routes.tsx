@@ -91,6 +91,12 @@ import CompensationDashboard from "@/compensation/Compensationdashboard";
 import Messages from "@/messages/Messages";
 import Notifications from "@/notifications/Notifications";
 import FindProviderMainPage from "@/Patient-Panel/FindProvider/FindProviderMainPage";
+import PatientAppointments from "@/Patient-Panel/appointments/PatientAppointments";
+import JoinConsultation from "@/Patient-Panel/appointments/JoinConsultation";
+import VisitSummary from "@/Patient-Panel/appointments/VisitSummary";
+import VisitFollowUp from "@/Patient-Panel/appointments/VisitFollowUp";
+import VisitPrescriptions from "@/Patient-Panel/appointments/VisitPrescriptions";
+import VisitResults from "@/Patient-Panel/appointments/VisitResults";
 /**
  * protected → signed-in only · guest → signed-out only · public → anyone
  */
@@ -226,6 +232,36 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "Appointments",
     access: "protected",
     requiredPermission: PERMISSIONS.APPOINTMENT_READ,
+  },
+  "my-appointments": {
+    component: PatientAppointments,
+    title: "Appointments",
+    access: "protected",
+  },
+  "my-appointments/join-consultation": {
+    component: JoinConsultation,
+    title: "Join Consultation",
+    access: "protected",
+  },
+  "my-appointments/visit-summary": {
+    component: VisitSummary,
+    title: "Visit Summary",
+    access: "protected",
+  },
+  "my-appointments/visit-follow-up": {
+    component: VisitFollowUp,
+    title: "Follow-Up",
+    access: "protected",
+  },
+  "my-appointments/visit-prescriptions": {
+    component: VisitPrescriptions,
+    title: "Visit Prescriptions",
+    access: "protected",
+  },
+  "my-appointments/visit-results": {
+    component: VisitResults,
+    title: "Visit Results",
+    access: "protected",
   },
   "appointments/calendar/blocktime": {
     component: AppointmentScheduling,

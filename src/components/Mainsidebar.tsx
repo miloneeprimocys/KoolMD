@@ -254,6 +254,8 @@ const PATIENT_SECTIONS: NavSection[] = [
     items: [
       { label: "Dashboard", href: "/dashboard", Icon: LayoutDashboard },
       { label: "Find a Provider", href: "/find-provider", Icon: Search },
+      { label: "Appointments", href: "/my-appointments", Icon: CalendarDays },
+      { label: "Messages", href: "/messages", Icon: MessageSquare },
     ],
   },
 ];
@@ -366,6 +368,13 @@ const RELATED_ROUTE_PATHS: Record<string, string[]> = {
     "/provider/license-management/edit",
   ],
   "/appointments": ["/book-appointment", "/edit-appointment"],
+  "/my-appointments": [
+    "/my-appointments/join-consultation",
+    "/my-appointments/visit-summary",
+    "/my-appointments/visit-follow-up",
+    "/my-appointments/visit-prescriptions",
+    "/my-appointments/visit-results",
+  ],
   "/encounters": ["/new-encounter", "/edit-encounter", "/view-encounter"],
   "/fhir-model": [
     "/view-fhir-patient",

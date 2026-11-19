@@ -1,14 +1,23 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Calendar, File, FileText, FlaskConical, Lock, Pill, Users } from "lucide-react";
 
 import AddButton from "@/components/Addbutton";
 import RightSubSection from "@/components/RightSubSection"; // TODO: adjust to where your common right section lives
+import { useAppSelector } from "@/hooks/useAppHooks";
+import { selectCurrentUser } from "@/redux/selectors/authSelectors";
 import MessageList, { type Attachment, type ChatMessage, type Conversation, type EmrItem, type PatientInfo } from "./MessageList";
 import MessageChat from "./MessageChat";
 import MessageContext from "./MessageContext";
 import { plainTextOf, type SendPayload } from "./MessageComposer";
+import {
+  normalizePatientEmail,
+  getServerSharedPatientMessagesSnapshot,
+  getSharedPatientMessagesSnapshot,
+  saveSharedPatientMessage,
+  subscribeToSharedPatientMessages,
+} from "./messageStore";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API / redux selector)                  */
@@ -154,7 +163,18 @@ const previewOf = (text: string, attachments: Attachment[]) =>
 /*               backdrop (RightSubSection).                         */
 /* ---------------------------------------------------------------- */
 const Messages = () => {
+  const currentUser = useAppSelector(selectCurrentUser);
+  const roleCodes = currentUser?.roleCodes ?? [];
+  const isPatient = roleCodes.includes("PATIENT") && !roleCodes.includes("ADMIN") && !roleCodes.includes("SUPER_ADMIN");
+  const patientEmail = normalizePatientEmail(currentUser?.email);
   const [conversations, setConversations] = useState<Conversation[]>(INITIAL_CONVERSATIONS);
+  const sharedSnapshot = useSyncExternalStore(
+    subscribeToSharedPatientMessages,
+    getSharedPatientMessagesSnapshot,
+    getServerSharedPatientMessagesSnapshot,
+  );
+  const sharedMessages = sharedSnapshot.messages;
+  const [sendError, setSendError] = useState<string | null>(null);
   const [unreadIds, setUnreadIds] = useState<Set<string>>(new Set(INITIAL_UNREAD));
   const [selectedId, setSelectedId] = useState<string>("1");
   /** Only matters below xl: false = list is visible, true = full-screen chat. */
@@ -164,12 +184,12 @@ const Messages = () => {
   /* Default the panel open on 2xl screens and closed below that breakpoint. */
   useEffect(() => {
     const desktopQuery = window.matchMedia("(min-width: 1536px)");
-    const syncPanelWithViewport = (event: MediaQueryListEvent) => setRightOpen(event.matches);
+    const syncPanelWithViewport = (event: MediaQueryListEvent) => setRightOpen(!isPatient && event.matches);
 
-    setRightOpen(desktopQuery.matches);
+    setRightOpen(!isPatient && desktopQuery.matches);
     desktopQuery.addEventListener("change", syncPanelWithViewport);
     return () => desktopQuery.removeEventListener("change", syncPanelWithViewport);
-  }, []);
+  }, [isPatient]);
 
   /* The full-screen chat must not let the page behind it scroll. */
   useEffect(() => {
@@ -181,7 +201,46 @@ const Messages = () => {
     };
   }, [chatOpen]);
 
-  const active = conversations.find((c) => c.id === selectedId) ?? conversations[0];
+  const visibleConversations = useMemo(() => {
+    const patientConversations = isPatient
+      ? conversations.filter((conversation) =>
+          normalizePatientEmail(conversation.patient?.email) === patientEmail && !!patientEmail,
+        )
+      : conversations;
+
+    return patientConversations.map((conversation) => {
+      const email = normalizePatientEmail(conversation.patient?.email);
+      const threadMessages = sharedMessages.filter(
+        (message) => message.conversationId === conversation.id && normalizePatientEmail(message.patientEmail) === email,
+      );
+      const chatMessages: ChatMessage[] = threadMessages.map((message) => ({
+        id: message.id,
+        from: (isPatient ? message.sender === "patient" : message.sender === "admin") ? "me" : "them",
+        day: message.day,
+        time: message.time,
+        text: message.text,
+        attachments: message.attachments,
+      }));
+      const latest = threadMessages[threadMessages.length - 1];
+      const preview = latest
+        ? previewOf(plainTextOf(latest.text ?? ""), latest.attachments ?? [])
+        : isPatient
+          ? "No messages yet"
+          : conversation.preview;
+
+      return {
+        ...conversation,
+        messages: isPatient ? chatMessages : [...conversation.messages, ...chatMessages],
+        subject: isPatient ? "Care team messages" : latest ? preview : conversation.subject,
+        preview,
+        time: latest?.time ?? (isPatient ? "" : conversation.time),
+        starred: isPatient ? false : conversation.starred,
+        archived: isPatient ? false : conversation.archived,
+      };
+    });
+  }, [conversations, isPatient, patientEmail, sharedMessages]);
+
+  const active = visibleConversations.find((c) => c.id === selectedId) ?? visibleConversations[0] ?? null;
 
   const select = (id: string) => {
     setSelectedId(id);
@@ -195,9 +254,41 @@ const Messages = () => {
   };
 
   const send = ({ text, attachments }: SendPayload) => {
-    // TODO: dispatch(sendMessage({ conversationId: active.id, text, attachments }))
+    if (!active) return;
+
+    const id = `${active.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const patientThreadEmail = normalizePatientEmail(active.patient?.email);
+    if (patientThreadEmail) {
+      if (isPatient && patientThreadEmail !== patientEmail) {
+        setSendError("You can only reply to conversations linked to your patient account.");
+        return;
+      }
+
+      try {
+        saveSharedPatientMessage({
+          id,
+          conversationId: active.id,
+          patientEmail: patientThreadEmail,
+          sender: isPatient ? "patient" : "admin",
+          day: "Today",
+          time: nowLabel(),
+          text: text || undefined,
+          attachments: attachments.map(({ name, size, kind }) => ({ name, size, kind })),
+        });
+        setSendError(null);
+      } catch {
+        setSendError("Your message could not be saved in this browser, so it was not sent.");
+      }
+      return;
+    }
+
+    if (isPatient) {
+      setSendError("This conversation is not linked to your patient account.");
+      return;
+    }
+
     const message: ChatMessage = {
-      id: `${active.id}-${Date.now()}`,
+      id,
       from: "me",
       day: "Today",
       time: nowLabel(),
@@ -213,13 +304,28 @@ const Messages = () => {
     );
   };
 
-  const toggleStar = () =>
+  const toggleStar = () => {
+    if (!active || isPatient) return;
     setConversations((prev) => prev.map((c) => (c.id === active.id ? { ...c, starred: !c.starred } : c)));
+  };
 
-  const toggleArchive = () =>
+  const toggleArchive = () => {
+    if (!active || isPatient) return;
     setConversations((prev) => prev.map((c) => (c.id === active.id ? { ...c, archived: !c.archived } : c)));
+  };
 
   const newMessage = () => {
+    if (isPatient) {
+      const careTeamConversation = visibleConversations[0];
+      if (!careTeamConversation) {
+        setSendError("No care team conversation is linked to your patient account yet.");
+        return;
+      }
+      setSendError(null);
+      select(careTeamConversation.id);
+      return;
+    }
+
     // TODO: replace with your compose flow (recipient picker). For now it opens an empty draft conversation.
     const id = `new-${Date.now()}`;
     const draft: Conversation = {
@@ -247,12 +353,17 @@ const Messages = () => {
           <div className="min-w-0">
             <h2 className="text-lg font-semibold text-heading sm:text-xl 2xl:text-2xl">Messages</h2>
             <p className="mt-0.5 hidden text-sm text-body sm:block">
-              Secure, internal communication for patient care, staff coordination and EMR updates.
+              {isPatient ? "Secure messages from your care team." : "Secure, internal communication for patient care, staff coordination and EMR updates."}
             </p>
           </div>
         </div>
         <AddButton text="New Message" onClick={newMessage} className="shrink-0 whitespace-nowrap" />
       </div>
+      {(sendError ?? sharedSnapshot.error) && (
+        <p role="alert" className="rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">
+          {sendError ?? sharedSnapshot.error}
+        </p>
+      )}
 
       {/* One card: list | chat | patient context */}
       <div className="relative flex h-[calc(100dvh-10rem)] min-h-[420px] overflow-hidden rounded-[14px] border border-border bg-card sm:h-[calc(100dvh-12rem)] sm:min-h-[480px] lg:h-[calc(100dvh-11.5rem)] 2xl:h-[calc(100dvh-12rem)] 2xl:min-h-0">
@@ -263,7 +374,7 @@ const Messages = () => {
             chatOpen ? "hidden xl:flex" : "flex"
           }`}
         >
-          <MessageList conversations={conversations} selectedId={active.id} unreadIds={unreadIds} onSelect={select} />
+          <MessageList conversations={visibleConversations} selectedId={active?.id ?? null} unreadIds={unreadIds} onSelect={select} />
         </section>
 
         {/* Center – chat (full screen below xl) */}
@@ -275,32 +386,41 @@ const Messages = () => {
               : "hidden xl:flex"
           }`}
         >
-          <MessageChat
-            key={active.id}
-            conversation={active}
-            infoOpen={rightOpen}
-            onBack={backToList}
-            onToggleInfo={() => setRightOpen((o) => !o)}
-            onOpenInfo={() => setRightOpen(true)}
-            onSend={send}
-          />
+          {active ? (
+            <MessageChat
+              key={active.id}
+              conversation={active}
+              infoOpen={rightOpen}
+              showInfo={!isPatient}
+              onBack={backToList}
+              onToggleInfo={() => setRightOpen((o) => !o)}
+              onOpenInfo={() => setRightOpen(true)}
+              onSend={send}
+            />
+          ) : (
+            <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-body">
+              No messages from your care team yet.
+            </div>
+          )}
         </section>
 
         {/* Right – patient context.
             2xl: third column of this card (the overrides drop the panel's own card border/radius).
             Below 2xl: overlay with a blurred backdrop (RightSubSection). */}
-        <RightSubSection
-          open={rightOpen}
-          onClose={() => setRightOpen(false)}
-          width={340}
-          ariaLabel="Patient context"
-          disableMobileTransition
-          className="2xl:!h-full 2xl:!rounded-none 2xl:!border-y-0 2xl:!border-r-0"
-        >
-          {(closePanel) => (
-            <MessageContext conversation={active} onClose={closePanel} onToggleStar={toggleStar} onToggleArchive={toggleArchive} />
-          )}
-        </RightSubSection>
+        {!isPatient && active && (
+          <RightSubSection
+            open={rightOpen}
+            onClose={() => setRightOpen(false)}
+            width={340}
+            ariaLabel="Patient context"
+            disableMobileTransition
+            className="2xl:!h-full 2xl:!rounded-none 2xl:!border-y-0 2xl:!border-r-0"
+          >
+            {(closePanel) => (
+              <MessageContext conversation={active} onClose={closePanel} onToggleStar={toggleStar} onToggleArchive={toggleArchive} />
+            )}
+          </RightSubSection>
+        )}
       </div>
     </div>
   );
