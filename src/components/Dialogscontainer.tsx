@@ -33,6 +33,8 @@ import TestGatewayConnectionModal from "@/billing/payment/payment-gateway/Testga
 import EditTransactionFeesModal from "@/billing/payment/payment-gateway/Edittransactionfeesmodal";
 import DeleteLicense from "@/providers/licensemanagement/Deletelicense";
 import RequestAccessModal from "@/userroles/Requestaccessmodal";
+import AddPracticeLocationModal from "@/provider-panel/profile/AddPracticeLocationModal";
+import AddStateLicenseModal from "@/provider-panel/profile/AddStateLicenseModal";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
   hideModal,
@@ -46,6 +48,8 @@ import {
   clearinghouseAccountDeleted,
   selectMedication,
   licenseDeleted,
+  practiceLocationSaved,
+  stateLicenseSaved,
 } from "@/redux/slices/dialogslice";
 
 /**
@@ -92,6 +96,8 @@ const DialogsContainer = () => {
   const selectMedicationOpen = useAppSelector((state) => state.dialog.SelectMedication);
   const requestAccessOpen = useAppSelector((state) => state.dialog.RequestAccess);
   const accessRequestModule = useAppSelector((state) => state.dialog.accessRequestModule);
+  const addPracticeLocationOpen = useAppSelector((state) => state.dialog.AddPracticeLocation);
+  const addStateLicenseOpen = useAppSelector((state) => state.dialog.AddStateLicense);
 
   return (
     <>
@@ -205,6 +211,37 @@ const DialogsContainer = () => {
         moduleName={accessRequestModule}
         onClose={() => dispatch(hideModal("RequestAccess"))}
         onSubmit={() => dispatch(hideModal("RequestAccess"))}
+      />
+      <AddPracticeLocationModal
+        open={addPracticeLocationOpen}
+        onClose={() => dispatch(hideModal("AddPracticeLocation"))}
+        onSave={(location) => {
+          dispatch(practiceLocationSaved(location));
+        }}
+      />
+      <AddStateLicenseModal
+        open={addStateLicenseOpen}
+        onClose={() => dispatch(hideModal("AddStateLicense"))}
+        onSave={(values) => {
+          const documentSize = values.document
+            ? values.document.size >= 1024 * 1024
+              ? `${(values.document.size / 1024 / 1024).toFixed(1)} MB`
+              : `${Math.max(1, Math.round(values.document.size / 1024))} KB`
+            : "";
+          dispatch(stateLicenseSaved({
+            id: values.id,
+            state: values.state,
+            type: values.type,
+            number: values.number,
+            authority: values.authority,
+            issue: values.issue,
+            expiry: values.expiry,
+            documentName: values.documentName,
+            primary: values.primary,
+            documentSize,
+            documentUrl: values.document ? URL.createObjectURL(values.document) : undefined,
+          }));
+        }}
       />
     </>
   );

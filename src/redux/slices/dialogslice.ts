@@ -7,6 +7,13 @@ import type { ClearinghouseAccount } from "@/billing/clearinghouse/clearingaccou
 import type { TestResult } from "@/billing/clearinghouse/clearingaccount/TestConnection";
 import type { CatalogMedication } from "@/prescriptions/addprescription/SelectMedicationlistModal";
 import type { PatientDetail } from "@/types/patient";
+import type { PracticeLocationValues } from "@/provider-panel/profile/AddPracticeLocationModal";
+import type { StateLicenseValues } from "@/provider-panel/profile/AddStateLicenseModal";
+
+export type StateLicenseDialogResult = Omit<StateLicenseValues, "document"> & {
+  documentSize: string;
+  documentUrl?: string;
+};
 
 export type IntegrationInfoKind =
   | "documentation" | "setup-guide" | "mapping-data" | "order-preview" | "sample-results" | "status-list";
@@ -92,6 +99,10 @@ interface ModalState {
   TestPaymentGatewayConnection: boolean;
   EditPaymentGatewayFees: boolean;
   paymentGatewayFees: Record<"card" | "ach" | "apple" | "google", string>;
+  AddPracticeLocation: boolean;
+  practiceLocationResult: PracticeLocationValues | null;
+  AddStateLicense: boolean;
+  stateLicenseResult: StateLicenseDialogResult | null;
 }
 
 const initialState: ModalState = {
@@ -152,6 +163,10 @@ const initialState: ModalState = {
   SelectMedication: false,
   TestPaymentGatewayConnection: false,
   EditPaymentGatewayFees: false,
+  AddPracticeLocation: false,
+  practiceLocationResult: null,
+  AddStateLicense: false,
+  stateLicenseResult: null,
   paymentGatewayFees: {
     card: "2.9% + $0.30",
     ach: "1% (max $10)",
@@ -235,6 +250,24 @@ const dialogSlice = createSlice({
     },
     savePaymentGatewayFees: (state, { payload }: PayloadAction<ModalState["paymentGatewayFees"]>) => {
       Object.assign(state, { paymentGatewayFees: payload, EditPaymentGatewayFees: false });
+    },
+    showAddPracticeLocation: (state) => {
+      Object.assign(state, { AddPracticeLocation: true, practiceLocationResult: null });
+    },
+    practiceLocationSaved: (state, { payload }: PayloadAction<PracticeLocationValues>) => {
+      Object.assign(state, { AddPracticeLocation: false, practiceLocationResult: payload });
+    },
+    clearPracticeLocationResult: (state) => {
+      state.practiceLocationResult = null;
+    },
+    showAddStateLicense: (state) => {
+      Object.assign(state, { AddStateLicense: true, stateLicenseResult: null });
+    },
+    stateLicenseSaved: (state, { payload }: PayloadAction<StateLicenseDialogResult>) => {
+      Object.assign(state, { AddStateLicense: false, stateLicenseResult: payload });
+    },
+    clearStateLicenseResult: (state) => {
+      state.stateLicenseResult = null;
     },
 
     // Prescriptions
@@ -386,6 +419,12 @@ export const {
   showIntegrationInfo,
   showAccessRequest,
   savePaymentGatewayFees,
+  showAddPracticeLocation,
+  practiceLocationSaved,
+  clearPracticeLocationResult,
+  showAddStateLicense,
+  stateLicenseSaved,
+  clearStateLicenseResult,
   hideModal,
   hideAllModals,
   showDeletePrescription,

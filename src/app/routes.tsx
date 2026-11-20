@@ -97,6 +97,7 @@ import VisitSummary from "@/Patient-Panel/appointments/VisitSummary";
 import VisitFollowUp from "@/Patient-Panel/appointments/VisitFollowUp";
 import VisitPrescriptions from "@/Patient-Panel/appointments/VisitPrescriptions";
 import VisitResults from "@/Patient-Panel/appointments/VisitResults";
+import ProviderProfile from "@/provider-panel/profile/ProviderProfile";
 /**
  * protected → signed-in only · guest → signed-out only · public → anyone
  */
@@ -131,6 +132,36 @@ export const ROUTES: Record<string, RouteConfig> = {
 
   // App (inside MainLayout)
   dashboard: { component: Dashboard, title: "Dashboard", access: "protected" },
+  "provider/profile": {
+    component: ProviderProfile,
+    title: "Provider Profile",
+    access: "protected",
+  },
+  "provider/profile/registration": {
+    component: ProviderProfile,
+    title: "Provider Profile",
+    access: "protected",
+  },
+  "provider/profile/licenses": {
+    component: ProviderProfile,
+    title: "Provider Profile",
+    access: "protected",
+  },
+  "provider/profile/locations": {
+    component: ProviderProfile,
+    title: "Provider Profile",
+    access: "protected",
+  },
+  "provider/profile/documents": {
+    component: ProviderProfile,
+    title: "Provider Profile",
+    access: "protected",
+  },
+  "provider/profile/review": {
+    component: ProviderProfile,
+    title: "Provider Profile",
+    access: "protected",
+  },
   "find-provider": {
     component: FindProviderMainPage,
     title: "Find a Provider",

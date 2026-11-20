@@ -204,7 +204,9 @@ const LoginForm = () => {
                 onClick={() => handleDemoLogin(account)}
                 disabled={loginRequest.isPending}
                 title={account.email}
-                className="cursor-pointer rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-heading transition-colors duration-200 hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                className={`cursor-pointer rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-heading transition-colors duration-200 hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60 ${
+                  account.role === "Super Admin" ? "sm:col-span-3" : ""
+                }`}
               >
                 {account.role}
               </button>

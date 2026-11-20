@@ -1,6 +1,7 @@
 "use client";
 
-import React, { ReactNode, useMemo, useState, useRef, useEffect } from "react";
+import React, { ReactNode, useMemo, useState, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { Country, State, City } from "country-state-city";
 import { CountryCode, isValidPhoneNumber } from "libphonenumber-js";
 import {
@@ -293,6 +294,8 @@ export const PhoneField = ({
   countryCode,
   onCountryChange,
   error,
+  portalMenu = false,
+  portalMenuZIndex = 1000,
 }: {
   label: ReactNode;
   placeholder: string;
@@ -302,16 +305,26 @@ export const PhoneField = ({
   countryCode: string;
   onCountryChange: (iso: string) => void;
   error?: string;
+  portalMenu?: boolean;
+  portalMenuZIndex?: number;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [placement, setPlacement] = useState<"down" | "up">("down");
+  const [portalPosition, setPortalPosition] = useState<{
+    left: number;
+    top?: number;
+    bottom?: number;
+    width: number;
+    maxHeight: number;
+  } | null>(null);
 
   const country = ALL_COUNTRIES.find((c) => c.isoCode === countryCode);
   const phoneCode = country ? `+${(country.phonecode || "").replace(/^\+/, "")}` : "+1";
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -331,10 +344,6 @@ export const PhoneField = ({
     });
   }, [searchQuery]);
 
-  useEffect(() => {
-    setHighlightedIndex(0);
-  }, [searchQuery, isOpen]);
-
   // Compute placement and auto-focus search input when opened
   useEffect(() => {
     if (isOpen) {
@@ -350,20 +359,54 @@ export const PhoneField = ({
       requestAnimationFrame(() => {
         searchInputRef.current?.focus();
       });
-    } else {
-      setSearchQuery("");
     }
   }, [isOpen]);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !portalMenu) return;
+
+    const updatePosition = () => {
+      const trigger = dropdownRef.current;
+      if (!trigger) return;
+
+      const rect = trigger.getBoundingClientRect();
+      const gap = 6;
+      const viewportPadding = 8;
+      const preferredHeight = 280;
+      const spaceBelow = window.innerHeight - rect.bottom - gap - viewportPadding;
+      const spaceAbove = rect.top - gap - viewportPadding;
+      const opensAbove = spaceBelow < preferredHeight && spaceAbove > spaceBelow;
+      const availableHeight = Math.max(0, opensAbove ? spaceAbove : spaceBelow);
+      const menuWidth = Math.min(window.innerWidth - viewportPadding * 2, window.innerWidth >= 640 ? 320 : 288);
+
+      setPlacement(opensAbove ? "up" : "down");
+      setPortalPosition({
+        left: Math.max(
+          viewportPadding,
+          Math.min(rect.left, window.innerWidth - menuWidth - viewportPadding),
+        ),
+        top: opensAbove ? undefined : rect.bottom + gap,
+        bottom: opensAbove ? window.innerHeight - rect.top + gap : undefined,
+        width: menuWidth,
+        maxHeight: Math.min(preferredHeight, availableHeight),
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [isOpen, portalMenu]);
 
   // Outside click to close
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
+      const target = event.target as Node;
+      if (dropdownRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setIsOpen(false);
     };
 
     if (isOpen) {
@@ -386,6 +429,15 @@ export const PhoneField = ({
     onCountryChange(iso);
     setIsOpen(false);
     setSearchQuery("");
+    setHighlightedIndex(0);
+  };
+
+  const toggleCountryMenu = () => {
+    if (!isOpen) {
+      setSearchQuery("");
+      setHighlightedIndex(0);
+    }
+    setIsOpen(!isOpen);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -436,7 +488,7 @@ export const PhoneField = ({
           {/* Country code selector button */}
           <button
             type="button"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={toggleCountryMenu}
             aria-expanded={isOpen}
             aria-haspopup="listbox"
             className="flex h-full shrink-0 items-center gap-1.5 border-r border-border bg-card/60 px-3 transition-colors hover:bg-surface-start/60 outline-none focus-visible:ring-2 focus-visible:ring-primary/30 cursor-pointer"
@@ -465,11 +517,30 @@ export const PhoneField = ({
 
         {/* Searchable Country code dropdown menu */}
         {isOpen && (
-          <div
-            className={`absolute left-0 z-50 w-72 sm:w-80 rounded-xl border border-border bg-card shadow-2xl ring-1 ring-border/60 overflow-hidden animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both] ${
-              placement === "up" ? "bottom-full mb-1.5" : "top-full mt-1.5"
-            }`}
-          >
+          (() => {
+            const menu = (
+              <div
+                ref={menuRef}
+                data-portal={portalMenu ? "true" : undefined}
+                onPointerDown={(event) => portalMenu && event.stopPropagation()}
+                onMouseDown={(event) => portalMenu && event.stopPropagation()}
+                style={
+                  portalMenu
+                    ? {
+                        position: "fixed",
+                        left: portalPosition?.left ?? 0,
+                        top: portalPosition?.top,
+                        bottom: portalPosition?.bottom,
+                        width: portalPosition?.width ?? 0,
+                        maxHeight: portalPosition?.maxHeight,
+                        zIndex: portalMenuZIndex,
+                      }
+                    : undefined
+                }
+                className={`${
+                  portalMenu ? "" : `absolute left-0 z-50 w-72 sm:w-80 ${placement === "up" ? "bottom-full mb-1.5" : "top-full mt-1.5"}`
+                } rounded-xl border border-border bg-card shadow-2xl ring-1 ring-border/60 overflow-hidden animate-[dropdownIn_0.18s_cubic-bezier(0.16,1,0.3,1)_both]`}
+              >
             {/* Search Input */}
             <div className="border-b border-divider bg-surface-start/30 p-2">
               <div className="relative flex items-center">
@@ -479,7 +550,10 @@ export const PhoneField = ({
                   type="text"
                   placeholder="Search prefix or country (e.g. +91, US)..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setHighlightedIndex(0);
+                  }}
                   onKeyDown={handleKeyDown}
                   className="h-8 w-full rounded-lg border border-border bg-card pl-8 pr-7 text-xs text-heading placeholder:text-placeholder outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
@@ -502,6 +576,11 @@ export const PhoneField = ({
             <ul
               ref={listRef}
               role="listbox"
+              style={
+                portalMenu && portalPosition
+                  ? { maxHeight: Math.max(0, Math.min(224, portalPosition.maxHeight - 52)) }
+                  : undefined
+              }
               className="max-h-56 overflow-y-auto p-1 text-sm hide-scrollbar"
             >
               {filteredCountries.length === 0 ? (
@@ -549,7 +628,12 @@ export const PhoneField = ({
                 })
               )}
             </ul>
-          </div>
+              </div>
+            );
+            return portalMenu && typeof document !== "undefined"
+              ? createPortal(menu, document.body)
+              : menu;
+          })()
         )}
       </div>
 

@@ -231,7 +231,7 @@ const IntakePayment = ({
 
       {!inPayment ? (
         <div className="sticky -bottom-4 z-[200] -mx-4 -mb-4 mt-4 border-t border-border bg-card px-4 py-4 sm:-bottom-6 sm:-mb-6 sm:-mx-6 sm:px-6 sm:py-5">
-          <div className="mx-auto flex max-w-[1600px] flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="mx-auto flex max-w-[1600px] flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
             {tab > 1 ? (
               <ImportButton text="Previous" icon={<ArrowLeft className="h-4 w-4" />} onClick={() => openTab(tab - 1)} />
             ) : (

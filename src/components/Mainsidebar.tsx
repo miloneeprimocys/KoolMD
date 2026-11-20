@@ -260,6 +260,15 @@ const PATIENT_SECTIONS: NavSection[] = [
   },
 ];
 
+const PROVIDER_SECTIONS: NavSection[] = [
+  {
+    items: [
+      { label: "Dashboard", href: "/dashboard", Icon: LayoutDashboard },
+      { label: "Profile", href: "/provider/profile", Icon: Users },
+    ],
+  },
+];
+
 /* ----- Shared link styles (blue accent) ----- */
 const linkBase =
   "relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-200 " +
@@ -458,10 +467,18 @@ const MainSidebar = ({ isMini, onToggleMini }: MainSidebarProps) => {
   const roleCodes = currentUser?.roleCodes ?? [];
   const hasAdminRole = roleCodes.includes("ADMIN") || roleCodes.includes("SUPER_ADMIN");
   const isPatient = roleCodes.includes("PATIENT") && !hasAdminRole;
+  const isProvider =
+    (roleCodes.includes("PRACTITIONER") || roleCodes.includes("PRACTITIONER_APPLICANT")) &&
+    !hasAdminRole;
 
   const visibleSections = useMemo(
-    () => (isPatient ? PATIENT_SECTIONS : filterSectionsByPermission(SECTIONS, permissionCodes)),
-    [isPatient, permissionCodes],
+    () =>
+      isPatient
+        ? PATIENT_SECTIONS
+        : isProvider
+          ? PROVIDER_SECTIONS
+          : filterSectionsByPermission(SECTIONS, permissionCodes),
+    [isPatient, isProvider, permissionCodes],
   );
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
     Object.fromEntries(

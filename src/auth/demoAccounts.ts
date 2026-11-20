@@ -26,6 +26,12 @@ const candidates: DemoAccount[] = [
     password: process.env.NEXT_PUBLIC_DEMO_DOCTOR_PASSWORD ?? "",
   },
   {
+    role: "Provider",
+    // Reuse the doctor demo until dedicated provider credentials are configured.
+    email: process.env.NEXT_PUBLIC_DEMO_PROVIDER_EMAIL ?? process.env.NEXT_PUBLIC_DEMO_DOCTOR_EMAIL ?? "",
+    password: process.env.NEXT_PUBLIC_DEMO_PROVIDER_PASSWORD ?? process.env.NEXT_PUBLIC_DEMO_DOCTOR_PASSWORD ?? "",
+  },
+  {
     role: "Patient",
     email: process.env.NEXT_PUBLIC_DEMO_PATIENT_EMAIL ?? "",
     password: process.env.NEXT_PUBLIC_DEMO_PATIENT_PASSWORD ?? "",
