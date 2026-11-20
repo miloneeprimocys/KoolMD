@@ -13,6 +13,7 @@ import { cardCls } from "@/providers/Shared";
 import PermissionMatrix, { ROLE_PERMISSIONS, clonePermissions, type PermissionMap } from "./Permissionmatrix";
 import RoleInfoTab, { validateRoleInfo, type RoleInfoErrors, type RoleInfoValues } from "./Roleinfotab";
 import AssignedUsers from "./Assignedusers";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API / redux selector)                  */
@@ -98,7 +99,7 @@ const RoleDetails = () => {
       <section className={`${cardCls} space-y-5 sm:p-6`}>
         {/* Tabs + Duplicate */}
         <div className="flex flex-col gap-3 border-b border-border sm:flex-row sm:items-center sm:justify-between">
-          <div role="tablist" aria-label="Role sections" className="hide-scrollbar flex gap-4 overflow-x-auto sm:gap-6">
+          <Tabs ariaLabel="Role sections">
             {tabs.map((t) => (
               <button
                 key={t.key}
@@ -113,7 +114,7 @@ const RoleDetails = () => {
                 {t.label}
               </button>
             ))}
-          </div>
+          </Tabs>
           <ImportButton
             text="Duplicate Role"
             icon={<Copy className="h-4 w-4" />}

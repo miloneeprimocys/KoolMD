@@ -22,6 +22,7 @@ import ImportButton from "@/components/ImportButton";
 import { cardCls } from "@/providers/Shared";
 import NotificationList, { type NotificationCategory, type NotificationItem } from "./Notificationlist";
 import NotificationDetail from "./Notificationdetail";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API / redux selector)                  */
@@ -296,10 +297,7 @@ const Notifications = () => {
       </div>
 
       {/* Category tabs */}
-      <div
-        role="tablist"
-        aria-label="Notification categories"
-        className="hide-scrollbar flex items-center gap-1 overflow-x-auto rounded-2xl border border-border bg-card px-3 py-2.5 sm:gap-3"
+      <Tabs ariaLabel="Notification categories"
       >
         {TABS.map(({ key, label, Icon }) => {
           const activeTab = key === tab;
@@ -310,8 +308,8 @@ const Notifications = () => {
               type="button"
               aria-selected={activeTab}
               onClick={() => changeTab(key)}
-              className={`flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
-                activeTab ? "bg-primary/10 font-semibold text-primary" : "text-heading hover:bg-primary/5"
+              className={`-mb-px flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap border-b-2 px-3 pb-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:px-4 sm:pb-3 ${
+                activeTab ? "border-primary font-semibold text-primary" : "border-transparent text-body hover:text-heading"
               }`}
             >
               {Icon && <Icon className="h-4 w-4" />}
@@ -324,7 +322,7 @@ const Notifications = () => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       {/* List + detail */}
       <div className="grid items-start gap-4 sm:gap-5 2xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">

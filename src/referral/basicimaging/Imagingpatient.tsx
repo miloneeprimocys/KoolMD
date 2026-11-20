@@ -27,6 +27,7 @@ import {
   type Errors,
   type StepProps,
 } from "@/providers/Shared";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Shared form model (all 4 steps edit the same values object)      */
@@ -529,14 +530,14 @@ const ImagingPatientStep = ({ values: v, errors, onChange }: StepProps<ImagingVa
         <SectionTitle
           title="Referral / Recipient"
           action={
-            <div role="tablist" aria-label="Recipient type" className="flex gap-2">
+            <Tabs ariaLabel="Recipient type">
               <button type="button" role="tab" aria-selected={isProvider} onClick={() => switchRecipientType("provider")} className={toggleCls(isProvider)}>
                 Provider
               </button>
               <button type="button" role="tab" aria-selected={!isProvider} onClick={() => switchRecipientType("facility")} className={toggleCls(!isProvider)}>
                 Facility / Location
               </button>
-            </div>
+            </Tabs>
           }
         />
         <div className="grid gap-x-6 gap-y-4 md:grid-cols-2">

@@ -8,6 +8,7 @@ import Tags from "@/components/Tags";
 import LinkComponent from "@/components/LinkComponent";
 import { cardCls } from "@/providers/Shared";
 import { OBSERVATION_META, OBS_STATUS_TONE, type ObservationRow } from "./Fhirobservations";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Observation view model (shared by Details / JSON / Related)      */
@@ -184,7 +185,7 @@ const FhirDetails = ({ observation }: { observation: ObservationRow }) => {
 
       {/* ---------- History / comments ---------- */}
       <section className={`${cardCls} min-w-0 sm:!p-6`}>
-        <div role="tablist" aria-label="Activity" className="mb-5 flex flex-wrap gap-2">
+        <Tabs ariaLabel="Activity">
           {(
             [
               ["history", "History"],
@@ -209,7 +210,7 @@ const FhirDetails = ({ observation }: { observation: ObservationRow }) => {
               </button>
             );
           })}
-        </div>
+        </Tabs>
 
         {sideTab === "history" ? (
           <ol>

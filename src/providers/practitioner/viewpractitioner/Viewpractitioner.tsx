@@ -13,6 +13,7 @@ import ErrorToast from "@/components/ErrorToast";
 import PractitionerOverview, { type PractitionerOverviewData } from "./Practitioneroverview";
 import PractitionerLicenses, { type PractitionerLicense } from "./Practitionerlicenses";
 import PractitionerDocuments, { type PractitionerDocument } from "./Practitionerdocuments";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Sample data (replace with your API using the `id` query param) ---------- */
 const SAMPLE_OVERVIEW: PractitionerOverviewData = {
@@ -198,10 +199,7 @@ const ViewPractitioner = () => {
       </div>
 
       {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Practitioner sections"
-        className="flex gap-4 overflow-x-auto border-b border-border hide-scrollbar sm:gap-6"
+      <Tabs ariaLabel="Practitioner sections"
       >
         {TABS.map((t) => {
           const isActive = t.key === tab;
@@ -220,7 +218,7 @@ const ViewPractitioner = () => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       {/* Active tab */}
       <div role="tabpanel">

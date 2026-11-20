@@ -8,6 +8,7 @@ import SignupDropdown, { type DropdownOption } from "@/components/SignupDropdown
 import StickyColumns from "@/components/StickyColumns";
 import { SectionCard, Req, Opt, cardCls } from "@/providers/Shared";
 import { formatDateLong, getCpt, getPos, getProvider, type ServiceDetailsValues } from "./Servicedetails";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API data later)                        */
@@ -132,7 +133,7 @@ export const RequestSidePanel = ({ children }: { children: React.ReactNode }) =>
 
   return (
     <div className={`${cardCls} overflow-hidden !p-0 2xl:sticky 2xl:top-24`}>
-      <div role="tablist" className="grid grid-cols-2 border-b border-border">
+      <Tabs>
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -147,7 +148,7 @@ export const RequestSidePanel = ({ children }: { children: React.ReactNode }) =>
             {t.label}
           </button>
         ))}
-      </div>
+      </Tabs>
       <div className="p-4 sm:p-5">
         {tab === "request" ? (
           children

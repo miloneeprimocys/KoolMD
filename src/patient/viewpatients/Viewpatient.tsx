@@ -23,6 +23,7 @@ import Medications from "./medications/Medications";
 import Allergies from "./allergies/Allergies";
 import Documents from "./Documents";
 import Appointments from "./Appointments";
+import Tabs from "@/components/Tabs";
 
 const STATUS_TONES: Record<PatientStatus, TagTone> = {
   ACTIVE: "success",
@@ -177,10 +178,7 @@ const ViewPatient = () => {
       </div>
 
       {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Patient sections"
-        className="flex gap-4 overflow-x-auto border-b border-border hide-scrollbar sm:gap-6"
+      <Tabs ariaLabel="Patient sections"
       >
         {TABS.map((t) => {
           const isActive = t.key === tab;
@@ -201,7 +199,7 @@ const ViewPatient = () => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       {/* Active tab — each tab loads (and caches) its own data */}
       <div id="patient-tabpanel" role="tabpanel" aria-labelledby={`patient-tab-${tab}`}>

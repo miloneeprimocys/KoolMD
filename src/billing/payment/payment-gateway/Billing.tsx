@@ -13,6 +13,7 @@ import GatewayConfiguration from "./Gatewayconfiguration";
 import SupportedMethods, { DEFAULT_METHODS, type MethodsState } from "./Supportedmethods";
 import TransactionHistory from "./Transactionhistory";
 import RefundSettings from "./Refundsettings";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Tabs ---------- */
 const TABS = [
@@ -90,7 +91,7 @@ const Billing = () => {
       </div>
 
       {/* Tabs */}
-      <div role="tablist" className="flex gap-6 overflow-x-auto border-b border-label/15 hide-scrollbar">
+      <Tabs>
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -105,7 +106,7 @@ const Billing = () => {
             {t.label}
           </button>
         ))}
-      </div>
+      </Tabs>
 
       <div role="tabpanel">
         {tab === "configuration" && <GatewayConfiguration methods={methods} onMethodsChange={patchMethods} />}

@@ -5,14 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Calendar,
-  CalendarCheck,
   CalendarPlus,
   CheckCircle2,
   ChevronRight,
   Clock,
   Download,
   FileText,
-  FlaskConical,
   Pill,
   Share2,
   Stethoscope,
@@ -27,6 +25,7 @@ import { type TableColumn } from "@/components/Tableheader";
 import Content from "@/components/Content";
 import Tags from "@/components/Tags";
 import { cardCls } from "@/providers/Shared";
+import VisitDocumentTabs from "./VisitDocumentTabs";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API / redux selector)                  */
@@ -134,12 +133,6 @@ const VisitPrescriptions = () => {
     }
   };
 
-  const tabs = [
-    { key: "prescriptions", label: `Prescriptions (${visit.prescriptions.length})`, Icon: FileText, href: `${BASE}/visit-prescriptions?id=${visitId}` },
-    { key: "results", label: `Results (${visit.results})`, Icon: FlaskConical, href: `${BASE}/visit-results?id=${visitId}` },
-    { key: "follow-up", label: "Follow-Up", Icon: CalendarCheck, href: `${BASE}/visit-follow-up?id=${visitId}` },
-  ];
-
   const rows = selected.medications.map((m) => ({
     medication: (
       <div className="flex items-center gap-3">
@@ -189,25 +182,12 @@ const VisitPrescriptions = () => {
       </section>
 
       {/* Tabs */}
-      <nav aria-label="Visit sections" className="grid grid-cols-3 gap-1 rounded-2xl border border-border bg-card p-1.5">
-        {tabs.map(({ key, label, Icon, href }) => {
-          const active = key === "prescriptions";
-          return (
-            <button
-              key={key}
-              type="button"
-              aria-current={active ? "page" : undefined}
-              onClick={() => !active && router.push(href)}
-              className={`flex min-w-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 py-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:px-4 ${
-                active ? "bg-primary font-semibold text-on-primary" : "text-heading hover:bg-primary/5"
-              }`}
-            >
-              <Icon className="hidden h-4 w-4 shrink-0 sm:block" />
-              <span className="truncate">{label}</span>
-            </button>
-          );
-        })}
-      </nav>
+      <VisitDocumentTabs
+        activeTab="prescriptions"
+        visitId={visitId}
+        prescriptionCount={visit.prescriptions.length}
+        resultCount={visit.results}
+      />
 
       <div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
         {/* List */}

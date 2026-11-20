@@ -261,7 +261,7 @@ const JoinConsultation = () => {
             {showVideo ? (
               <video ref={videoRef} autoPlay muted playsInline className="h-full w-full -scale-x-100 object-cover" />
             ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-card px-6 text-center text-heading">
+              <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[#eef5ff] px-6 text-center text-heading dark:bg-[#0c1a5a]">
                 {access === "pending" ? (
                   <Loader2 className="h-8 w-8 animate-spin" />
                 ) : (

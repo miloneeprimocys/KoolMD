@@ -11,10 +11,8 @@ import {
   ChevronRight,
   ClipboardList,
   Clock,
-  FlaskConical,
   HeartPulse,
   ListChecks,
-  Pill,
   RefreshCw,
   Video,
   XCircle,
@@ -27,15 +25,13 @@ import DeleteButton from "@/components/DeleteButton";
 import DeleteDialog from "@/components/Deletedialog";
 import Tags from "@/components/Tags";
 import { cardCls } from "@/providers/Shared";
+import VisitDocumentTabs from "./VisitDocumentTabs";
 
 /* ---------------------------------------------------------------- */
 /*  Routes (create a page.tsx for each)                              */
 /* ---------------------------------------------------------------- */
 const BASE = "/my-appointments";
 const SUMMARY_ROUTE = `${BASE}/visit-summary`;
-const PRESCRIPTIONS_ROUTE = `${BASE}/visit-prescriptions`;
-const RESULTS_ROUTE = `${BASE}/visit-results`;
-const FOLLOW_UP_ROUTE = `${BASE}/visit-follow-up`;
 const BOOK_ROUTE = "/find-provider";
 
 /* ---------------------------------------------------------------- */
@@ -112,12 +108,6 @@ const VisitFollowUp = () => {
   const [cancelling, setCancelling] = useState(false);
   const [cancelled, setCancelled] = useState(false);
 
-  const tabs = [
-    { key: "prescriptions", label: `Prescriptions (${visit.prescriptions})`, Icon: Pill, href: PRESCRIPTIONS_ROUTE },
-    { key: "results", label: `Results (${visit.results})`, Icon: FlaskConical, href: RESULTS_ROUTE },
-    { key: "follow-up", label: "Follow-Up", Icon: Calendar, href: FOLLOW_UP_ROUTE },
-  ];
-
   const handleCancel = async () => {
     if (cancelling) return;
     setCancelling(true);
@@ -172,26 +162,12 @@ const VisitFollowUp = () => {
       </section>
 
       {/* Tabs */}
-      <div role="tablist" aria-label="Visit documents" className="grid grid-cols-3 gap-1 rounded-2xl border border-border bg-card p-1.5">
-        {tabs.map(({ key, label, Icon, href }) => {
-          const isActive = key === "follow-up";
-          return (
-            <button
-              key={key}
-              role="tab"
-              type="button"
-              aria-selected={isActive}
-              onClick={() => !isActive && router.push(`${href}?id=${visitId}`)}
-              className={`flex min-w-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 py-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:px-4 ${
-                isActive ? "bg-primary font-semibold text-on-primary" : "text-heading hover:bg-primary/5"
-              }`}
-            >
-              <Icon className="hidden h-4 w-4 shrink-0 sm:block" />
-              <span className="truncate">{label}</span>
-            </button>
-          );
-        })}
-      </div>
+      <VisitDocumentTabs
+        activeTab="follow-up"
+        visitId={visitId}
+        prescriptionCount={visit.prescriptions}
+        resultCount={visit.results}
+      />
 
       <div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
         {/* ================= LEFT: list ================= */}

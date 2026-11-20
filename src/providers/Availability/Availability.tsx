@@ -19,6 +19,7 @@ import TelemedicineTab, {
   validateTelemedicine,
 } from "./Telemedicine";
 import BlockedDatesTab, { BlockedDate } from "./Blockeddate";
+import Tabs from "@/components/Tabs";
 
 export type { Shift, DaySchedule, WeekSchedule, LocationItem } from "./Location";
 export type { BlockedDate } from "./Blockeddate";
@@ -227,9 +228,7 @@ const Availability = ({
       {/* Tabs */}
       <section className={`${cardCls} sm:p-6`}>
         {/* overflow-y-hidden + no -mb-px = no stray vertical scrollbar arrows */}
-        <div
-          role="tablist"
-          className="mb-5 sm:px-2 -mt-2 sm:-mt-3.5 -mx-4 sm:-mx-6 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-divider [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        <Tabs
         >
           {TABS.map((t) => (
             <button
@@ -247,7 +246,7 @@ const Availability = ({
               {t.label}
             </button>
           ))}
-        </div>
+        </Tabs>
 
         {/* Panels stay mounted (just hidden) so each tab keeps its own state */}
         <div hidden={tab !== "location"}>

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 
 import AddButton from "@/components/Addbutton";
+import EditButton from "@/components/EditButton";
 import ImportButton from "@/components/ImportButton";
 import { cardCls, type Errors } from "@/providers/Shared";
 
@@ -14,6 +15,7 @@ import IntakeReasonSymptoms, { initialReason, validateReason, type ReasonValues 
 import IntakeMedicalHistory, { initialHistory, validateHistory, type HistoryValues } from "./IntakeMedicalHistory";
 import IntakeMedications, { initialMedications, validateMedications, type MedicationsValues } from "./IntakeMedications";
 import IntakeAdditionalInfo, { initialAdditional, validateAdditional, type AdditionalValues } from "./IntakeAdditionalInfo";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Tabs                                                             */
@@ -149,10 +151,7 @@ const IntakePayment = ({
       <div className={`grid min-w-0 items-start gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_340px] ${tab === 3 ? "flex-1" : ""}`}>
         {/* ---------- Left: tabs + form / review ---------- */}
         <div className="min-w-0 space-y-4">
-          <div
-            role="tablist"
-            aria-label="Intake sections"
-            className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1.5 hide-scrollbar"
+          <Tabs ariaLabel="Intake sections"
           >
             {TABS.map((t) => {
               const complete = inPayment || t.id < tab;
@@ -166,8 +165,12 @@ const IntakePayment = ({
                   aria-selected={current}
                   disabled={!clickable}
                   onClick={() => openTab(t.id)}
-                  className={`flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-default sm:text-sm ${
-                    current ? "bg-primary/10 text-primary" : clickable ? "text-heading hover:bg-primary/5" : "text-body"
+                  className={`-mb-px flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap border-b-2 px-3 pb-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-default sm:pb-3 sm:text-sm ${
+                    current
+                      ? "border-primary text-primary"
+                      : clickable
+                        ? "border-transparent text-heading hover:text-primary"
+                        : "border-transparent text-body"
                   }`}
                 >
                   <span
@@ -185,7 +188,7 @@ const IntakePayment = ({
                 </button>
               );
             })}
-          </div>
+          </Tabs>
 
           {inPayment ? (
             <section className={`${cardCls} space-y-4 sm:p-6`}>
@@ -201,7 +204,7 @@ const IntakePayment = ({
                         </p>
                       ))}
                     </div>
-                    <ImportButton text="Edit" icon={null} onClick={() => openTab(r.id)} className="shrink-0 text-primary" />
+                    <EditButton section={r.title} onEdit={() => openTab(r.id)} hideIcon />
                   </li>
                 ))}
               </ul>

@@ -181,6 +181,7 @@ const ProviderFilters = ({ filters: f, onChange, onClear, className = "" }: Prop
             label="Insurance"
             placeholder="Select insurance provider"
             searchable={false}
+            portalMenu
             options={INSURERS}
             value={f.insurance}
             onChange={(v: string) => onChange({ insurance: v })}

@@ -7,6 +7,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import RoleList from "./Rolelist";
 import UserManagement from "./Usermanagement";
 import AccessControl from "./Accesscontrol";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Tabs ---------- */
 type TabKey = "roles" | "users" | "access-control";
@@ -44,10 +45,7 @@ const RolesPermissions = () => {
       />
 
       {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Roles and permissions sections"
-        className="hide-scrollbar flex gap-4 overflow-x-auto border-b border-border sm:gap-6"
+      <Tabs ariaLabel="Roles and permissions sections"
       >
         {TABS.map((t) => {
           const active = t.key === tab;
@@ -66,7 +64,7 @@ const RolesPermissions = () => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       {/* Tab panels */}
       <div role="tabpanel">

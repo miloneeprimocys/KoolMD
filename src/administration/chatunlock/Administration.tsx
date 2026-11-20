@@ -12,6 +12,7 @@ import UnlockChats from "./Unlockchats";
 import LockChats from "./Lockchats";
 import AuditHistory from "./Audithistory";
 import ChartRightSection, { type PanelState } from "./Chartrightsection";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Tabs (a 4th tab can be added here later) ---------- */
 type TabKey = "unlock-requests" | "locked-charts" | "audit-history";
@@ -131,10 +132,7 @@ const Administration = () => {
         </div>
 
         {/* Tabs */}
-        <div
-          role="tablist"
-          aria-label="Chart control sections"
-          className="hide-scrollbar flex gap-4 overflow-x-auto border-b border-border sm:gap-6"
+        <Tabs ariaLabel="Chart control sections"
         >
           {TABS.map((t) => {
             const isActive = t.key === tab;
@@ -155,7 +153,7 @@ const Administration = () => {
               </button>
             );
           })}
-        </div>
+        </Tabs>
 
         {/* Active tab */}
         <div role="tabpanel">

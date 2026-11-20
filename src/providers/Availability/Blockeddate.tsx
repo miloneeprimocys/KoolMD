@@ -8,6 +8,7 @@ import SignupDropdown from "@/components/SignupDropdown";
 import DatePicker from "@/components/Datepicker";
 import AddButton from "@/components/Addbutton";
 import { TextArea, pad, todayISO, toOptions, uid } from "../Shared";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Types                                                           */
@@ -227,9 +228,7 @@ const BlockedDatesTab = ({ blocked, onChange }: BlockedDatesTabProps) => {
             Add Blocked Date
           </h4>
 
-          <div
-            role="tablist"
-            className="mb-4 inline-flex rounded-lg border border-border p-0.5"
+          <Tabs
           >
             {(
               [
@@ -256,7 +255,7 @@ const BlockedDatesTab = ({ blocked, onChange }: BlockedDatesTabProps) => {
                 {o.l}
               </button>
             ))}
-          </div>
+          </Tabs>
 
           <div className="grid gap-4 sm:grid-cols-2">
             {mode === "single" ? (

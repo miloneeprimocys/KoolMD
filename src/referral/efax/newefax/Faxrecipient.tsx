@@ -15,6 +15,7 @@ import {
   type Errors,
   type StepProps,
 } from "@/providers/Shared";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Shared form model (all 4 steps edit the same values object)      */
@@ -244,14 +245,14 @@ const FaxRecipient = ({ values: v, errors, onChange }: StepProps<FaxValues>) => 
         <section className={`${cardCls} sm:p-6`}>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-base font-semibold text-heading sm:text-lg">Recipient Information</h3>
-            <div role="tablist" aria-label="Recipient type" className="flex gap-2">
+            <Tabs ariaLabel="Recipient type">
               <button type="button" role="tab" aria-selected={isProvider} onClick={() => switchType("provider")} className={toggleCls(isProvider)}>
                 Provider
               </button>
               <button type="button" role="tab" aria-selected={!isProvider} onClick={() => switchType("facility")} className={toggleCls(!isProvider)}>
                 Facility / Location
               </button>
-            </div>
+            </Tabs>
           </div>
 
           <div className="grid gap-x-6 gap-y-4 md:grid-cols-2">

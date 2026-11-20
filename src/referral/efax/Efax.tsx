@@ -16,6 +16,7 @@ import Tags from "@/components/Tags";
 import Actions from "@/components/Actions";
 import Pagination from "@/components/Pagination";
 import FaxDetails, { STATUS_TONE, type Fax, type FaxStatus } from "./Faxdetails";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Static data (replace with API data later) ---------- */
 const FAXES: Fax[] = [
@@ -190,7 +191,7 @@ const Efax = () => {
         <StatCards stats={STATS} />
 
         {/* Tabs */}
-        <div role="tablist" className="flex gap-6 overflow-x-auto overflow-y-hidden border-b border-label/15 ">
+        <Tabs>
           {TABS.map((t) => (
             <button
               key={t}
@@ -208,7 +209,7 @@ const Efax = () => {
               {t}
             </button>
           ))}
-        </div>
+        </Tabs>
 
         {/* Search + filters */}
         <SearchAndFilter

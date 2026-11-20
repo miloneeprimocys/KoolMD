@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import QuestionnaireList, { QUESTIONNAIRES, type QuestionnaireRow } from "./Questionnairelist";
 import ResponseList from "./response/Responselist";
 import Templates from "./template/Templates";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Stats (shown on the Questionnaire List tab) ---------- */
 const STATS: StatItem[] = [
@@ -75,10 +76,7 @@ const QuestionnairesPage = () => {
       </div>
 
       {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Questionnaire sections"
-        className="hide-scrollbar flex gap-4 overflow-x-auto border-b border-border sm:gap-6"
+      <Tabs ariaLabel="Questionnaire sections"
       >
         {TABS.map((t) => {
           const isActive = t.key === tab;
@@ -99,7 +97,7 @@ const QuestionnairesPage = () => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       {/* Active tab */}
       <div role="tabpanel" className="space-y-4 sm:space-y-5">

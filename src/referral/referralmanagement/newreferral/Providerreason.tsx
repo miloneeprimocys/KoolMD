@@ -17,6 +17,7 @@ import DatePicker from "@/components/Datepicker";
 import { ModalRadioGroup } from "@/components/Modalshell";
 import { Opt, Req, TextArea, cardCls, todayISO, type Errors, type StepProps } from "@/providers/Shared";
 import { PRIORITY_OPTIONS, TYPE_OPTIONS, initials, type ReferralValues } from "./Referraldetails";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API data later)                        */
@@ -242,7 +243,7 @@ const ProviderReason = ({ values: v, errors, onChange }: StepProps<ReferralValue
           </div>
 
           {/* Tabs */}
-          <div role="tablist" className="mb-4 flex gap-5 overflow-x-auto border-b border-divider">
+          <Tabs>
             {TABS.map((t) => (
               <button
                 key={t.key}
@@ -259,7 +260,7 @@ const ProviderReason = ({ values: v, errors, onChange }: StepProps<ReferralValue
                 {t.label}
               </button>
             ))}
-          </div>
+          </Tabs>
 
           {tab === "providers" ? (
             <div className="space-y-3">

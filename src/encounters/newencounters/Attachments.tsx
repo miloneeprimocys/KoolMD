@@ -10,6 +10,7 @@ import Content from "@/components/Content";
 import Tags, { type TagTone } from "@/components/Tags";
 import FileDropzone from "@/components/Filedropzone";
 import { StepHeader, checkboxCls, iconBtn } from "@/components/Verticalsteps";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Static data ---------- */
 type FileType = "Clinical Document" | "Lab Result" | "Imaging" | "Other";
@@ -161,10 +162,7 @@ const Attachments = () => {
         <FileDropzone title="files here" file={null} onChange={addFile} maxSizeMB={10} />
 
         {/* Filter tabs */}
-        <div
-          role="tablist"
-          aria-label="Attachment types"
-          className="custom-scrollbar flex min-w-0 gap-5 overflow-x-auto border-b border-border"
+        <Tabs ariaLabel="Attachment types"
         >
           {TABS.map((t) => {
             const on = t.label === tab;
@@ -183,7 +181,7 @@ const Attachments = () => {
               </button>
             );
           })}
-        </div>
+        </Tabs>
 
         <div className="min-w-0">
           <Table columns={COLUMNS} rows={rows} selectable />

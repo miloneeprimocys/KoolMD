@@ -34,6 +34,7 @@ import TableStatus from "@/components/TableStatus";
 import StickyColumns from "@/components/StickyColumns";
 import SuccessToast from "@/components/SuccessToast";
 import { cardCls } from "@/providers/Shared";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API data later)                        */
@@ -553,7 +554,7 @@ const ViewEncounter = () => {
             title="Orders & Prescriptions"
             action={<AddAction text="Add Order" onClick={() => editSection("Orders")} />}
           >
-            <div role="tablist" aria-label="Orders and prescriptions" className="flex gap-6 border-b border-border">
+            <Tabs ariaLabel="Orders and prescriptions">
               {ORDER_TABS.map((t) => {
                 const active = t.key === ordersTab;
                 return (
@@ -571,7 +572,7 @@ const ViewEncounter = () => {
                   </button>
                 );
               })}
-            </div>
+            </Tabs>
 
             <div className={tableWrap} role="tabpanel">
               {ordersTab === "orders" ? (

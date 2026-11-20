@@ -10,6 +10,7 @@ import { cardCls } from "@/providers/Shared";
 import CurrentMedications, { CURRENT_MEDS } from "./Currentmedications";
 import DiscontinuedMedications, { DISCONTINUED } from "./Discontinuedmedications";
 import AllMedications from "./Allmedications";
+import Tabs from "@/components/Tabs";
 
 export const PATIENT = {
   name: "John Smith",
@@ -61,7 +62,7 @@ const MedicationListPage = () => {
 
       <PatientHeader />
 
-      <div role="tablist" aria-label="Medication sections" className="flex gap-4 overflow-x-auto border-b border-border hide-scrollbar sm:gap-6">
+      <Tabs ariaLabel="Medication sections">
         {TABS.map((t) => {
           const isActive = t.key === tab;
           return (
@@ -79,7 +80,7 @@ const MedicationListPage = () => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       <div role="tabpanel">
         {tab === "current" && <CurrentMedications />}

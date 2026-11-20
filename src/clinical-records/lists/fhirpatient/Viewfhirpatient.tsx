@@ -14,6 +14,7 @@ import FhirOverview from "./Fhiroverview";
 import FhirObservations, { VIEW_PATIENT_ROUTE } from "./observations/Fhirobservations";
 import FhirResourceMapping from "./Fhirresourcemapping";
 import FhirValidationRules from "./Fhirvalidationrules";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Static patient + encounters (replace with API data by ?id=)      */
@@ -162,10 +163,7 @@ const ViewFhirPatient = () => {
       </div>
 
       {/* ---------- Tabs ---------- */}
-      <div
-        role="tablist"
-        aria-label="Patient record sections"
-        className="flex gap-4 overflow-x-auto border-b border-border hide-scrollbar sm:gap-6"
+      <Tabs ariaLabel="Patient record sections"
       >
         {TABS.map((t) => {
           const isActive = t.key === tab;
@@ -184,7 +182,7 @@ const ViewFhirPatient = () => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       {/* ---------- Active tab ---------- */}
       <div role="tabpanel">

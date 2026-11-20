@@ -11,6 +11,7 @@ import WaitingRoom from "./waitingroom/Waitingroom";
 import AppointmentHistory from "./Appointmenthistory";
 import BlockTimeMain from "./calenderview/Blocktimemain";
 import Holidays from "./calenderview/Holidays";
+import Tabs from "@/components/Tabs";
 
 
 /* ---------- Tabs ---------- */
@@ -70,10 +71,7 @@ const AppointmentScheduling = () => {
           </div>
 
           {/* Tabs */}
-          <div
-            role="tablist"
-            aria-label="Appointment sections"
-            className="flex gap-4 overflow-x-auto border-b border-border hide-scrollbar sm:gap-6"
+          <Tabs ariaLabel="Appointment sections"
           >
             {TABS.map((t) => {
               const isActive = t.key === tab;
@@ -94,7 +92,7 @@ const AppointmentScheduling = () => {
                 </button>
               );
             })}
-          </div>
+          </Tabs>
         </div>
       )}
 

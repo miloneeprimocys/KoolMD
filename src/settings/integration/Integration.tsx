@@ -16,6 +16,7 @@ import ResultMapping from "./Resultmapping";
 import StatusMapping from "./Statusmapping";
 import TestConnection from "./Testconnection";
 import ActivityLogs from "./Activitylogs";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Tabs ---------- */
 type TabKey =
@@ -127,10 +128,7 @@ const Integration = () => {
           </div>
 
           {/* Tabs */}
-          <div
-            role="tablist"
-            aria-label="Integration sections"
-            className="flex gap-4 overflow-x-auto border-b border-border hide-scrollbar sm:gap-6"
+          <Tabs ariaLabel="Integration sections"
           >
             {TABS.map((t) => {
               const active = t.key === tab;
@@ -151,7 +149,7 @@ const Integration = () => {
                 </button>
               );
             })}
-          </div>
+          </Tabs>
           {/* Tab panels – all stay mounted so mappings keep their state while switching tabs */}
           <div>
             <div role="tabpanel" hidden={tab !== "configuration"}>

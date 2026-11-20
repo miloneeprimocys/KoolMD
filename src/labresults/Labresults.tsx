@@ -10,6 +10,7 @@ import ImportButton from "@/components/ImportButton";
 import { cardCls } from "@/providers/Shared";
 import LabOrders from "./Laborders";
 import Results from "./Results";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Static patient (replace with API data later) ---------- */
 export const LAB_PATIENT = {
@@ -184,10 +185,7 @@ return (
     </div>
 
     {/* Tabs */}
-    <div
-      role="tablist"
-      aria-label="Lab sections"
-      className="flex gap-4 overflow-x-auto border-b border-border hide-scrollbar sm:gap-6"
+    <Tabs ariaLabel="Lab sections"
     >
       {TABS.map((t) => {
         const isActive = t.key === tab;
@@ -208,7 +206,7 @@ return (
           </button>
         );
       })}
-    </div>
+    </Tabs>
 
     {/* Active tab */}
     <div role="tabpanel">

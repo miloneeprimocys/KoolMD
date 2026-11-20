@@ -24,6 +24,7 @@ import LeftSection, {
   PROVIDERS,
 } from "./LeftSection";
 import MiddleSection, { Appt, ColorKey, View } from "./MiddleSection";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Static data                                                     */
@@ -296,7 +297,7 @@ const router = useRouter();
         </div>
 
       <div className="flex flex-wrap items-center gap-2">
-  <div role="tablist" className="inline-flex rounded-lg border border-border bg-card p-0.5">
+  <Tabs>
     {(["Day", "Week", "Month"] as const).map((v) => (
       <button
         key={v}
@@ -311,7 +312,7 @@ const router = useRouter();
         {v}
       </button>
     ))}
-  </div>
+  </Tabs>
   <div className="flex gap-2">
     <AddButton
       text="Block Time"

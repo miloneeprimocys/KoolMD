@@ -13,6 +13,7 @@ import { TableSelectAllCheckbox } from "@/components/TableSelection";
 
 import { CURRENT_MEDS } from "../medicationlist/Currentmedications";
 import { RX_HISTORY } from "../prescriptionlist/Prescriptionhistorypage";
+import Tabs from "@/components/Tabs";
 
 export type SourceRow = { id: string; name: string; dosage: string; source: string; start: string; status: string };
 
@@ -101,7 +102,7 @@ const ReviewExisting = ({ selected, onSelectedChange }: Props) => {
 
   return (
     <div className="space-y-4">
-      <div role="tablist" className="flex gap-4 overflow-x-auto border-b border-border hide-scrollbar sm:gap-6">
+      <Tabs>
         {TABS.map((t) => {
           const isActive = t.key === tab;
           return (
@@ -122,7 +123,7 @@ const ReviewExisting = ({ selected, onSelectedChange }: Props) => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
       <div className="overflow-hidden rounded-[14px] border border-border bg-card">
         <Table columns={columns} rows={rows} bordered={false} />
       </div>

@@ -13,6 +13,7 @@ import {
   PhoneField,
   validatePhone,
 } from "@/providers/Shared";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API data later)                        */
@@ -164,7 +165,7 @@ const SelectPatient = ({ values, errors, onChange }: Props) => {
       <h3 className="text-base font-semibold text-heading">Select Patient</h3>
 
       {/* Tabs */}
-      <div role="tablist" aria-label="Patient type" className="mt-3 flex gap-6 border-b border-border">
+      <Tabs ariaLabel="Patient type">
         {TABS.map((t) => {
           const active = values.mode === t.key;
           return (
@@ -182,7 +183,7 @@ const SelectPatient = ({ values, errors, onChange }: Props) => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       <div className="mt-4">
         {values.mode === "existing" ? (

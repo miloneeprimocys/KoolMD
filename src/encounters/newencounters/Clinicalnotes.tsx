@@ -12,6 +12,7 @@ import {
   checkboxCls,
   ghostBtn,
 } from "@/components/Verticalsteps";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Static data ---------- */
 const TABS = ["SOAP Note", "Free Text Note", "Previous Notes"] as const;
@@ -63,10 +64,7 @@ const ClinicalNotes = () => {
       />
 
       {/* Sub tabs */}
-      <div
-        role="tablist"
-        aria-label="Note type"
-        className="custom-scrollbar mb-5 flex min-w-0 gap-5 overflow-x-auto overflow-y-hidden border-b border-border"
+      <Tabs ariaLabel="Note type"
       >
         {TABS.map((t) => {
           const on = t === tab;
@@ -85,7 +83,7 @@ const ClinicalNotes = () => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       {tab === "SOAP Note" && (
         <div className="space-y-6">

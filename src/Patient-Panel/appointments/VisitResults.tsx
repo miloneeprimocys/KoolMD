@@ -9,9 +9,7 @@ import {
   ChevronRight,
   Download,
   FileText,
-  FlaskConical,
   Info,
-  Pill,
   ScanLine,
   Share2,
   Video,
@@ -25,15 +23,13 @@ import { type TableColumn } from "@/components/Tableheader";
 import Content from "@/components/Content";
 import Tags, { type TagTone } from "@/components/Tags";
 import { cardCls } from "@/providers/Shared";
+import VisitDocumentTabs from "./VisitDocumentTabs";
 
 /* ---------------------------------------------------------------- */
 /*  Routes (create a page.tsx for each)                              */
 /* ---------------------------------------------------------------- */
 const BASE = "/my-appointments";
 const SUMMARY_ROUTE = `${BASE}/visit-summary`;
-const PRESCRIPTIONS_ROUTE = `${BASE}/visit-prescriptions`;
-const RESULTS_ROUTE = `${BASE}/visit-results`;
-const FOLLOW_UP_ROUTE = `${BASE}/visit-follow-up`;
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API / redux selector)                  */
@@ -138,12 +134,6 @@ const VisitResults = () => {
   const [activeId, setActiveId] = useState(TESTS[0].id);
   const test = TESTS.find((t) => t.id === activeId) ?? TESTS[0];
 
-  const tabs = [
-    { key: "prescriptions", label: `Prescriptions (${visit.prescriptions})`, Icon: Pill, href: PRESCRIPTIONS_ROUTE },
-    { key: "results", label: `Results (${TESTS.length})`, Icon: FlaskConical, href: RESULTS_ROUTE },
-    { key: "follow-up", label: "Follow-Up", Icon: Calendar, href: FOLLOW_UP_ROUTE },
-  ];
-
   const columns: TableColumn[] = [
     { key: "parameter", label: "Parameter" },
     { key: "result", label: "Result" },
@@ -206,26 +196,12 @@ const VisitResults = () => {
       </section>
 
       {/* Tabs */}
-      <div role="tablist" aria-label="Visit documents" className="grid grid-cols-3 gap-1 rounded-2xl border border-border bg-card p-1.5">
-        {tabs.map(({ key, label, Icon, href }) => {
-          const isActive = key === "results";
-          return (
-            <button
-              key={key}
-              role="tab"
-              type="button"
-              aria-selected={isActive}
-              onClick={() => !isActive && router.push(`${href}?id=${visitId}`)}
-              className={`flex min-w-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-2 py-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:px-4 ${
-                isActive ? "bg-primary font-semibold text-on-primary" : "text-heading hover:bg-primary/5"
-              }`}
-            >
-              <Icon className="hidden h-4 w-4 shrink-0 sm:block" />
-              <span className="truncate">{label}</span>
-            </button>
-          );
-        })}
-      </div>
+      <VisitDocumentTabs
+        activeTab="results"
+        visitId={visitId}
+        prescriptionCount={visit.prescriptions}
+        resultCount={TESTS.length}
+      />
 
       <div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
         {/* ================= LEFT: list ================= */}

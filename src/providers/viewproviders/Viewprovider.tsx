@@ -42,6 +42,7 @@ import {
   toProviderSummary,
   toVerificationRows,
 } from "./providerDetailMappers";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Tabs ---------- */
 type TabKey = "overview" | "licenses" | "documents" | "history";
@@ -391,10 +392,7 @@ const ViewProvider = () => {
         </div>
 
         {/* Tabs */}
-        <div
-          role="tablist"
-          aria-label="Provider sections"
-          className="flex gap-4 sm:gap-6 overflow-x-auto border-b border-border hide-scrollbar"
+        <Tabs ariaLabel="Provider sections"
         >
           {TABS.map((t) => {
             const isActive = t.key === tab;
@@ -415,7 +413,7 @@ const ViewProvider = () => {
               </button>
             );
           })}
-        </div>
+        </Tabs>
 
         {/* Active tab */}
         <div role="tabpanel">

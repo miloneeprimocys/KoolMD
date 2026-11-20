@@ -24,6 +24,7 @@ import Pagination from "@/components/Pagination";
 import TableStatus from "@/components/TableStatus";
 import Tags, { type TagTone } from "@/components/Tags";
 import { cardCls } from "@/providers/Shared";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API / redux selector)                  */
@@ -248,12 +249,9 @@ const PatientAppointments = () => {
       </div>
 
       {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Appointment status"
-        className="overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-card p-1.5"
+      <Tabs ariaLabel="Appointment status"
       >
-        <div className="flex min-w-max gap-1">
+        <div className="flex min-w-max gap-1 sm:gap-3">
           {tabs.map(({ key, label, Icon, count }) => {
             const active = key === tab;
             return (
@@ -263,8 +261,8 @@ const PatientAppointments = () => {
                 type="button"
                 aria-selected={active}
                 onClick={() => changeTab(key)}
-                className={`flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:px-4 ${
-                  active ? "bg-primary/10 font-semibold text-primary" : "text-heading hover:bg-primary/5"
+                className={`-mb-px flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap border-b-2 px-3 pb-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:px-4 sm:pb-3 ${
+                  active ? "border-primary font-semibold text-primary" : "border-transparent text-body hover:text-heading"
                 }`}
               >
                 <Icon className="hidden h-4 w-4 shrink-0 sm:block" />
@@ -275,7 +273,7 @@ const PatientAppointments = () => {
             );
           })}
         </div>
-      </div>
+      </Tabs>
 
       {/* Upcoming */}
       {tab === "upcoming" && (

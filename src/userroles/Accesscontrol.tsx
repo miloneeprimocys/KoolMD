@@ -16,6 +16,7 @@ import { cardCls } from "@/providers/Shared";
 import { MODULES, ROLE_PERMISSIONS } from "./Permissionmatrix";
 import { useAppDispatch } from "@/hooks/useAppHooks";
 import { showAccessRequest } from "@/redux/slices/dialogslice";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API / redux selector)                  */
@@ -109,7 +110,7 @@ const AccessControl = () => {
         </p>
       </div>
 
-      <div role="tablist" aria-label="Access control sections" className="hide-scrollbar flex gap-4 overflow-x-auto border-b border-border sm:gap-6">
+      <Tabs ariaLabel="Access control sections">
         {([
           ["preview", "Role Access Preview"],
           ["audit", "Access Audit Log"],
@@ -127,7 +128,7 @@ const AccessControl = () => {
             {label}
           </button>
         ))}
-      </div>
+      </Tabs>
 
       {subTab === "preview" ? (
         <div className="space-y-4 sm:space-y-5">

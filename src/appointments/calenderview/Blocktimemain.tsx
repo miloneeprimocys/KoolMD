@@ -11,6 +11,7 @@ import BlockTime, { type Notify } from "./Blocktime";
 import AddExtraAvailability from "./Addextraavailability";
 import Holidays from "./Holidays";
 import AddHolidays from "./Addholidays";
+import Tabs from "@/components/Tabs";
 const BACK_ROUTE = "/appointments?tab=calendar";
 
 type TabKey = "block" | "extra" | "holidays";
@@ -90,7 +91,7 @@ const BlockTimeMain = () => {
         </div>
 
         {/* Tabs */}
-        <div role="tablist" aria-label="Block time sections" className="flex gap-4 overflow-x-auto border-b border-border hide-scrollbar sm:gap-6">
+        <Tabs ariaLabel="Block time sections">
           {TABS.map((t) => {
             const active = t.key === tab;
             return (
@@ -108,7 +109,7 @@ const BlockTimeMain = () => {
               </button>
             );
           })}
-        </div>
+        </Tabs>
       </div>
 
       <div role="tabpanel" className="flex-1 mt-4">

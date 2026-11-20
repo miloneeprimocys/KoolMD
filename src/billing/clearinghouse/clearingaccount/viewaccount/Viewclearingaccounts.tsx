@@ -17,6 +17,7 @@ import { cardCls } from "@/providers/Shared";
 import { ACCOUNTS, ROUTES } from "../ClearinghouseAccounts";
 import ClearinghouseOverview from "./Clearinghouseoverview";
 import PayerIds from "./Payerids";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Tabs ---------- */
 type TabKey = "overview" | "payer-ids";
@@ -114,7 +115,7 @@ const ViewClearingAccounts = () => {
       </div>
 
       {/* Tabs */}
-      <div role="tablist" aria-label="Account sections" className="flex gap-6 overflow-x-auto border-b border-border hide-scrollbar">
+      <Tabs ariaLabel="Account sections">
         {TABS.map((t) => {
           const active = t.key === tab;
           return (
@@ -132,7 +133,7 @@ const ViewClearingAccounts = () => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       <div role="tabpanel">
         {tab === "overview" && <ClearinghouseOverview account={account} />}

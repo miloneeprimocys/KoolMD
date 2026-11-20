@@ -25,6 +25,7 @@ import EditButton from "@/components/EditButton";
 import Actions from "@/components/Actions";
 import RightSubSection from "@/components/RightSubSection";
 import { cardCls } from "@/providers/Shared";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Static data ---------- */
 type ResultStatus = "Normal" | "High" | "Abnormal";
@@ -161,7 +162,7 @@ const ResultPanel = ({
       </div>
 
       {/* Tabs */}
-      <div role="tablist" className="mt-4 flex gap-5 overflow-x-auto border-b border-border hide-scrollbar">
+      <Tabs>
         {PANEL_TABS.map((t) => {
           const active = t === tab;
           return (
@@ -179,7 +180,7 @@ const ResultPanel = ({
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       {tab === "Summary" ? (
         <div className="mt-4 space-y-5">

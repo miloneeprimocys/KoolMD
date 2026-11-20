@@ -40,9 +40,9 @@ const ProviderCard = ({
   selected = false,
   actionLabel = "Book Appointment",
 }: Props) => (
-  <article className={`${cardCls} flex min-w-0 flex-col gap-4 transition-shadow duration-200 hover:shadow-lg hover:shadow-primary/10 md:grid md:grid-cols-[118px_minmax(0,1fr)] 2xl:flex 2xl:flex-row 2xl:items-stretch 2xl:gap-5 ${selected ? "ring-2 ring-primary" : ""}`}>
+  <article className={`${cardCls} flex min-w-0 flex-col gap-4 transition-shadow duration-200 hover:shadow-lg hover:shadow-primary/10 md:grid md:grid-cols-[140px_minmax(0,1fr)] 2xl:flex 2xl:flex-row 2xl:items-stretch 2xl:gap-5 ${selected ? "ring-2 ring-primary" : ""}`}>
     {/* Photo */}
-    <div className="relative flex h-[118px] w-[118px] shrink-0 items-center justify-center self-center rounded-xl bg-gradient-to-br from-primary/15 to-violet/30 text-3xl font-bold text-primary md:self-start 2xl:self-start">
+    <div className="relative flex h-[140px] w-[140px] shrink-0 items-center justify-center self-center rounded-xl bg-gradient-to-br from-primary/15 to-violet/30 text-4xl font-bold text-primary md:self-start 2xl:h-auto 2xl:w-auto 2xl:min-w-[140px] 2xl:aspect-square 2xl:self-stretch 2xl:text-5xl">
       {initials(p.name)}
       <button
         type="button"

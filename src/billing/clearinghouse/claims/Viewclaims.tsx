@@ -16,6 +16,7 @@ import { cardCls } from "@/providers/Shared";
 import { CLAIM_ROUTES, CLAIM_STATUS_TONE, getClaim, money, type Claim } from "./Claims";
 import ClaimInformation from "./Claiminformation";
 import StatusHistory from "./Statushistory";
+import Tabs from "@/components/Tabs";
 
 /* ---------- Tabs ---------- */
 type TabKey = "information" | "lines" | "attachments" | "history";
@@ -194,7 +195,7 @@ const ViewClaims = () => {
       </div>
 
       {/* Tabs */}
-      <div role="tablist" aria-label="Claim sections" className="flex gap-6 overflow-x-auto border-b border-border hide-scrollbar">
+      <Tabs ariaLabel="Claim sections">
         {TABS.map((t) => {
           const active = t.key === tab;
           return (
@@ -212,7 +213,7 @@ const ViewClaims = () => {
             </button>
           );
         })}
-      </div>
+      </Tabs>
 
       <div role="tabpanel">
         {tab === "information" && <ClaimInformation claim={claim} />}

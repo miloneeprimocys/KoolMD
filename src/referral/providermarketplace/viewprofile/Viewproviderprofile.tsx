@@ -12,6 +12,7 @@ import ProviderOverview from "./Provideroverview";
 import ProviderAvailability from "./Provideravailability";
 import ProviderLocations from "./Providerlocations";
 import ProviderServices, { type Service } from "./Providerservices";
+import Tabs from "@/components/Tabs";
 
 /* ---------------------------------------------------------------- */
 /*  Types (shared by the marketplace and every tab)                  */
@@ -218,10 +219,7 @@ const ViewProviderProfile = ({ provider, initialTab = "overview" }: Props) => {
       </section>
 
       {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Provider profile sections"
-        className="flex gap-4 overflow-x-auto overflow-y-hidden border-b border-border hide-scrollbar sm:gap-6"
+      <Tabs ariaLabel="Provider profile sections"
       >
         {TABS.map((t) => (
           <button
@@ -237,7 +235,7 @@ const ViewProviderProfile = ({ provider, initialTab = "overview" }: Props) => {
             {t.label}
           </button>
         ))}
-      </div>
+      </Tabs>
  
       <div role="tabpanel">
         {tab === "overview" && <ProviderOverview profile={profile} />}
