@@ -58,9 +58,11 @@ const WAVE_PATH =
 const StatCards = ({
   stats = DEFAULT_STATS,
   truncateContent = false,
+  gridClassName,
 }: {
   stats?: StatItem[];
   truncateContent?: boolean;
+  gridClassName?: string;
 }) => {
   /*
     Grid rules:
@@ -75,7 +77,7 @@ const StatCards = ({
       : "grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4";
 
   return (
-    <div className={`grid gap-4 ${grid}`}>
+    <div className={`grid gap-4 ${gridClassName ?? grid}`}>
       {stats.map(({ label, value, change, positive, tag, Icon, accent }) => {
         const { tone, color: waveColor, glow } = ACCENTS[accent];
         const isNumericValue = /^[\d,$.]+$/.test(value);

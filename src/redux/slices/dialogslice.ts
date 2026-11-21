@@ -9,6 +9,7 @@ import type { CatalogMedication } from "@/prescriptions/addprescription/SelectMe
 import type { PatientDetail } from "@/types/patient";
 import type { PracticeLocationValues } from "@/provider-panel/profile/AddPracticeLocationModal";
 import type { StateLicenseValues } from "@/provider-panel/profile/AddStateLicenseModal";
+import type { AvailabilityException } from "@/Patient-Panel/availability/AddExceptionModal";
 
 export type StateLicenseDialogResult = Omit<StateLicenseValues, "document"> & {
   documentSize: string;
@@ -103,6 +104,11 @@ interface ModalState {
   practiceLocationResult: PracticeLocationValues | null;
   AddStateLicense: boolean;
   stateLicenseResult: StateLicenseDialogResult | null;
+  AddAvailabilityException: boolean;
+  availabilityExceptionInitial: AvailabilityException | null;
+  availabilityExceptionDefaults: Partial<AvailabilityException> | null;
+  availabilityExceptionResetInlineForm: boolean;
+  availabilityExceptionResult: { exception: AvailabilityException; resetInlineForm: boolean } | null;
 }
 
 const initialState: ModalState = {
@@ -167,6 +173,11 @@ const initialState: ModalState = {
   practiceLocationResult: null,
   AddStateLicense: false,
   stateLicenseResult: null,
+  AddAvailabilityException: false,
+  availabilityExceptionInitial: null,
+  availabilityExceptionDefaults: null,
+  availabilityExceptionResetInlineForm: false,
+  availabilityExceptionResult: null,
   paymentGatewayFees: {
     card: "2.9% + $0.30",
     ach: "1% (max $10)",
@@ -194,6 +205,11 @@ const resetOnHide: Partial<Record<ModalKey, StateKey[]>> = {
   ViewMembershipPlan: ["membershipPlanTarget"],
   DeleteMembershipPlan: ["membershipPlanTarget"],
   AddCustomInvoiceItem: ["customInvoiceItem", "customInvoiceItemDefaultDate"],
+  AddAvailabilityException: [
+    "availabilityExceptionInitial",
+    "availabilityExceptionDefaults",
+    "availabilityExceptionResetInlineForm",
+  ],
   DeleteCustomInvoiceItem: ["customInvoiceItemDeleteTarget"],
   DeletePaymentMethod: ["paymentMethodDeleteTarget", "paymentMethodDeleteIsDefault"],
   TestConnection: ["clearinghouseTestResult"],
@@ -268,6 +284,37 @@ const dialogSlice = createSlice({
     },
     clearStateLicenseResult: (state) => {
       state.stateLicenseResult = null;
+    },
+    showAddAvailabilityException: (
+      state,
+      { payload }: PayloadAction<{
+        initial?: AvailabilityException | null;
+        defaults?: Partial<AvailabilityException>;
+        resetInlineForm?: boolean;
+      }>,
+    ) => {
+      Object.assign(state, {
+        AddAvailabilityException: true,
+        availabilityExceptionInitial: payload.initial ?? null,
+        availabilityExceptionDefaults: payload.defaults ?? null,
+        availabilityExceptionResetInlineForm: payload.resetInlineForm ?? false,
+        availabilityExceptionResult: null,
+      });
+    },
+    availabilityExceptionSaved: (state, { payload }: PayloadAction<AvailabilityException>) => {
+      Object.assign(state, {
+        AddAvailabilityException: false,
+        availabilityExceptionInitial: null,
+        availabilityExceptionDefaults: null,
+        availabilityExceptionResult: {
+          exception: payload,
+          resetInlineForm: state.availabilityExceptionResetInlineForm,
+        },
+        availabilityExceptionResetInlineForm: false,
+      });
+    },
+    clearAvailabilityExceptionResult: (state) => {
+      state.availabilityExceptionResult = null;
     },
 
     // Prescriptions
@@ -425,6 +472,9 @@ export const {
   showAddStateLicense,
   stateLicenseSaved,
   clearStateLicenseResult,
+  showAddAvailabilityException,
+  availabilityExceptionSaved,
+  clearAvailabilityExceptionResult,
   hideModal,
   hideAllModals,
   showDeletePrescription,

@@ -48,7 +48,7 @@ const VerticalSteps = ({ steps, current, onStepClick, className = "" }: Vertical
     >
       <ol
         ref={listRef}
-        className="custom-scrollbar relative flex w-full min-w-0 flex-nowrap overflow-x-auto overscroll-x-contain touch-pan-x px-1.5 py-1.5 before:absolute before:bottom-[30px] before:left-[29px] before:top-[30px] before:hidden before:w-0.5 before:bg-divider before:content-[''] xl:flex-col xl:overflow-visible xl:p-0 xl:before:block"
+        className="custom-scrollbar relative flex w-full min-w-0 flex-nowrap overflow-x-auto overscroll-x-contain touch-pan-x px-1.5 py-1.5 before:absolute before:bottom-[30px] before:left-[29px] before:top-[30px] before:hidden before:w-0.5 before:bg-divider before:content-[''] xl:flex-col xl:gap-1.5 xl:overflow-visible xl:p-0 xl:before:block"
       >
         {steps.map((s, i) => {
           const complete = s.id < current;

@@ -23,8 +23,7 @@ import ProfileDocuments, { initialDocuments, validateDocuments, type DocumentsVa
 import ProfileReview from "./ProfileReview";
 import type { LocationRow } from "./PracticeLocations";
 
-/* Update to your real route (shown after a successful submission) */
-const DONE_ROUTE = "/provider/onboarding-status";
+const DONE_ROUTE = "/provider/under-review";
 const PROFILE_STEP_ROUTES = [
   "/provider/profile/registration",
   "/provider/profile/licenses",

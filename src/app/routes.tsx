@@ -91,13 +91,17 @@ import CompensationDashboard from "@/compensation/Compensationdashboard";
 import Messages from "@/messages/Messages";
 import Notifications from "@/notifications/Notifications";
 import FindProviderMainPage from "@/Patient-Panel/FindProvider/FindProviderMainPage";
+import ConfigureAvailability from "@/Patient-Panel/availability/ConfigureAvailability";
 import PatientAppointments from "@/Patient-Panel/appointments/PatientAppointments";
+import ReviewIntakeChart from "@/Patient-Panel/appointments/today/ReviewIntakeChart";
 import JoinConsultation from "@/Patient-Panel/appointments/JoinConsultation";
 import VisitSummary from "@/Patient-Panel/appointments/VisitSummary";
 import VisitFollowUp from "@/Patient-Panel/appointments/VisitFollowUp";
 import VisitPrescriptions from "@/Patient-Panel/appointments/VisitPrescriptions";
 import VisitResults from "@/Patient-Panel/appointments/VisitResults";
 import ProviderProfile from "@/provider-panel/profile/ProviderProfile";
+import ProviderApproved from "@/provider-panel/profile/ProviderApproved";
+import ProviderUnderReview from "@/provider-panel/profile/ProviderUnderReview";
 /**
  * protected → signed-in only · guest → signed-out only · public → anyone
  */
@@ -162,9 +166,24 @@ export const ROUTES: Record<string, RouteConfig> = {
     title: "Provider Profile",
     access: "protected",
   },
+  "provider/under-review": {
+    component: ProviderUnderReview,
+    title: "Application Under Review",
+    access: "protected",
+  },
+  "provider/approved": {
+    component: ProviderApproved,
+    title: "Provider Application Approved",
+    access: "protected",
+  },
   "find-provider": {
     component: FindProviderMainPage,
     title: "Find a Provider",
+    access: "protected",
+  },
+  availability: {
+    component: ConfigureAvailability,
+    title: "Availability",
     access: "protected",
   },
   patients: {
@@ -267,6 +286,11 @@ export const ROUTES: Record<string, RouteConfig> = {
   "my-appointments": {
     component: PatientAppointments,
     title: "Appointments",
+    access: "protected",
+  },
+  "review-intake-chart": {
+    component: ReviewIntakeChart,
+    title: "Review Intake & Patient Chart",
     access: "protected",
   },
   "my-appointments/join-consultation": {

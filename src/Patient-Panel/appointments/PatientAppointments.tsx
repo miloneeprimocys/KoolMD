@@ -1,11 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Calendar,
+  CalendarDays,
   CalendarX,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
   Clock,
   FileText,
   History,
@@ -16,12 +20,18 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import Actions from "@/components/Actions";
 import AddButton from "@/components/Addbutton";
+import Content from "@/components/Content";
 import DeleteDialog from "@/components/Deletedialog";
 import EditButton from "@/components/EditButton";
 import ImportButton from "@/components/ImportButton";
+import Name from "@/components/Name";
 import Pagination from "@/components/Pagination";
+import SearchAndFilter from "@/components/Searchandfilter";
+import Table from "@/components/Table";
 import TableStatus from "@/components/TableStatus";
+import { type TableColumn } from "@/components/Tableheader";
 import Tags, { type TagTone } from "@/components/Tags";
 import { cardCls } from "@/providers/Shared";
 import Tabs from "@/components/Tabs";
@@ -60,13 +70,43 @@ const APPOINTMENTS: Appointment[] = [
   { id: "APT-1999", doctor: "Dr. Thomas Patel", specialty: "Ophthalmology", rating: "4.7", reviews: 150, date: "Tue, Sep 15, 2026", time: "5:00 PM – 5:30 PM (30 min)", type: "In-Person Visit", status: "Cancelled" },
 ];
 
-type TabKey = "upcoming" | "past" | "cancelled";
+/* ---------- Today's schedule (clinician view) ---------- */
+type IntakeStatus = "Intake Complete" | "Intake Pending";
+type VisitStatus = "Checked In" | "Scheduled" | "Confirmed";
+
+type TodayRow = {
+  id: string;
+  time: string;
+  patient: string;
+  sub: string;
+  visit: string;
+  intake: IntakeStatus;
+  status: VisitStatus;
+};
+
+const TODAY_ROWS: TodayRow[] = [
+  { id: "T-1", time: "10:00 AM", patient: "Emily Carter", sub: "32 y • F • MRN: KM-002487", visit: "Follow-up Visit", intake: "Intake Complete", status: "Checked In" },
+  { id: "T-2", time: "10:30 AM", patient: "James Mitchell", sub: "45 y • M • MRN: KM-002531", visit: "Initial Consultation", intake: "Intake Pending", status: "Scheduled" },
+  { id: "T-3", time: "11:00 AM", patient: "Sophia Reed", sub: "29 y • F • MRN: KM-002451", visit: "Follow-up Visit", intake: "Intake Complete", status: "Confirmed" },
+  { id: "T-4", time: "11:30 AM", patient: "Daniel Brooks", sub: "41 y • M • MRN: KM-002384", visit: "Chronic Care", intake: "Intake Complete", status: "Scheduled" },
+  { id: "T-5", time: "12:00 PM", patient: "Olivia Hayes", sub: "36 y • F • MRN: KM-002558", visit: "Initial Consultation", intake: "Intake Pending", status: "Scheduled" },
+  { id: "T-6", time: "02:00 PM", patient: "William Scott", sub: "58 y • M • MRN: KM-002390", visit: "Follow-up Visit", intake: "Intake Complete", status: "Confirmed" },
+  { id: "T-7", time: "02:30 PM", patient: "Isabella Martin", sub: "27 y • F • MRN: KM-002523", visit: "Urgent Care", intake: "Intake Complete", status: "Checked In" },
+  { id: "T-8", time: "03:00 PM", patient: "Henry Adams", sub: "62 y • M • MRN: KM-002602", visit: "Follow-up Visit", intake: "Intake Pending", status: "Scheduled" },
+];
+
+const INTAKE_TONES: Record<IntakeStatus, TagTone> = { "Intake Complete": "success", "Intake Pending": "warning" };
+const VISIT_TONES: Record<VisitStatus, TagTone> = { "Checked In": "violet", Scheduled: "neutral", Confirmed: "success" };
+
+type TabKey = "today" | "upcoming" | "past" | "cancelled";
 
 const STATUS_TONES: Record<Status, TagTone> = { Confirmed: "success", Completed: "info", Cancelled: "danger" };
 
 const BASE = "/my-appointments";
 const BOOK_HREF = "/find-provider";
+const REVIEW_HREF = "/review-intake-chart";
 const PAGE_SIZE = 5;
+const TODAY_PAGE_SIZE = 10;
 
 const initialsOf = (name: string) =>
   name
@@ -76,6 +116,12 @@ const initialsOf = (name: string) =>
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
     .join("");
+
+const dayLabel = (offset: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+};
 
 /* ---------------------------------------------------------------- */
 /*  Small pieces                                                     */
@@ -119,13 +165,160 @@ const KebabMenu = ({ items }: { items: { label: string; onClick: () => void; dan
 };
 
 /* ---------------------------------------------------------------- */
+/*  Today tab: the day's schedule                                    */
+/* ---------------------------------------------------------------- */
+const VISIT_FILTER = "All Visit Types";
+const INTAKE_FILTER = "All Intake Statuses";
+const STATUS_FILTER = "All Appointment Statuses";
+const EMPTY_FILTERS: Record<string, string> = { [VISIT_FILTER]: "", [INTAKE_FILTER]: "", [STATUS_FILTER]: "" };
+
+const TODAY_COLUMNS: TableColumn[] = [
+  { key: "time", label: "Time" },
+  { key: "patient", label: "Patient" },
+  { key: "visit", label: "Visit Type" },
+  { key: "intake", label: "Intake Status" },
+  { key: "status", label: "Appointment Status" },
+  { key: "actions", label: "Actions", header: <div className="flex w-full items-center justify-center">Actions</div> },
+];
+
+const TodayAppointments = ({ onView }: { onView: (row: TodayRow) => void }) => {
+  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<Record<string, string>>(EMPTY_FILTERS);
+  const [page, setPage] = useState(1);
+  const [dayOffset, setDayOffset] = useState(0);
+
+  // The static schedule belongs to today; other days show an empty state until you wire the API.
+  const dayRows = dayOffset === 0 ? TODAY_ROWS : [];
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return dayRows.filter((r) => {
+      if (q && ![r.patient, r.sub, r.visit].some((f) => f.toLowerCase().includes(q))) return false;
+      if (filters[VISIT_FILTER] && r.visit !== filters[VISIT_FILTER]) return false;
+      if (filters[INTAKE_FILTER] && r.intake !== filters[INTAKE_FILTER]) return false;
+      if (filters[STATUS_FILTER] && r.status !== filters[STATUS_FILTER]) return false;
+      return true;
+    });
+  }, [dayRows, search, filters]);
+
+  const totalPages = Math.max(Math.ceil(filtered.length / TODAY_PAGE_SIZE), 1);
+  const safePage = Math.min(page, totalPages);
+  const visible = filtered.slice((safePage - 1) * TODAY_PAGE_SIZE, safePage * TODAY_PAGE_SIZE);
+
+  const rows = visible.map((r) => ({
+    time: <Content title={r.time} />,
+    patient: <Name name={r.patient} sub={r.sub} truncate />,
+    visit: (
+      <span className="flex items-center gap-2 text-sm text-heading">
+        <ClipboardList className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+        <span className="whitespace-nowrap">{r.visit}</span>
+      </span>
+    ),
+    intake: <Tags text={r.intake} tone={INTAKE_TONES[r.intake]} size="xs" />,
+    status: <Tags text={r.status} tone={VISIT_TONES[r.status]} size="xs" />,
+    actions: (
+      <div className="flex w-full items-center justify-center gap-1">
+        <Actions
+          actions={["view", "more"]}
+          onAction={(action) => {
+            if (action === "view") onView(r);
+          }}
+          size="sm"
+        />
+      </div>
+    ),
+  }));
+
+  const dateNav = (
+    <div className="flex items-center gap-1 rounded-xl border border-border bg-card px-2 py-1.5">
+      <Calendar className="mx-1 h-4 w-4 text-primary" aria-hidden="true" />
+      <span className="px-1 text-sm font-medium text-heading">{dayLabel(dayOffset)}</span>
+      {/* <button
+        type="button"
+        aria-label="Previous day"
+        onClick={() => {
+          setDayOffset((d) => d - 1);
+          setPage(1);
+        }}
+        className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-body transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        aria-label="Next day"
+        onClick={() => {
+          setDayOffset((d) => d + 1);
+          setPage(1);
+        }}
+        className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-body transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button> */}
+    </div>
+  );
+
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="flex items-center gap-2 text-base font-semibold text-heading">
+          <CalendarDays className="h-5 w-5 text-primary" />
+          {dayOffset === 0 ? "Today's Appointments" : "Appointments"}
+        </h3>
+        {dateNav}
+      </div>
+
+      <SearchAndFilter
+        placeholder="Search patient, MRN or reason for visit"
+        value={search}
+        onSearch={(v: string) => {
+          setSearch(v);
+          setPage(1);
+        }}
+        filters={[
+          { label: VISIT_FILTER, options: Array.from(new Set(TODAY_ROWS.map((r) => r.visit))) },
+          { label: INTAKE_FILTER, options: ["Intake Complete", "Intake Pending"] },
+          { label: STATUS_FILTER, options: ["Checked In", "Scheduled", "Confirmed"] },
+        ]}
+        selectedFilters={filters}
+        onFilterChange={(label: string, value: string) => {
+          setFilters((prev) => ({ ...prev, [label]: value }));
+          setPage(1);
+        }}               
+        showDateRange={false}     
+      />
+
+      <div className="overflow-hidden rounded-[14px] border border-border bg-card">
+        {visible.length === 0 ? (
+          <TableStatus variant="empty" message="No appointments found for this day." />
+        ) : (
+          <Table columns={TODAY_COLUMNS} rows={rows} bordered={false} />
+        )}
+      </div>
+
+      {filtered.length > 0 && (
+        <Pagination
+          page={safePage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={TODAY_PAGE_SIZE}
+          itemLabel="appointments"
+          onChange={setPage}
+        />
+      )}
+    </section>
+  );
+};
+
+/* ---------------------------------------------------------------- */
 /*  Page                                                             */
 /* ---------------------------------------------------------------- */
 const PatientAppointments = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
-  const tab: TabKey = requestedTab === "past" || requestedTab === "cancelled" ? requestedTab : "upcoming";
+  const tab: TabKey =
+    requestedTab === "upcoming" || requestedTab === "past" || requestedTab === "cancelled" ? requestedTab : "today";
 
   const [appointments, setAppointments] = useState<Appointment[]>(APPOINTMENTS);
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
@@ -150,7 +343,7 @@ const PatientAppointments = () => {
   const goJoin = (a: Appointment) => router.push(`${BASE}/join-consultation?id=${a.id}`);
   const goSummary = (a: Appointment) => router.push(`${BASE}/visit-summary?id=${a.id}`);
   /* ---------- One appointment card ---------- */
-  const renderCard = (a: Appointment, variant: TabKey) => {
+  const renderCard = (a: Appointment, variant: Exclude<TabKey, "today">) => {
     const video = a.type === "Video Consultation";
 
     const menuItems =
@@ -190,7 +383,6 @@ const PatientAppointments = () => {
           <DetailLine Icon={Clock} text={a.time} />
           <DetailLine Icon={video ? Video : MapPin} text={a.type} />
         </div>
-
         {/* Status + actions */}
         <div className="flex items-start justify-between gap-3 md:justify-end">
           <div className="flex flex-col items-start gap-2.5">
@@ -228,6 +420,7 @@ const PatientAppointments = () => {
   );
 
   const tabs: { key: TabKey; label: string; Icon: LucideIcon; count: number }[] = [
+    { key: "today", label: "Today", Icon: CalendarDays, count: TODAY_ROWS.length },
     { key: "upcoming", label: "Upcoming", Icon: Calendar, count: upcoming.length },
     { key: "past", label: "Past", Icon: CheckCircle2, count: past.length },
     { key: "cancelled", label: "Cancelled", Icon: XCircle, count: cancelled.length },
@@ -274,6 +467,11 @@ const PatientAppointments = () => {
           })}
         </div>
       </Tabs>
+
+      {/* Today */}
+      {tab === "today" && (
+        <TodayAppointments onView={(row) => router.push(`${REVIEW_HREF}?id=${encodeURIComponent(row.id)}`)} />
+      )}
 
       {/* Upcoming */}
       {tab === "upcoming" && (

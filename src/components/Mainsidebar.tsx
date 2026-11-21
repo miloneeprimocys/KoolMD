@@ -255,6 +255,7 @@ const PATIENT_SECTIONS: NavSection[] = [
       { label: "Dashboard", href: "/dashboard", Icon: LayoutDashboard },
       { label: "Find a Provider", href: "/find-provider", Icon: Search },
       { label: "Appointments", href: "/my-appointments", Icon: CalendarDays },
+      { label: "Availability", href: "/availability", Icon: Calendar },
       { label: "Messages", href: "/messages", Icon: MessageSquare },
     ],
   },

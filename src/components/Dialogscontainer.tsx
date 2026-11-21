@@ -35,6 +35,7 @@ import DeleteLicense from "@/providers/licensemanagement/Deletelicense";
 import RequestAccessModal from "@/userroles/Requestaccessmodal";
 import AddPracticeLocationModal from "@/provider-panel/profile/AddPracticeLocationModal";
 import AddStateLicenseModal from "@/provider-panel/profile/AddStateLicenseModal";
+import AddExceptionModal from "@/Patient-Panel/availability/AddExceptionModal";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
   hideModal,
@@ -50,6 +51,7 @@ import {
   licenseDeleted,
   practiceLocationSaved,
   stateLicenseSaved,
+  availabilityExceptionSaved,
 } from "@/redux/slices/dialogslice";
 
 /**
@@ -98,6 +100,9 @@ const DialogsContainer = () => {
   const accessRequestModule = useAppSelector((state) => state.dialog.accessRequestModule);
   const addPracticeLocationOpen = useAppSelector((state) => state.dialog.AddPracticeLocation);
   const addStateLicenseOpen = useAppSelector((state) => state.dialog.AddStateLicense);
+  const addAvailabilityExceptionOpen = useAppSelector((state) => state.dialog.AddAvailabilityException);
+  const availabilityExceptionInitial = useAppSelector((state) => state.dialog.availabilityExceptionInitial);
+  const availabilityExceptionDefaults = useAppSelector((state) => state.dialog.availabilityExceptionDefaults);
 
   return (
     <>
@@ -243,6 +248,14 @@ const DialogsContainer = () => {
           }));
         }}
       />
+      {addAvailabilityExceptionOpen && (
+        <AddExceptionModal
+          initial={availabilityExceptionInitial}
+          defaults={availabilityExceptionDefaults ?? undefined}
+          onClose={() => dispatch(hideModal("AddAvailabilityException"))}
+          onSave={(exception) => dispatch(availabilityExceptionSaved(exception))}
+        />
+      )}
     </>
   );
 };

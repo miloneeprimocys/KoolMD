@@ -83,7 +83,7 @@ export const ModalTextarea = ({
     <label htmlFor={id} className="mb-2 block text-sm font-medium text-label">
       {label}
     </label>
-    <div className="relative">
+    <div>
       <textarea
         id={id}
         name={id}
@@ -91,11 +91,11 @@ export const ModalTextarea = ({
         maxLength={maxLength}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className={`h-28 w-full resize-none rounded-xl border bg-card px-4 pb-7 pt-3 text-sm text-heading outline-none transition-colors duration-200 placeholder:text-placeholder ${
+        className={`h-28 w-full resize-none custom-scrollbar rounded-xl border bg-card px-4 py-3 text-sm text-heading outline-none transition-colors duration-200 placeholder:text-placeholder ${
           error ? "border-danger" : "border-border hover:border-primary/50 focus:border-primary"
         }`}
       />
-      <span className="pointer-events-none absolute bottom-2.5 right-3.5 text-[11px] text-body">
+      <span className=" block text-right text-[11px] text-body">
         {value.length}/{maxLength}
       </span>
     </div>
