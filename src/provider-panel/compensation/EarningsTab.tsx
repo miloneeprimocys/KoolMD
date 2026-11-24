@@ -18,8 +18,7 @@ const COLUMNS: TableColumn[] = [
 
 const EarningsTab = ({ rows }: { rows: EarningRow[] }) => (
   <Table
-    bordered
-    rowClassName="dark:border-b-[#294a97]"
+    bordered={false}
     columns={COLUMNS}
     rows={rows.map((r) => ({
       date: <Content title={dateLabel(r.date)} />,
