@@ -102,6 +102,12 @@ import VisitResults from "@/Patient-Panel/appointments/VisitResults";
 import ProviderProfile from "@/provider-panel/profile/ProviderProfile";
 import ProviderApproved from "@/provider-panel/profile/ProviderApproved";
 import ProviderUnderReview from "@/provider-panel/profile/ProviderUnderReview";
+import ProviderPrescription from "@/provider-panel/prescription/ProviderPrescription";
+import ProviderCompensation from "@/provider-panel/compensation/Compensation";
+import ProviderAppointments from "@/provider-panel/appointments/ProviderAppointments";
+import ProviderAppointmentView from "@/provider-panel/appointments/ProviderAppointmentView";
+import ProviderNewEncounter from "@/provider-panel/appointments/ProviderNewEncounter";
+import ProviderConsultation from "@/provider-panel/appointments/consulting/Consultation";
 /**
  * protected → signed-in only · guest → signed-out only · public → anyone
  */
@@ -174,6 +180,36 @@ export const ROUTES: Record<string, RouteConfig> = {
   "provider/approved": {
     component: ProviderApproved,
     title: "Provider Application Approved",
+    access: "protected",
+  },
+  "provider/appointments": {
+    component: ProviderAppointments,
+    title: "Appointments",
+    access: "protected",
+  },
+  "provider/appointments/view": {
+    component: ProviderAppointmentView,
+    title: "Appointment Details",
+    access: "protected",
+  },
+  "provider/appointments/new-encounter": {
+    component: ProviderNewEncounter,
+    title: "New Encounter",
+    access: "protected",
+  },
+  "provider/appointments/consultation": {
+    component: ProviderConsultation,
+    title: "Consultation",
+    access: "protected",
+  },
+  "provider/prescriptions": {
+    component: ProviderPrescription,
+    title: "Prescriptions",
+    access: "protected",
+  },
+  "provider/compensation": {
+    component: ProviderCompensation,
+    title: "Compensation",
     access: "protected",
   },
   "find-provider": {

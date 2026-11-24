@@ -8,6 +8,7 @@ type TableProps = {
   fillHeight?: boolean;
   bordered?: boolean;
   selectable?: boolean;
+  rowClassName?: string;
 };
 
 const Table = ({
@@ -16,6 +17,7 @@ const Table = ({
   fillHeight = false,
   bordered = true,
   selectable = false,
+  rowClassName = "",
 }: TableProps) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<Set<string>>(new Set());
   const rowKeys = useMemo(
@@ -87,7 +89,7 @@ const Table = ({
             {rows.map((row, i) => (
               <tr
                 key={i}
-                className="border-b border-divider transition-colors duration-200 last:border-b-0 dark:hover:bg-primary/5 hover:bg-primary/3"
+                className={`border-b border-divider transition-colors duration-200 last:border-b-0 dark:hover:bg-primary/5 hover:bg-primary/3 ${rowClassName}`}
               >
 
                 {columns.map((c) => {

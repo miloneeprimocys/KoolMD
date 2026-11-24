@@ -123,7 +123,7 @@ const IntegrationInfoModal = () => {
       )}
 
       {kind === "status-list" && (
-        <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="overflow-x-auto rounded-xl border border-border custom-scrollbar">
           <table className="w-full min-w-[560px] text-left text-sm">
             <thead className="bg-primary/5 text-xs text-body"><tr><th className="px-4 py-3 font-medium">External M13 Status</th><th className="px-4 py-3 font-medium">Meaning</th><th className="px-4 py-3 font-medium">KOOLMD Status</th></tr></thead>
             <tbody>{STATUS_ROWS.map(([external, meaning, mapped]) => <tr key={external} className="border-t border-divider"><td className="px-4 py-3 font-medium text-heading">{external}</td><td className="px-4 py-3 text-body">{meaning}</td><td className="px-4 py-3 text-heading">{mapped}</td></tr>)}</tbody>

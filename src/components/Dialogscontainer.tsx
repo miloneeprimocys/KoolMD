@@ -36,6 +36,12 @@ import RequestAccessModal from "@/userroles/Requestaccessmodal";
 import AddPracticeLocationModal from "@/provider-panel/profile/AddPracticeLocationModal";
 import AddStateLicenseModal from "@/provider-panel/profile/AddStateLicenseModal";
 import AddExceptionModal from "@/Patient-Panel/availability/AddExceptionModal";
+import AddOrderModal from "@/provider-panel/appointments/consulting/AddOrderModal";
+import AddCustomImagingModal from "@/provider-panel/appointments/consulting/AddCustomImagingModal";
+import AddMedicationModal from "@/provider-panel/appointments/consulting/AddMedicationModal";
+import AddOtherOrderModal from "@/provider-panel/appointments/consulting/AddOtherOrderModal";
+import AddProcedureModal from "@/provider-panel/appointments/consulting/AddProcedureModal";
+import CreateReferralModal from "@/provider-panel/appointments/consulting/CreateReferralModal";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppHooks";
 import {
   hideModal,
@@ -52,6 +58,8 @@ import {
   practiceLocationSaved,
   stateLicenseSaved,
   availabilityExceptionSaved,
+  consultationOrderSaved,
+  consultationChildModalSaved,
 } from "@/redux/slices/dialogslice";
 
 /**
@@ -103,6 +111,13 @@ const DialogsContainer = () => {
   const addAvailabilityExceptionOpen = useAppSelector((state) => state.dialog.AddAvailabilityException);
   const availabilityExceptionInitial = useAppSelector((state) => state.dialog.availabilityExceptionInitial);
   const availabilityExceptionDefaults = useAppSelector((state) => state.dialog.availabilityExceptionDefaults);
+  const consultationOrderOpen = useAppSelector((state) => state.dialog.AddConsultationOrder);
+  const consultationOrderInitialTab = useAppSelector((state) => state.dialog.consultationOrderInitialTab);
+  const addConsultationCustomImagingOpen = useAppSelector((state) => state.dialog.AddConsultationCustomImaging);
+  const addConsultationMedicationOpen = useAppSelector((state) => state.dialog.AddConsultationMedication);
+  const addConsultationOtherOrderOpen = useAppSelector((state) => state.dialog.AddConsultationOtherOrder);
+  const addConsultationProcedureOpen = useAppSelector((state) => state.dialog.AddConsultationProcedure);
+  const addConsultationReferralOpen = useAppSelector((state) => state.dialog.AddConsultationReferral);
 
   return (
     <>
@@ -256,6 +271,53 @@ const DialogsContainer = () => {
           onSave={(exception) => dispatch(availabilityExceptionSaved(exception))}
         />
       )}
+      <AddOrderModal
+        open={consultationOrderOpen}
+        initialTab={consultationOrderInitialTab}
+        onClose={() => dispatch(hideModal("AddConsultationOrder"))}
+        onSubmitOrders={(orders) => dispatch(consultationOrderSaved({ orders }))}
+        onMedicationAdded={(medication) => dispatch(consultationOrderSaved({ medication }))}
+      />
+      <AddCustomImagingModal
+        open={addConsultationCustomImagingOpen}
+        onClose={() => dispatch(hideModal("AddConsultationCustomImaging"))}
+        onAdd={(study) => {
+          dispatch(consultationChildModalSaved({ type: "imaging", value: study }));
+          dispatch(hideModal("AddConsultationCustomImaging"));
+        }}
+      />
+      <AddMedicationModal
+        open={addConsultationMedicationOpen}
+        onClose={() => dispatch(hideModal("AddConsultationMedication"))}
+        onAdd={(medication) => {
+          dispatch(consultationChildModalSaved({ type: "medication", value: medication }));
+          dispatch(hideModal("AddConsultationMedication"));
+        }}
+      />
+      <AddOtherOrderModal
+        open={addConsultationOtherOrderOpen}
+        onClose={() => dispatch(hideModal("AddConsultationOtherOrder"))}
+        onAdd={(order) => {
+          dispatch(consultationChildModalSaved({ type: "otherOrder", value: order }));
+          dispatch(hideModal("AddConsultationOtherOrder"));
+        }}
+      />
+      <AddProcedureModal
+        open={addConsultationProcedureOpen}
+        onClose={() => dispatch(hideModal("AddConsultationProcedure"))}
+        onAdd={(procedure) => {
+          dispatch(consultationChildModalSaved({ type: "procedure", value: procedure }));
+          dispatch(hideModal("AddConsultationProcedure"));
+        }}
+      />
+      <CreateReferralModal
+        open={addConsultationReferralOpen}
+        onClose={() => dispatch(hideModal("AddConsultationReferral"))}
+        onSave={(referral) => {
+          dispatch(consultationChildModalSaved({ type: "referral", value: referral }));
+          dispatch(hideModal("AddConsultationReferral"));
+        }}
+      />
     </>
   );
 };

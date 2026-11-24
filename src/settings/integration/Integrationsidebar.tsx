@@ -149,7 +149,7 @@ export const CodeBlock = ({
   const { copied, copy: doCopy } = useCopy(code, onCopied);
   const lines = code.split("\n");
   return (
-    <div className="relative overflow-x-auto rounded-xl border border-border bg-primary/5 p-3">
+    <div className="relative overflow-x-auto rounded-xl border border-border custom-scrollbar bg-primary/5 p-3">
       {copy && (
         <button
           type="button"

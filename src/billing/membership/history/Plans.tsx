@@ -112,7 +112,7 @@ const Plans = ({ plan, onClose, onCloseStart }: Props) => {
 
         <section>
           <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold text-heading">Payment History</h3><EditButton section="Payment History" variant="viewAll" onEdit={() => { }} /></div>
-          <div className="overflow-x-auto rounded-xl border border-border"><table className="w-full text-left text-xs"><thead><tr className="border-b border-border text-body"><th className="p-2">Date</th><th className="p-2">Transaction ID</th><th className="p-2">Amount</th><th className="p-2">Status</th></tr></thead><tbody><tr><td className="p-2">{formatDate(plan.start)}</td><td className="p-2">TXN{plan.id.toUpperCase()}</td><td className="p-2">${plan.price.toFixed(2)}</td><td className="p-2"><Tags text="Success" tone="success" /></td></tr></tbody></table></div>
+          <div className="overflow-x-auto rounded-xl border border-border custom-scrollbar"><table className="w-full text-left text-xs"><thead><tr className="border-b border-border text-body"><th className="p-2">Date</th><th className="p-2">Transaction ID</th><th className="p-2">Amount</th><th className="p-2">Status</th></tr></thead><tbody><tr><td className="p-2">{formatDate(plan.start)}</td><td className="p-2">TXN{plan.id.toUpperCase()}</td><td className="p-2">${plan.price.toFixed(2)}</td><td className="p-2"><Tags text="Success" tone="success" /></td></tr></tbody></table></div>
         </section>
       </div>
     </CommonRightSection>

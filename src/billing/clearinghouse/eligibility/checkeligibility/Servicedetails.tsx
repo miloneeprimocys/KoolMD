@@ -362,7 +362,7 @@ const ServiceDetails = ({ values, errors, onChange, patientInsurance, onEdit }: 
               />
             </div>
 
-            <div id="service-lines" className="overflow-x-auto rounded-xl border border-border">
+            <div id="service-lines" className="overflow-x-auto rounded-xl border border-border custom-scrollbar">
               {values.lines.length === 0 ? (
                 <p className="px-4 py-8 text-center text-sm text-body">No service lines added yet.</p>
               ) : (

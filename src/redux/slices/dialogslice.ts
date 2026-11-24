@@ -10,6 +10,20 @@ import type { PatientDetail } from "@/types/patient";
 import type { PracticeLocationValues } from "@/provider-panel/profile/AddPracticeLocationModal";
 import type { StateLicenseValues } from "@/provider-panel/profile/AddStateLicenseModal";
 import type { AvailabilityException } from "@/Patient-Panel/availability/AddExceptionModal";
+import type { OrderTabKey, PlacedOrder } from "@/provider-panel/appointments/consulting/AddOrderModal";
+import type { Medication } from "@/provider-panel/appointments/consulting/MedicationsTab";
+import type { ImagingStudy } from "@/provider-panel/appointments/consulting/ImagingTab";
+import type { OtherOrder } from "@/provider-panel/appointments/consulting/OtherOrdersTab";
+import type { Procedure } from "@/provider-panel/appointments/consulting/ProceduresTab";
+import type { Referral } from "@/provider-panel/appointments/consulting/ReferralsTab";
+
+type ConsultationOrderResult = { orders?: PlacedOrder[]; medication?: Medication };
+export type ConsultationChildModalResult =
+  | { type: "imaging"; value: ImagingStudy }
+  | { type: "medication"; value: Medication }
+  | { type: "otherOrder"; value: OtherOrder }
+  | { type: "procedure"; value: Procedure }
+  | { type: "referral"; value: Referral };
 
 export type StateLicenseDialogResult = Omit<StateLicenseValues, "document"> & {
   documentSize: string;
@@ -109,6 +123,15 @@ interface ModalState {
   availabilityExceptionDefaults: Partial<AvailabilityException> | null;
   availabilityExceptionResetInlineForm: boolean;
   availabilityExceptionResult: { exception: AvailabilityException; resetInlineForm: boolean } | null;
+  AddConsultationOrder: boolean;
+  consultationOrderInitialTab: OrderTabKey;
+  consultationOrderResult: ConsultationOrderResult | null;
+  AddConsultationCustomImaging: boolean;
+  AddConsultationMedication: boolean;
+  AddConsultationOtherOrder: boolean;
+  AddConsultationProcedure: boolean;
+  AddConsultationReferral: boolean;
+  consultationChildModalResult: ConsultationChildModalResult | null;
 }
 
 const initialState: ModalState = {
@@ -178,6 +201,15 @@ const initialState: ModalState = {
   availabilityExceptionDefaults: null,
   availabilityExceptionResetInlineForm: false,
   availabilityExceptionResult: null,
+  AddConsultationOrder: false,
+  consultationOrderInitialTab: "lab",
+  consultationOrderResult: null,
+  AddConsultationCustomImaging: false,
+  AddConsultationMedication: false,
+  AddConsultationOtherOrder: false,
+  AddConsultationProcedure: false,
+  AddConsultationReferral: false,
+  consultationChildModalResult: null,
   paymentGatewayFees: {
     card: "2.9% + $0.30",
     ach: "1% (max $10)",
@@ -210,6 +242,7 @@ const resetOnHide: Partial<Record<ModalKey, StateKey[]>> = {
     "availabilityExceptionDefaults",
     "availabilityExceptionResetInlineForm",
   ],
+  AddConsultationOrder: ["consultationOrderInitialTab"],
   DeleteCustomInvoiceItem: ["customInvoiceItemDeleteTarget"],
   DeletePaymentMethod: ["paymentMethodDeleteTarget", "paymentMethodDeleteIsDefault"],
   TestConnection: ["clearinghouseTestResult"],
@@ -230,6 +263,25 @@ const dialogSlice = createSlice({
   name: "modals",
   initialState,
   reducers: {
+    showConsultationOrderModal: (state, { payload }: PayloadAction<OrderTabKey>) => {
+      Object.assign(state, {
+        AddConsultationOrder: true,
+        consultationOrderInitialTab: payload,
+        consultationOrderResult: null,
+      });
+    },
+    consultationOrderSaved: (state, { payload }: PayloadAction<ConsultationOrderResult>) => {
+      state.consultationOrderResult = payload;
+    },
+    consultationChildModalSaved: (state, { payload }: PayloadAction<ConsultationChildModalResult>) => {
+      state.consultationChildModalResult = payload;
+    },
+    clearConsultationChildModalResult: (state) => {
+      state.consultationChildModalResult = null;
+    },
+    clearConsultationOrderResult: (state) => {
+      state.consultationOrderResult = null;
+    },
     showModal: (state, { payload }: PayloadAction<ModalKey>) => {
       state[payload] = true;
       if (payload === "UnlockPopup") state.unlockPopupConfirmed = false;
@@ -459,6 +511,11 @@ const dialogSlice = createSlice({
 });
 
 export const {
+  showConsultationOrderModal,
+  consultationOrderSaved,
+  consultationChildModalSaved,
+  clearConsultationChildModalResult,
+  clearConsultationOrderResult,
   showModal,
   showProviderOverviewEdit,
   imagingPatientSelected,

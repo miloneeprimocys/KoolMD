@@ -265,7 +265,10 @@ const PROVIDER_SECTIONS: NavSection[] = [
   {
     items: [
       { label: "Dashboard", href: "/dashboard", Icon: LayoutDashboard },
+      { label: "Appointments", href: "/provider/appointments", Icon: CalendarDays },
       { label: "Profile", href: "/provider/profile", Icon: Users },
+      { label: "Prescriptions", href: "/provider/prescriptions", Icon: Receipt },
+      { label: "Compensation", href: "/provider/compensation", Icon: DollarSign },
     ],
   },
 ];

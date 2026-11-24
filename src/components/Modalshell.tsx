@@ -3,13 +3,14 @@
 import RadioCheckButtonh from "@/components/RadioCheckButtonh";
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { ArrowLeft, Download, Search, X } from "lucide-react";
 
 import AddButton from "@/components/Addbutton";
 import DatePicker from "@/components/Datepicker";
 import ImportButton from "@/components/ImportButton";
 import FileDropzone from "@/components/Filedropzone";
 import { FieldError } from "@/components/SignupField";
+import Tags, { type TagTone } from "@/components/Tags";
 import type { DropdownOption } from "@/components/SignupDropdown";
 /* Re-exports so modals import everything from one place */
 export { default as SignupField } from "@/components/SignupField";
@@ -33,6 +34,24 @@ export const OptLabel = ({ children }: { children: ReactNode }) => (
 );
 
 export const todayISO = () => new Date().toISOString().slice(0, 10);
+
+/** "2026-11-20" -> "Nov 20, 2026" */
+export const fmtDate = (iso: string) =>
+  iso ? new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : "—";
+
+export const addDays = (iso: string, n: number) => {
+  const d = new Date(`${iso}T00:00:00`);
+  d.setDate(d.getDate() + n);
+  const p = (x: number) => String(x).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
+
+export const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+
+export type Attachment = { name: string; size: string };
+const fileSize = (b: number) => (b < 1048576 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1048576).toFixed(1)} MB`);
+export const toAttachments = (files: (File | null)[]): Attachment[] =>
+  files.filter((f): f is File => !!f).map((f) => ({ name: f.name, size: fileSize(f.size) }));
 
 /* ---------------------------------------------------------------- */
 /*  Date field                                                       */
@@ -265,6 +284,175 @@ export const ModalSection = ({
     {children}
   </section>
 );
+
+/* ---------------------------------------------------------------- */
+/*  Pieces for the sidebar-style modals (Add Order etc.)            */
+/* ---------------------------------------------------------------- */
+export const FieldLabel = ({ children }: { children: ReactNode }) => (
+  <p className="mb-2 text-sm font-medium text-label">{children}</p>
+);
+
+/** Bordered box used for detail / summary panels inside a modal */
+export const Panel = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
+  <div className={`min-w-0 rounded-xl border border-border bg-card p-4 ${className}`}>{children}</div>
+);
+
+export const DetailRow = ({ label, children }: { label: string; children: ReactNode }) => (
+  <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-2 py-1.5 text-sm">
+    <dt className="text-body">{label}</dt>
+    <dd className="font-medium text-heading">{children}</dd>
+  </div>
+);
+
+const outlineBtnCls =
+  "flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
+export const dangerBtnCls = `${outlineBtnCls} border-danger/40 text-danger hover:bg-danger/5`;
+
+export type Priority = "Routine" | "Urgent" | "Stat";
+const PRIORITIES: Priority[] = ["Routine", "Urgent", "Stat"];
+
+export const PriorityToggle = ({ value, onChange }: { value: Priority; onChange: (p: Priority) => void }) => (
+  <div className="flex flex-wrap gap-2" role="group" aria-label="Priority">
+    {PRIORITIES.map((p) => (
+      <button
+        key={p}
+        type="button"
+        aria-pressed={value === p}
+        onClick={() => onChange(p)}
+        className={`cursor-pointer rounded-lg border px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
+          value === p ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-heading hover:border-primary/40"
+        }`}
+      >
+        {p}
+      </button>
+    ))}
+  </div>
+);
+
+export const SearchInput = ({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) => (
+  <label className="flex h-11 w-full min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3 transition-colors focus-within:border-primary hover:border-primary/50">
+    <Search className="h-4 w-4 shrink-0 text-body" />
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="min-w-0 flex-1 bg-transparent text-sm text-heading outline-none placeholder:text-placeholder"
+    />
+  </label>
+);
+
+export const Chips = ({ options, value, onChange }: { options: { label: string; count?: number }[]; value: string; onChange: (v: string) => void }) => (
+  <div className="flex flex-wrap gap-2" role="group">
+    {options.map((o) => {
+      const active = value === o.label;
+      return (
+        <button
+          key={o.label}
+          type="button"
+          aria-pressed={active}
+          onClick={() => onChange(o.label)}
+          className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
+            active ? "border-primary bg-primary text-on-primary" : "border-border bg-card text-heading hover:border-primary/40 hover:bg-primary/5"
+          }`}
+        >
+          {o.label}
+          {o.count !== undefined ? ` (${o.count})` : ""}
+        </button>
+      );
+    })}
+  </div>
+);
+
+const STATUS_TONE: Record<string, TagTone> = {
+  Active: "success", Completed: "success", Accepted: "success",
+  Scheduled: "info", Sent: "info",
+  Pending: "warning",
+  Cancelled: "danger", Declined: "danger",
+  Draft: "neutral", "As Needed": "violet",
+};
+export const StatusTag = ({ status, tone }: { status: string; tone?: TagTone }) => (
+  <Tags text={status} tone={tone ?? STATUS_TONE[status] ?? "neutral"} size="xs" />
+);
+
+/** Clickable-row table used for the master lists */
+export function ListTable<T extends { id: string }>({
+  columns, rows, selectedId, onSelect, emptyText,
+}: {
+  columns: { label: string; render: (row: T) => ReactNode }[];
+  rows: T[];
+  selectedId?: string;
+  onSelect: (id: string) => void;
+  emptyText: string;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-border custom-scrollbar">
+      <table className="w-full min-w-[680px] text-left text-sm">
+        <thead className="border-b border-border bg-primary/5 text-xs font-semibold text-heading dark:bg-primary/10">
+          <tr>{columns.map((c) => <th key={c.label} className="border-b border-border px-3 py-2.5">{c.label}</th>)}</tr>
+        </thead>
+        <tbody className="divide-y divide-divider">
+          {rows.length === 0 && (
+            <tr><td colSpan={columns.length} className="px-3 py-8 text-center text-body">{emptyText}</td></tr>
+          )}
+          {rows.map((r) => (
+            <tr
+              key={r.id}
+              onClick={() => onSelect(r.id)}
+              className={`cursor-pointer transition-colors hover:bg-primary/5 ${selectedId === r.id ? "bg-primary/10" : ""}`}
+            >
+              {columns.map((c) => <td key={c.label} className="px-3 py-3 align-middle">{c.render(r)}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export const AttachmentList = ({ items }: { items: Attachment[] }) =>
+  items.length === 0 ? (
+    <p className="text-sm text-body">No attachments.</p>
+  ) : (
+    <ul className="space-y-2">
+      {items.map((a) => (
+        <li key={a.name} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2">
+          <span className="min-w-0 truncate text-sm text-heading">
+            {a.name} <span className="text-body">({a.size})</span>
+          </span>
+          <button type="button" aria-label={`Download ${a.name}`} className="cursor-pointer text-body hover:text-primary">
+            <Download className="h-4 w-4" />
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+
+/** List on the left, details on the right; each column scrolls on large screens. */
+export const TabLayout = ({
+  list,
+  details,
+  mobileDetailOpen = false,
+  onMobileBack,
+}: {
+  list: ReactNode;
+  details: ReactNode;
+  mobileDetailOpen?: boolean;
+  onMobileBack?: () => void;
+}) => (
+  <div className="grid min-h-0 gap-4 xl:h-full xl:grid-cols-[minmax(0,1fr)_340px]">
+    <div className={`min-h-0 min-w-0 space-y-3 hide-scrollbar xl:overflow-y-auto ${mobileDetailOpen ? "hidden xl:block" : ""}`}>{list}</div>
+    <div className={`min-h-0 min-w-0 hide-scrollbar xl:overflow-y-auto ${mobileDetailOpen ? "" : "hidden xl:block"}`}>
+      {onMobileBack && (
+        <button type="button" onClick={onMobileBack} className="mb-3 flex cursor-pointer items-center gap-1.5 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 xl:hidden">
+          <ArrowLeft className="h-4 w-4" />
+          Back to options
+        </button>
+      )}
+      {details}
+    </div>
+  </div>
+);
+
 /* ---------------------------------------------------------------- */
 /*  Modal shell (no MUI — Tailwind + portal)                        */
 /* ---------------------------------------------------------------- */

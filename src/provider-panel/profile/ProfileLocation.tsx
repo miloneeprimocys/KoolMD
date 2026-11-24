@@ -47,7 +47,7 @@ const ProfileLocation = ({ values, errors, onChange }: StepProps<LocationStepVal
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <div role="tablist" aria-label="Locations and telemedicine" className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1 hide-scrollbar sm:inline-flex">
+      <div role="tablist" aria-label="Locations and telemedicine" className="flex gap-1 overflow-x-auto rounded-xl border border-border custom-scrollbar bg-card p-1 hide-scrollbar sm:inline-flex">
         {TABS.map(({ key, label, Icon }) => {
           const isActive = key === tab;
           return (

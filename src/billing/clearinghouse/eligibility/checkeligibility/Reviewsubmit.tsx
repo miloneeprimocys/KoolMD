@@ -138,7 +138,7 @@ const ReviewSubmit = ({ patientInsurance, service, onEdit }: Props) => {
           </div>
 
           <h4 className="mb-3 mt-5 text-sm font-semibold text-heading">Service Lines ({service.lines.length})</h4>
-          <div className="overflow-x-auto rounded-xl border border-border">
+          <div className="overflow-x-auto rounded-xl border border-border custom-scrollbar">
             {service.lines.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-body">No service lines added.</p>
             ) : (
