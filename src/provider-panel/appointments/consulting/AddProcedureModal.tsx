@@ -91,9 +91,9 @@ const AddProcedureModal = ({ open, onClose, onAdd }: Props) => {
 
       <ModalSection icon={<CalendarClock className="h-4 w-4" />} title="Scheduling">
         <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
-          <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-3">
-            <ModalDateField id="proc-date" label={<ReqLabel>Date &amp; Time</ReqLabel>} value={date} onChange={(v) => { setDate(v); clear("date"); }} error={errors.date} />
-            <TimePicker name="procTime" label={<span className="sr-only">Time</span>} value={time} onChange={setTime} portalZIndex={1000} mobilePortalZIndex={1000} />
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_120px]">
+            <ModalDateField id="proc-date" label={<ReqLabel>Date</ReqLabel>} value={date} onChange={(v) => { setDate(v); clear("date"); }} error={errors.date} />
+            <TimePicker name="procTime" label="Time" value={time} onChange={setTime} portalZIndex={1000} mobilePortalZIndex={1000} />
           </div>
           <SignupDropdown name="procLocation" label={<ReqLabel>Location</ReqLabel>} placeholder="Select location" options={LOCATIONS} value={location} onChange={(v) => { setLocation(v); clear("location"); }} error={errors.location} portalMenu portalMenuZIndex={1000} />
         </div>

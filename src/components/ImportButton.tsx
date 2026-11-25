@@ -27,7 +27,7 @@ const ImportButton: React.FC<ImportButtonProps> = ({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`group relative inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-heading transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:h-10 sm:gap-2 sm:px-5 sm:text-sm ${className}`}
+      className={`group relative inline-flex h-[34px] cursor-pointer items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2.5 text-xs font-medium text-heading transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:h-10 sm:gap-2 sm:rounded-lg sm:px-5 sm:text-sm ${className}`}
     >
       {icon}
       <span>{text}</span>

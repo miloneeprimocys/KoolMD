@@ -67,18 +67,19 @@ const AddCustomImagingModal = ({ open, onClose, onAdd }: Props) => {
         <ModalTextarea id="custom-imaging-desc" label="Description" value={desc} onChange={setDesc} placeholder="Describe what this study evaluates..." />
         <div>
           <FieldLabel><ReqLabel>Modality</ReqLabel></FieldLabel>
-          <div className="grid grid-cols-5 gap-2" role="group" aria-label="Modality">
+          <div className="grid grid-cols-3 xl:grid-cols-5 gap-2" role="group" aria-label="Modality">
             {MODALITIES.map(({ key, Icon }) => (
               <button
                 key={key}
                 type="button"
                 aria-pressed={modality === key}
                 onClick={() => setModality(key)}
-                className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border px-1 py-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
-                  modality === key ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-heading hover:border-primary/40"
-                }`}
+                className={`group flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border px-1 py-3 text-xs font-medium transition-all duration-200 ease-out  hover:shadow-md hover:shadow-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:translate-y-0 active:scale-[0.97] xl:text-[11px] ${modality === key
+                    ? "border-primary bg-primary/10 text-primary hover:bg-primary/15"
+                    : "border-border bg-card text-heading hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                  }`}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
                 {key}
               </button>
             ))}
@@ -93,7 +94,7 @@ const AddCustomImagingModal = ({ open, onClose, onAdd }: Props) => {
               <PriorityToggle value={priority} onChange={setPriority} />
             </div>
             <div className="relative">
-              <SignupDropdown name="turnaround" label={<OptLabel>Expected Turnaround Time</OptLabel>} placeholder="Select turnaround" options={TURNAROUND} value={turnaround} onChange={setTurnaround} searchable={false} portalMenu portalMenuZIndex={1000} />
+              <SignupDropdown className="h-10!" name="turnaround" label={<OptLabel>Expected Turnaround Time</OptLabel>} placeholder="Select turnaround" options={TURNAROUND} value={turnaround} onChange={setTurnaround} searchable={false} portalMenu portalMenuZIndex={1000} />
             </div>
           </div>
           <p className="flex items-center gap-1.5 text-xs text-body"><Clock className="h-3.5 w-3.5" />Used as the defaults when this study is ordered.</p>

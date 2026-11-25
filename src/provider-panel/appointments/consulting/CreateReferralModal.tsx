@@ -107,12 +107,12 @@ const CreateReferralModal = ({ open, onClose, onSave }: Props) => {
           </div>
           <ModalTextarea id="referral-notes" label={<ReqLabel>Clinical Notes</ReqLabel>} value={notes} onChange={(v) => { setNotes(v); clear("notes"); }} placeholder="Describe the clinical reason for this referral..." error={errors.notes} />
 
-          <Panel className="space-y-2 bg-primary/5">
-            <div className="flex items-center justify-between gap-2">
+          <Panel className="space-y-2 bg-primary/5 !p-3 sm:!p-4">
+            <div className="flex min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <h4 className="flex items-center gap-2 text-sm font-semibold text-heading"><Paperclip className="h-4 w-4 text-primary" />Attachments</h4>
-              <ImportButton text="Add Attachment" icon={<Plus className="h-4 w-4" />} onClick={() => fileRef.current?.click()} className="whitespace-nowrap" />
-              <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" multiple hidden onChange={(e) => { setFiles((p) => [...p, ...Array.from(e.target.files ?? [])]); e.target.value = ""; }} />
+              <ImportButton text="Add Attachment" icon={<Plus className="h-4 w-4" />} onClick={() => fileRef.current?.click()} className="w-full whitespace-nowrap sm:w-auto" />
             </div>
+            <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" multiple hidden onChange={(e) => { setFiles((p) => [...p, ...Array.from(e.target.files ?? [])]); e.target.value = ""; }} />
             {files.map((f, i) => (
               <div key={`${f.name}-${i}`} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm text-heading">
                 <span className="min-w-0 truncate">{f.name}</span>

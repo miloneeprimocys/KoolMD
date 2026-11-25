@@ -210,21 +210,21 @@ const ProviderAppointmentView = () => {
       {/* Appointment actions */}
       {tab === "intake-review" && (
         <div className="sticky -bottom-4 z-[200] -mx-4 -mb-4 mt-4 border-t border-border bg-card px-4 py-4 sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6 sm:py-5">
-          <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-2">
+          <div className="mx-auto grid w-full max-w-[1600px] grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap sm:justify-between sm:gap-3">
+            <div className="col-span-2 grid grid-cols-2 gap-2 sm:col-span-1 sm:flex sm:flex-wrap">
               <ImportButton
                 text="Reschedule"
                 icon={<CalendarClock className="h-4 w-4" />}
                 onClick={() => router.push(`${RESCHEDULE_HREF}?id=${encodeURIComponent(appointmentId)}`)}
-                className="whitespace-nowrap"
+                className="w-full justify-center whitespace-nowrap sm:w-auto"
               />
-              <ImportButton text="Cancel Appointment" icon={<X className="h-4 w-4" />} onClick={() => setCancelOpen(true)} className="whitespace-nowrap" />
+              <ImportButton text="Cancel Appointment" icon={<X className="h-4 w-4" />} onClick={() => setCancelOpen(true)} className="w-full justify-center whitespace-nowrap sm:w-auto" />
             </div>
             <AddButton
               text="Start Consultation"
               icon={<Video className="h-4 w-4" />}
               onClick={() => router.push(`${START_CONSULTATION_HREF}?id=${encodeURIComponent(appointmentId)}&from=${backTab}`)}
-              className="ml-auto whitespace-nowrap"
+              className="col-span-2 w-full justify-center whitespace-nowrap sm:col-span-1 sm:ml-auto sm:w-auto"
             />
           </div>
         </div>

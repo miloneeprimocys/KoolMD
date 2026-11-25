@@ -12,6 +12,9 @@ import SignupDropdown from "@/components/SignupDropdown";
 import SignupField from "@/components/SignupField";
 import SuccessToast from "@/components/SuccessToast";
 import { Req, cardCls, toOptions, uid, type Errors } from "@/providers/Shared";
+import AddOrderModal, { type PlacedOrder } from "@/provider-panel/appointments/consulting/AddOrderModal";
+import AddMedicationModal from "@/provider-panel/appointments/consulting/AddMedicationModal";
+import type { Medication as PrescribedMedication } from "@/provider-panel/appointments/consulting/MedicationsTab";
 
 /* ---------------------------------------------------------------- */
 /*  Static data (replace with API data)                              */
@@ -67,6 +70,8 @@ const ProviderNewEncounter = () => {
   const [diagnoses, setDiagnoses] = useState<string[]>(["G43.009 – Migraine, unspecified"]);
   const [labTest, setLabTest] = useState(false);
   const [imaging, setImaging] = useState(false);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [medicationModalOpen, setMedicationModalOpen] = useState(false);
 
   const [medications, setMedications] = useState<Medication[]>([{ id: "m1", name: "Sumatriptan 50 mg", instructions: "Take 1 tablet as needed for migraine" }]);
   const [medForm, setMedForm] = useState<{ open: boolean; editingId: string | null; name: string; instructions: string }>({ open: false, editingId: null, name: "", instructions: "" });
@@ -266,7 +271,7 @@ const ProviderNewEncounter = () => {
             <Heading
               icon={FlaskConical}
               title="Orders"
-              action={<ImportButton text="Add Order" icon={<Plus className="h-4 w-4" />} onClick={() => router.push("/add-order")} className="whitespace-nowrap" />}
+              action={<ImportButton text="Add Order" icon={<Plus className="h-4 w-4" />} onClick={() => setOrderModalOpen(true)} className="whitespace-nowrap" />}
             />
             <div className="flex flex-wrap gap-x-6 gap-y-2">
               <label className="flex cursor-pointer items-center gap-2.5 text-sm text-heading">
@@ -288,7 +293,7 @@ const ProviderNewEncounter = () => {
                 <ImportButton
                   text="Add Medication"
                   icon={<Plus className="h-4 w-4" />}
-                  onClick={() => setMedForm({ open: true, editingId: null, name: "", instructions: "" })}
+                  onClick={() => setMedicationModalOpen(true)}
                   className="whitespace-nowrap"
                 />
               }
@@ -354,6 +359,24 @@ const ProviderNewEncounter = () => {
           <AddButton text="Sign Encounter" icon={<Pencil className="h-4 w-4" />} onClick={signEncounter} className="whitespace-nowrap" />
         </div>
       </div>
+
+      <AddOrderModal
+        open={orderModalOpen}
+        onClose={() => setOrderModalOpen(false)}
+        onSubmitOrders={(orders: PlacedOrder[]) => {
+          setLabTest(orders.some((order) => order.type === "Lab Test"));
+          setImaging(orders.some((order) => order.type === "Imaging"));
+        }}
+      />
+      <AddMedicationModal
+        open={medicationModalOpen}
+        onClose={() => setMedicationModalOpen(false)}
+        onAdd={(medication: PrescribedMedication) => {
+          const instructions = [medication.dosage, medication.frequency, medication.notes].filter(Boolean).join(" · ");
+          setMedications((current) => [{ id: medication.id, name: `${medication.name} ${medication.strength}`.trim(), instructions }, ...current]);
+          setMedicationModalOpen(false);
+        }}
+      />
     </div>
   );
 };

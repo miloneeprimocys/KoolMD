@@ -17,7 +17,7 @@ const AddButton = ({
   text = "Add Patients",
   ariaLabel,
   icon = (
-    <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
+    <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:rotate-90" />
   ),
   onClick,
   type = "button",
@@ -30,7 +30,7 @@ const AddButton = ({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className={`group relative isolate inline-flex h-10 cursor-pointer items-center justify-center gap-2 whitespace-nowrap overflow-hidden rounded-lg border border-primary bg-primary px-2 sm:px-5 text-sm font-medium text-on-primary shadow-md shadow-primary/25 transition-all duration-300 ease-out hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+      className={`group relative isolate inline-flex h-8 sm:h-10 cursor-pointer items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap overflow-hidden rounded-md sm:rounded-lg border border-primary bg-primary px-2.5 sm:px-5 text-xs sm:text-sm font-medium text-on-primary shadow-md shadow-primary/25 transition-all duration-300 ease-out hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
     >
       {/* shine sweep on hover */}
       <span
